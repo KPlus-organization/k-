@@ -1,0 +1,17 @@
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'normalize.css' layer(base);
+@import './base.css' layer(base);
+@import 'tailwindcss/utilities.css' layer(utilities) source('../../');
+
+/* normalize.css supplies the reset; Tailwind Preflight is intentionally omitted. */
+@theme inline {
+  --color-brand: var(--green);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-mint: var(--mint);
+  --color-surface: var(--pale);
+  --font-sans: 'Inter Variable', 'Inter', 'Arial', sans-serif;
+}

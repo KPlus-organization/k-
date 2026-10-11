@@ -1,0 +1,248 @@
+.dashboard {
+  padding-top: 24px;
+  padding-bottom: 60px;
+}
+
+.dashboard-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.dashboard-heading h1 {
+  font-size: 28px;
+  line-height: 34px;
+  letter-spacing: 0;
+  font-weight: 700;
+}
+
+.dashboard-heading p {
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas: 'personal history' 'favorites history';
+  gap: 28px 60px;
+  max-width: 1201px;
+}
+
+.panel {
+  padding: 19px;
+  border: 1px solid #dfe3e9;
+  background: white;
+  border-radius: 12px;
+}
+
+.panel h2 {
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panel-heading .button {
+  min-height: 37px;
+  padding: 9px 15px;
+  white-space: nowrap;
+}
+
+.personal-panel {
+  grid-area: personal;
+  min-height: 204px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.personal-panel .panel-heading {
+  margin-bottom: 2px;
+}
+
+.personal-panel dl {
+  margin: 0;
+}
+
+.personal-panel dt {
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+
+.personal-panel dd {
+  margin: 0 0 12px;
+  font-size: 16px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.personal-panel dd:last-child {
+  margin-bottom: 0;
+}
+
+.favorites-panel {
+  grid-area: favorites;
+}
+
+.history-panel {
+  grid-area: history;
+}
+
+.history-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 0 8px;
+  margin-top: 18px;
+  font-size: 14px;
+}
+
+.history-group p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 2px;
+  color: #4c586a;
+}
+
+.history-group p svg {
+  color: var(--muted);
+}
+
+.history-group a,
+.history-group button {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-align: left;
+  line-height: 20px;
+}
+
+.history-group a:hover,
+.history-group button:hover {
+  color: var(--green);
+}
+
+@media (width <= 1250px) {
+  .dashboard-grid {
+    gap: 28px;
+  }
+}
+
+@media (width <= 950px) {
+  .dashboard-heading {
+    flex-wrap: wrap;
+  }
+}
+
+@media (width <= 950px) {
+  .dashboard-heading > div {
+    flex: 1;
+  }
+}
+
+@media (width <= 950px) {
+  .dashboard-heading h1 {
+    font-size: 24px;
+  }
+}
+
+@media (width <= 950px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'personal' 'favorites' 'history';
+  }
+}
+
+@media (width <= 950px) {
+  .panel {
+    max-width: none;
+  }
+}
+
+@media (width <= 950px) {
+  .history-panel {
+    min-height: 320px;
+  }
+}
+
+@media (width <= 650px) {
+  .dashboard {
+    padding-top: 24px;
+  }
+}
+
+@media (width <= 650px) {
+  .dashboard-heading {
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+}
+
+@media (width <= 650px) {
+  .dashboard-heading > div {
+    flex-basis: 100%;
+  }
+}
+
+@media (width <= 650px) {
+  .dashboard-heading h1 {
+    font-size: 24px;
+    line-height: 30px;
+  }
+}
+
+@media (width <= 650px) {
+  .dashboard-heading .button {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+}
+
+@media (width <= 650px) {
+  .dashboard-grid {
+    gap: 20px;
+  }
+}
+
+@media (width <= 650px) {
+  .panel {
+    padding: 18px;
+  }
+}
+
+@media (width <= 650px) {
+  .panel-heading {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+@media (width <= 650px) {
+  .panel h2 {
+    font-size: 17px;
+  }
+}
+
+@media (width <= 650px) {
+  .personal-panel .panel-heading {
+    margin-bottom: 18px;
+  }
+}
+
+@media (width <= 650px) {
+  .history-group {
+    padding: 0;
+    font-size: 13px;
+  }
+}

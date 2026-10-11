@@ -1,0 +1,75 @@
+.objects-section {
+  padding: 36px 0 64px;
+}
+
+.objects-section > h2 {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.objects-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 26px;
+}
+
+.object-card {
+  min-width: 0;
+  min-height: 120px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--green);
+  border-radius: 16px;
+  padding: 22px 18px;
+  box-shadow: 0 6px 16px #142f2808;
+}
+
+.object-heading {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.object-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-size: 18px;
+}
+
+.object-title svg,
+a.object-title:hover {
+  color: var(--green);
+}
+
+.status {
+  display: block;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (width <= 950px) {
+  .objects-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (width <= 650px) {
+  .objects-section {
+    padding: 28px 0 40px;
+  }
+
+  .objects-section > h2 {
+    font-size: 24px;
+  }
+
+  .objects-grid {
+    grid-template-columns: 1fr;
+  }
+}

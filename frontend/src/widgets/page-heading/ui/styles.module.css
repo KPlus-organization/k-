@@ -1,0 +1,84 @@
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 28px 0 24px;
+  line-height: 16px;
+  flex-wrap: wrap;
+}
+
+.breadcrumbs > span {
+  color: var(--text);
+}
+
+.breadcrumbs a:hover {
+  color: var(--green);
+}
+
+.page-intro {
+  padding: 5px 8px 6px;
+  background: linear-gradient(90deg, #def3e9, #dbe9e170);
+  border-radius: 10px;
+}
+
+.page-intro > .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.page-intro h1 {
+  margin-bottom: 12px;
+  line-height: 48px;
+}
+
+.page-intro p {
+  max-width: 885px;
+  font-size: 16px;
+  line-height: 25px;
+}
+
+@media (width <= 950px) {
+  .page-intro h1 {
+    font-size: 36px;
+    line-height: 1.2;
+  }
+}
+
+@media (width <= 650px) {
+  .breadcrumbs {
+    padding: 22px 0;
+    font-size: 11px;
+    gap: 8px;
+  }
+}
+
+@media (width <= 650px) {
+  .page-intro {
+    padding: 16px;
+  }
+}
+
+@media (width <= 650px) {
+  .page-intro .eyebrow {
+    font-size: 10px;
+  }
+}
+
+@media (width <= 650px) {
+  .page-intro h1 {
+    font-size: 30px;
+    letter-spacing: 0;
+    margin: 12px 0;
+  }
+}
+
+@media (width <= 650px) {
+  .page-intro p {
+    font-size: 14px;
+    line-height: 23px;
+  }
+}

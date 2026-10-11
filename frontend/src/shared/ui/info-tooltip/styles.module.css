@@ -1,0 +1,45 @@
+.wrapper {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.trigger {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--mint);
+  border: 1px solid var(--line);
+  color: var(--green);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.trigger:hover {
+  background: #ceecdd;
+}
+
+.tooltip {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: min(280px, calc(100vw - 80px));
+  padding-top: 10px;
+  z-index: 10;
+}
+
+.tooltip > span {
+  display: block;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px #142f281a;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 400;
+}
