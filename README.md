@@ -10,12 +10,14 @@
 
 ## Быстрый старт
 
-Требования: Node.js 24 LTS+, PostgreSQL. Как создать локальную БД, описано в [backend/README.md](backend/README.md#локальная-база-данных).
+Требования: Node.js 24 LTS+, PostgreSQL. Как создать локальную БД, описано в [backend/README.md](backend/README.md#локальная-база).
 
 ```bash
 cd backend
 npm install
-cp .env.example .env    # заполнить DATABASE_URL
+cp .env.example .env    # заполнить DATABASE_URL и JWT_SECRET
+npm run db:migrate
+npm run db:seed
 npm run dev
 curl http://localhost:3001/api/health
 ```
@@ -26,3 +28,4 @@ curl http://localhost:3001/api/health
 
 - Изменения API (новые эндпоинты, поля, коды ошибок) сначала описываются в `docs/api.md`, затем реализуются.
 - Файлы `.env` не коммитятся. Образец настроек — `backend/.env.example`.
+- CI: `.github/workflows/frontend.yml` и `.github/workflows/backend.yml` (с PostgreSQL и сидером).

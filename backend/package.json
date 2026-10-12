@@ -12,7 +12,10 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "db:migrate": "tsc && node dist/db/migrate.js",
+    "db:seed": "tsc && node dist/db/seed.js",
+    "test": "tsc -p tsconfig.test.json && node --test --test-concurrency=1 \"test-dist/tests/**/*.test.js\""
   },
   "repository": {
     "type": "git",
@@ -27,6 +30,7 @@
     "cors": "^2.8.6",
     "dotenv": "^18.0.7",
     "express": "^5.3.0",
+    "jose": "^6.2.12",
     "pg": "^8.23.1"
   },
   "devDependencies": {

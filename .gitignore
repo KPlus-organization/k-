@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 dist/
+test-dist/
 *.tsbuildinfo
 
 # Environment (secrets). Only the example file is committed.

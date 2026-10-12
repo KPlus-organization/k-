@@ -18,7 +18,7 @@ server.on('error', (err) => {
 
 server.listen(env.port, () => {
   console.log(`[server] Listening on http://localhost:${env.port} (${env.nodeEnv})`);
-  console.log(`[server] CORS allowed origin: ${env.frontendOrigin}`);
+  console.log(`[server] CORS allowed origins: ${env.frontendOrigins.join(', ')}`);
 });
 
 let shuttingDown = false;
