@@ -1,0 +1,62 @@
+name: Backend checks
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: k_ci
+          POSTGRES_PASSWORD: k_ci_password
+          POSTGRES_DB: k_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U k_ci -d k_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # Throwaway values for the CI database only; they are not secrets.
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://k_ci:k_ci_password@localhost:5432/k_ci
+      JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else-0123456789
+      SEED_DEMO_PASSWORD: ci-demo-password
+      FRONTEND_ORIGIN: http://localhost:3000,http://127.0.0.1:3000
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Migrate database
+        run: npm run db:migrate
+      - name: Seed database
+        run: npm run db:seed
+      - name: Seed again (must be idempotent)
+        run: npm run db:seed
+      - run: npm test

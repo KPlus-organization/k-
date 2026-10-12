@@ -4,7 +4,12 @@ import express from 'express';
 import { corsOptions } from './config/cors';
 import { errorHandler } from './middlewares/errorHandler';
 import { notFound } from './middlewares/notFound';
+import { authRoutes } from './routes/authRoutes';
+import { contentRoutes } from './routes/contentRoutes';
+import { favoritesRoutes } from './routes/favoritesRoutes';
 import { healthRoutes } from './routes/healthRoutes';
+import { historyRoutes } from './routes/historyRoutes';
+import { profileRoutes } from './routes/profileRoutes';
 
 export function createApp(): express.Express {
   const app = express();
@@ -15,6 +20,11 @@ export function createApp(): express.Express {
   app.use(express.json({ limit: '100kb' }));
 
   app.use(healthRoutes);
+  app.use('/api', contentRoutes);
+  app.use('/api/auth', authRoutes);
+  app.use('/api/profile', profileRoutes);
+  app.use('/api/favorites', favoritesRoutes);
+  app.use('/api/history', historyRoutes);
 
   // Must stay after all routes.
   app.use(notFound);

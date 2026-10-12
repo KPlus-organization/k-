@@ -1,12 +1,13 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { env } from '../config/env';
-import { HttpError } from '../errors/HttpError';
+import { HttpError, type FieldIssue } from '../errors/HttpError';
 
 interface PublicError {
   status: number;
   code: string;
   message: string;
+  details?: FieldIssue[];
 }
 
 const INTERNAL_ERROR: PublicError = {
@@ -33,9 +34,27 @@ function fromBodyParserError(err: unknown): PublicError | undefined {
   }
 }
 
+// Network errors and PostgreSQL connection/shutdown SQLSTATEs (classes 08 and 57P).
+const DB_UNAVAILABLE_CODES = new Set(['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'EAI_AGAIN']);
+
+function isDatabaseUnavailable(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const code = 'code' in err ? String(err.code) : '';
+  return (
+    DB_UNAVAILABLE_CODES.has(code) ||
+    code.startsWith('08') ||
+    code.startsWith('57P') ||
+    // pg-pool: connectionTimeoutMillis exceeded.
+    err.message.includes('timeout exceeded when trying to connect')
+  );
+}
+
 function toPublicError(err: unknown): PublicError {
   if (err instanceof HttpError) {
-    return { status: err.status, code: err.code, message: err.message };
+    return { status: err.status, code: err.code, message: err.message, details: err.details };
+  }
+  if (isDatabaseUnavailable(err)) {
+    return { status: 503, code: 'DATABASE_UNAVAILABLE', message: 'Database is unavailable' };
   }
   return fromBodyParserError(err) ?? INTERNAL_ERROR;
 }
@@ -61,11 +80,11 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
     return;
   }
 
-  const { status, code, message } = toPublicError(err);
+  const { status, code, message, details } = toPublicError(err);
 
   if (status >= 500) {
     logError(req, status, err);
   }
 
-  res.status(status).json({ error: { code, message } });
+  res.status(status).json({ error: details ? { code, message, details } : { code, message } });
 }
