@@ -1,0 +1,207 @@
+.site-header {
+  height: 104px;
+  flex-shrink: 0;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 0 48px;
+  position: relative;
+  z-index: 30;
+}
+
+.menu-button {
+  width: 42px;
+  height: 42px;
+}
+
+.menu-button.active {
+  background: var(--pale);
+}
+
+.brand {
+  font-size: 36px;
+  line-height: 42px;
+  font-weight: 700;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.brand span {
+  color: var(--green);
+}
+
+.account-link {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.account-link:hover {
+  color: var(--green);
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: var(--mint);
+  color: var(--green);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+.menu-outside {
+  position: fixed;
+  inset: 104px 0 0;
+  z-index: 20;
+  cursor: default;
+}
+
+.side-menu {
+  position: absolute;
+  z-index: 25;
+  top: 104px;
+  left: 0;
+  width: 400px;
+  min-height: calc(100vh - 104px);
+  padding: 30px 31px;
+  background: var(--pale);
+  border: 1px solid var(--line);
+  max-height: calc(100vh - 104px);
+  overflow: auto;
+}
+
+.side-menu h2 {
+  font-size: 19px;
+  letter-spacing: 0;
+  margin-bottom: 12px;
+}
+
+.side-menu h2:not(:first-child) {
+  margin-top: 28px;
+}
+
+.menu-links {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 16px;
+  color: var(--green);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.menu-links button {
+  text-align: left;
+}
+
+.side-menu a:hover,
+.side-menu button:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (width >= 1600px) {
+  .site-header {
+    padding-left: max(48px, calc((100vw - 1440px) / 2));
+    padding-right: max(48px, calc((100vw - 1440px) / 2));
+  }
+}
+
+@media (width <= 1250px) {
+  .site-header {
+    gap: 20px;
+    padding: 0 32px;
+  }
+}
+
+@media (width <= 1250px) {
+  .account-link > span:first-child {
+    display: none;
+  }
+}
+
+@media (width <= 950px) {
+  .brand {
+    font-size: 30px;
+  }
+}
+
+@media (width <= 950px) {
+  .site-header {
+    gap: 16px;
+  }
+}
+
+@media (width <= 650px) {
+  .site-header {
+    height: 136px;
+    padding: 16px 20px 64px;
+    gap: 16px;
+    align-items: center;
+  }
+}
+
+@media (width <= 650px) {
+  .site-header .brand {
+    font-size: 30px;
+  }
+}
+
+@media (width <= 650px) {
+  .site-header .menu-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+}
+
+@media (width <= 650px) {
+  .account-link {
+    margin-left: auto;
+  }
+}
+
+@media (width <= 650px) {
+  .avatar {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (width <= 650px) {
+  .side-menu {
+    top: 136px;
+    width: min(400px, 100%);
+    min-height: calc(100dvh - 136px);
+    max-height: calc(100dvh - 136px);
+    padding: 24px;
+  }
+}
+
+@media (width <= 650px) {
+  .menu-outside {
+    top: 136px;
+  }
+}
+
+@media (width <= 650px) {
+  .side-menu h2 {
+    font-size: 18px;
+  }
+}
+
+@media (width <= 650px) {
+  .menu-links {
+    font-size: 14px;
+  }
+}

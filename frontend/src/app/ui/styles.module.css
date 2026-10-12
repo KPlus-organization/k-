@@ -1,0 +1,68 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app > main {
+  flex: 1;
+}
+
+.skip-link {
+  position: fixed;
+  top: -70px;
+  left: 16px;
+  z-index: 100;
+  background: var(--green);
+  color: #fff;
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+.auth-background {
+  background: var(--pale);
+}
+
+.profile-background {
+  background: #f8f9fa;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translate(-50%, 16px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  background: var(--text);
+  border-radius: 10px;
+  padding: 13px 20px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 60;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+  white-space: nowrap;
+  max-width: calc(100vw - 32px);
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (width <= 650px) {
+  .toast {
+    font-size: 12px;
+    white-space: normal;
+    min-width: 220px;
+  }
+}

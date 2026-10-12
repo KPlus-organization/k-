@@ -5,7 +5,7 @@
 | Папка                     | Что внутри                                     | Точка входа |
 | ------------------------- | ---------------------------------------------- | ----------- |
 | [`backend/`](backend/)    | API на TypeScript + Express + PostgreSQL       | `backend/src/index.ts`, `npm run dev` → http://localhost:3001 |
-| [`frontend/`](frontend/)  | Клиентская часть (стек выбирается)             | [`frontend/README.md`](frontend/README.md), dev-сервер → http://localhost:3000 |
+| [`frontend/`](frontend/)  | React + TypeScript + Vite, прототип по Figma на моках | [`frontend/README.md`](frontend/README.md), dev-сервер → http://localhost:3000 |
 | [`docs/`](docs/)          | Общий контракт API между фронтендом и бэкендом | [`docs/api.md`](docs/api.md) |
 
 ## Быстрый старт

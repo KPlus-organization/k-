@@ -1,0 +1,70 @@
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  height: 44px;
+  width: 498px;
+  background: var(--pale);
+  padding: 0 15px;
+  color: var(--muted);
+}
+
+.search-box input:not([type='checkbox']) {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 13px;
+  outline: 0;
+}
+
+.search-box:focus-within {
+  outline: 2px solid #00865b30;
+  border-color: var(--green);
+}
+
+.search-box button {
+  display: flex;
+  align-items: center;
+}
+
+.search-box kbd {
+  font-family: inherit;
+  font-size: 11px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 3px;
+  padding: 2px 5px;
+  white-space: nowrap;
+}
+
+@media (width <= 950px) {
+  .search-box {
+    width: auto;
+    flex: 1;
+  }
+}
+
+@media (width <= 650px) {
+  .search-box {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 12px;
+    height: 38px;
+    padding: 0 12px;
+  }
+}
+
+@media (width <= 650px) {
+  .search-box kbd {
+    display: none;
+  }
+}
+
+@media (width <= 650px) {
+  .search-box input:not([type='checkbox']) {
+    font-size: 12px;
+  }
+}

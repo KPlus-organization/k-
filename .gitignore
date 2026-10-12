@@ -25,6 +25,10 @@ temp/
 # Coverage
 coverage/
 
+# Frontend browser checks
+playwright-report/
+test-results/
+
 # OS / editor files
 .DS_Store
 Thumbs.db

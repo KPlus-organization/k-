@@ -1,0 +1,51 @@
+.availability-note {
+  display: flex;
+  gap: 14px;
+  background: var(--pale);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.availability-note > svg {
+  color: var(--green);
+  margin-top: 4px;
+}
+
+.availability-note p {
+  font-size: 14px;
+}
+
+.saved-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.saved-row > .icon-button {
+  flex-shrink: 0;
+}
+
+@media (width <= 650px) {
+  .saved-row > :first-child {
+    padding: 12px 8px;
+  }
+}
+
+@media (width <= 650px) {
+  .saved-row {
+    gap: 4px;
+  }
+}
+
+@media (width <= 650px) {
+  .saved-row > :first-child > svg:last-child {
+    display: none;
+  }
+}
+
+@media (width <= 650px) {
+  .availability-note {
+    padding: 16px;
+  }
+}
