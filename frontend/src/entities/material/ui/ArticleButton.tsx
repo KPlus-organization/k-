@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { cx, type Open } from '@/shared/lib';
 import { Icon } from '@/shared/ui';
-import type { articles } from '../model/catalog';
+import { materialHref } from '../model/routes';
+import type { MaterialSummary } from '../model/types';
 import styles from './styles.module.css';
 
 export function ArticleButton({
@@ -9,7 +10,7 @@ export function ArticleButton({
   open,
   className,
 }: {
-  item: (typeof articles)[number];
+  item: MaterialSummary;
   open: Open;
   className?: string;
 }) {
@@ -23,8 +24,9 @@ export function ArticleButton({
       <Icon name="chevron" size={18} />
     </>
   );
-  return item.href ? (
-    <Link className={cx(styles['favorite-item'], className)} to={item.href}>
+  // Materials without published text open a card in a dialog instead of a page.
+  return item.hasContent ? (
+    <Link className={cx(styles['favorite-item'], className)} to={materialHref(item.id)}>
       {content}
     </Link>
   ) : (

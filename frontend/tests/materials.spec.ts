@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { signIn } from './helpers';
 
 test('brand object opens complete article, source table, and four-step checklist', async ({
   page,
@@ -29,13 +30,16 @@ test('brand object opens complete article, source table, and four-step checklist
 
 test('database checklists have no completion controls and keep favorites across navigation and reload', async ({
   page,
+  request,
 }) => {
+  await signIn(page, request);
   await page.goto('/protect/databases');
   await page.getByRole('link', { name: /Как зафиксировать авторство/ }).click();
   await expect(page.getByTestId('guide-step')).toHaveCount(7);
   await expect(page.getByRole('checkbox')).toHaveCount(0);
   await expect(page.getByRole('progressbar')).toHaveCount(0);
   await page.getByRole('button', { name: 'Сохранить чек-лист' }).click();
+  await expect(page.getByRole('button', { name: 'В избранном', exact: true })).toBeVisible();
   await page.getByRole('link', { name: /База данных в стартапе/ }).click();
   await expect(page).toHaveURL(/\/ownership\/databases$/);
   await expect(page.getByTestId('guide-step')).toHaveCount(5);

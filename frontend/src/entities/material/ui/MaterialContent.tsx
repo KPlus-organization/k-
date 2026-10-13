@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { Open } from '@/shared/lib';
-import type { ContentBlock, TextRun } from '../model/materials';
+import type { ContentBlock, TextRun } from '../model/types';
 import styles from './content.module.css';
 
 function InlineText({ runs, open }: { runs: TextRun[]; open: Open }) {

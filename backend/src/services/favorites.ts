@@ -7,11 +7,15 @@ export interface Favorite {
   addedAt: string;
 }
 
+/**
+ * Only published materials are listed. Favorites of unpublished materials stay in
+ * the database and reappear if the material is published again.
+ */
 export async function listFavorites(userId: string): Promise<Favorite[]> {
   const { rows } = await pool.query(
     `SELECT ${SUMMARY_COLUMNS}, f.created_at
      FROM favorites f JOIN materials m ON m.id = f.material_id
-     WHERE f.user_id = $1
+     WHERE f.user_id = $1 AND m.is_published
      ORDER BY f.created_at DESC, m.sort_order`,
     [userId],
   );

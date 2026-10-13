@@ -1,1 +1,1 @@
-export { useSession } from './model/use-session';
+export { useSession, type ProfileChanges, type RegisterData } from './model/use-session';

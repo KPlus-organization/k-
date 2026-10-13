@@ -1,14 +1,17 @@
 import { Link, useParams } from 'react-router-dom';
-import { cx, type Open } from '@/shared/lib';
-import { Icon, ui } from '@/shared/ui';
+import { apiUrl, isNotFound } from '@/shared/api';
+import { cx, useDocumentTitle, type Open } from '@/shared/lib';
+import { Icon, LoadState, ui } from '@/shared/ui';
 import {
-  materials,
   materialLabels,
-  objects,
   MaterialContent,
   ArticleButton,
+  topicHref,
+  useMaterial,
+  useObjects,
   type Material,
 } from '@/entities/material';
+import { useRecordVisit } from '@/features/history';
 import { Breadcrumbs } from '@/widgets/page-heading';
 import { LegalNotice } from '@/widgets/legal-notice';
 import styles from './styles.module.css';
@@ -22,8 +25,18 @@ type Props = {
 
 export function MaterialPage(props: Props) {
   const { id } = useParams();
-  const material = materials.find((item) => item.id === (props.materialId || id));
-  if (!material)
+  const { data: material, error, reload } = useMaterial(props.materialId ?? id ?? '');
+  useDocumentTitle(material?.pageTitle);
+  useRecordVisit(
+    material
+      ? {
+          type: 'material',
+          target: material.id,
+          title: `${materialLabels[material.kind]}: ${material.title}`,
+        }
+      : null,
+  );
+  if (isNotFound(error))
     return (
       <section className={ui['empty-state']}>
         <span className={ui['eyebrow']}>404</span>
@@ -33,6 +46,7 @@ export function MaterialPage(props: Props) {
         </Link>
       </section>
     );
+  if (!material) return <LoadState error={error} onRetry={reload} />;
   return <ReadingSession key={material.id} {...props} material={material} />;
 }
 
@@ -43,23 +57,16 @@ function ReadingSession({
   open,
 }: Props & { material: Material }) {
   const saved = favorites.includes(material.id);
-  const object = objects.find((item) => item.id === material.topic)!;
-  const related = material.related.map((id) => materials.find((item) => item.id === id)!);
+  const object = useObjects().data?.find((item) => item.id === material.topic);
+  const parents = [
+    material.id === 'database-registration'
+      ? { title: 'Оформить права', href: '/ownership' }
+      : { title: 'Защитить нарушенные права', href: '/protect' },
+    ...(object ? [{ title: object.title, href: topicHref(object.id) }] : []),
+  ];
   return (
     <div className={cx(ui['container'], styles['page'])}>
-      <Breadcrumbs
-        current={materialLabels[material.kind]}
-        parents={[
-          {
-            title:
-              material.id === 'database-registration'
-                ? 'Оформить права'
-                : 'Защитить нарушенные права',
-            href: material.id === 'database-registration' ? '/ownership' : '/protect',
-          },
-          { title: object.title, href: object.href || `/articles?topic=${object.id}` },
-        ]}
-      />
+      <Breadcrumbs current={materialLabels[material.kind]} parents={parents} />
       <header className={styles['intro']}>
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <span className={ui['tag']}>{materialLabels[material.kind]}</span>
@@ -117,17 +124,15 @@ function ReadingSession({
                   ? 'Сохранить чек-лист'
                   : 'Сохранить материал'}
             </button>
-            <a
-              className={styles['download']}
-              href={material.download}
-              download={material.sourceFile}
-            >
-              Скачать исходный DOCX ↓
-            </a>
+            {material.download && (
+              <a className={styles['download']} href={apiUrl(material.download.url)}>
+                Скачать исходный DOCX ↓
+              </a>
+            )}
           </div>
           <h2>Разобраться в деталях</h2>
           <div className="mt-4 grid gap-4">
-            {related.map((item) => (
+            {material.related.map((item) => (
               <ArticleButton key={item.id} item={item} open={open} />
             ))}
           </div>

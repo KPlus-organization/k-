@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { errorMessage } from '@/shared/api';
+import { tools } from '@/shared/config';
 import { cx, type Open } from '@/shared/lib';
 import { Icon, ui } from '@/shared/ui';
-import { useSession } from '@/features/session';
+import { useSession, type ProfileChanges } from '@/features/session';
 import { useFavorites } from '@/features/favorites';
-import { articles, materials, objects } from '@/entities/material';
+import { recordVisit } from '@/features/history';
+import { materialHref, useMaterials } from '@/entities/material';
 import { SiteHeader } from '@/widgets/site-header';
 import { Footer } from '@/widgets/site-footer';
 import { AppModal } from '@/widgets/service-dialog';
@@ -18,10 +21,23 @@ import { SearchPage } from '@/pages/search';
 import { ArticlesPage } from '@/pages/articles';
 import styles from './styles.module.css';
 
+const staticTitles: Record<string, string> = {
+  '/': 'Мой продукт. Мои права.',
+  '/defend': 'Оспорить претензию о нарушении чужих прав',
+  '/login': 'Войти в профиль',
+  '/register': 'Создать профиль',
+  '/profile': 'Личный кабинет',
+  '/protect': 'Защитить нарушенные права',
+  '/ownership': 'Оформить права',
+  '/search': 'Поиск',
+  '/articles': 'Информационные статьи',
+};
+
 export function App() {
   const [modalSelection, setModalSelection] = useState<{ id: string; key: string } | null>(null);
-  const { profile, signedIn, login, logout, updateProfile } = useSession();
-  const { favorites, toggleFavorite: toggleSaved } = useFavorites();
+  const { profile, status, signedIn, login, register, logout, updateProfile } = useSession();
+  const { favorites, items: favoriteItems, toggleFavorite: toggleSaved } = useFavorites(profile);
+  const materials = useMaterials().data ?? [];
   const [toast, setToast] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
@@ -31,11 +47,9 @@ export function App() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const material = materials.find(
-      (item) => item.href === location.pathname || `/articles/${item.id}` === location.pathname,
-    );
-    const object = objects.find((item) => item.href === location.pathname);
-    document.title = `${material?.pageTitle || object?.title || ({ '/': 'Мой продукт. Мои права.', '/defend': 'Оспорить претензию о нарушении чужих прав', '/login': 'Войти в профиль', '/register': 'Создать профиль', '/profile': 'Личный кабинет', '/protect': 'Защитить нарушенные права', '/ownership': 'Оформить права', '/search': 'Поиск', '/articles': 'Информационные статьи' } as Record<string, string>)[location.pathname] || 'Материалы'} — МоёПраво`;
+    // Pages with loaded content (materials, objects) set their own titles.
+    const title = staticTitles[location.pathname];
+    if (title) document.title = `${title} — МоёПраво`;
   }, [location.pathname, location.search]);
   useEffect(() => {
     if (!toast) return;
@@ -44,19 +58,37 @@ export function App() {
   }, [toast]);
   const open: Open = (id) => {
     const article = id.startsWith('article:')
-      ? articles.find((item) => item.id === id.slice(8))
+      ? materials.find((item) => item.id === id.slice(8))
       : undefined;
-    if (article?.href) {
-      navigate(article.href);
+    if (article?.hasContent) {
+      navigate(materialHref(article.id));
       return;
     }
     if (id === 'ownership') {
       return;
     }
+    const tool = tools.find((item) => item.id === id);
+    if (tool) recordVisit({ type: 'tool', target: tool.id, title: tool.title });
     setModal(id);
   };
-  const toggleFavorite = (id: string) =>
-    setToast(toggleSaved(id) ? 'Добавлено в избранное' : 'Удалено из избранного');
+  const toggleFavorite = async (id: string) => {
+    // Favorites belong to the personal account: a guest signs in and comes back here.
+    if (!signedIn) {
+      setToast('Войдите, чтобы сохранять материалы');
+      navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`);
+      return;
+    }
+    try {
+      setToast((await toggleSaved(id)) ? 'Добавлено в избранное' : 'Удалено из избранного');
+    } catch (error) {
+      setToast(errorMessage(error));
+    }
+  };
+  const saveProfile = async (changes: ProfileChanges) => {
+    if (Object.keys(changes).length > 0) await updateProfile(changes);
+    setModal(null);
+    setToast('Настройки сохранены');
+  };
   const toolAction = (id: string) => (id === 'articles' ? navigate('/articles') : open(id));
 
   return (
@@ -115,22 +147,23 @@ export function App() {
           />
           <Route
             path="/login"
-            element={<Auth key="login" register={false} login={login} open={open} />}
+            element={
+              <Auth key="login" register={false} login={login} signUp={register} open={open} />
+            }
           />
           <Route
             path="/register"
-            element={<Auth key="register" register login={login} open={open} />}
+            element={<Auth key="register" register login={login} signUp={register} open={open} />}
           />
           <Route
             path="/profile"
             element={
               <ProfilePage
                 profile={profile}
-                favorites={favorites}
+                status={status}
+                favorites={favoriteItems}
                 open={open}
                 logout={logout}
-                signedIn={signedIn}
-                login={() => login()}
               />
             }
           />
@@ -170,12 +203,8 @@ export function App() {
           profile={profile}
           open={open}
           onClose={() => setModal(null)}
-          onSaveProfile={(value) => {
-            updateProfile(value);
-            setModal(null);
-            setToast('Настройки сохранены');
-          }}
-          favorites={favorites}
+          onSaveProfile={saveProfile}
+          favorites={favoriteItems.map((item) => item.material)}
           toggleFavorite={toggleFavorite}
         />
       )}

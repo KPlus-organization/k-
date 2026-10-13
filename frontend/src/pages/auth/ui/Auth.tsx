@@ -1,37 +1,64 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
-import { cx, type Open } from '@/shared/lib';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { errorMessage } from '@/shared/api';
+import { cx, validateForm, type Open } from '@/shared/lib';
 import { Icon, type IconName, PasswordField, ui } from '@/shared/ui';
-import { type Profile } from '@/entities/profile';
+import { profileFieldHints } from '@/entities/profile';
+import { type RegisterData } from '@/features/session';
 import styles from './styles.module.css';
+
+/** Where to go after signing in: ?next= if it is a path on this site, else the profile. */
+function nextPath(next: string | null) {
+  return next?.startsWith('/') && !next.startsWith('//') ? next : '/profile';
+}
 
 export function Auth({
   register,
   login,
+  signUp,
   open,
 }: {
   register: boolean;
-  login: (profile?: Profile) => void;
+  login: (identifier: string, password: string) => Promise<void>;
+  signUp: (data: RegisterData) => Promise<void>;
   open: Open;
 }) {
   const [error, setError] = useState('');
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const [pending, setPending] = useState(false);
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const next = params.get('next');
+  const keepNext = (path: string) => (next ? `${path}?next=${encodeURIComponent(next)}` : path);
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const invalid = validateForm(event.currentTarget);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
     const data = new FormData(event.currentTarget);
-    if (register && data.get('password') !== data.get('confirm')) {
+    const password = String(data.get('password'));
+    if (register && password !== data.get('confirm')) {
       setError('Пароли не совпадают. Проверьте повторный ввод.');
       return;
     }
     setError('');
-    if (register) {
-      const name = String(data.get('login')).trim();
-      login({
-        name,
-        login: name,
-        email: String(data.get('email')).trim(),
-        registered: new Date().toLocaleDateString('ru-RU'),
-      });
-    } else login();
+    setPending(true);
+    try {
+      if (register)
+        await signUp({
+          login: String(data.get('login')).trim(),
+          email: String(data.get('email')).trim(),
+          password,
+          consent: true,
+        });
+      else await login(String(data.get('email')).trim(), password);
+      navigate(nextPath(next));
+    } catch (caught) {
+      setError(errorMessage(caught, profileFieldHints));
+      setPending(false);
+    }
   };
   return (
     <div className={styles['auth-page']}>
@@ -85,14 +112,14 @@ export function Auth({
           <nav className={styles['auth-tabs']} aria-label="Вход и регистрация">
             <Link
               className={!register ? cx(ui['selected'], styles['selected']) : undefined}
-              to="/login"
+              to={keepNext('/login')}
               aria-current={!register ? 'page' : undefined}
             >
               Войти в профиль
             </Link>
             <Link
               className={register ? cx(ui['selected'], styles['selected']) : undefined}
-              to="/register"
+              to={keepNext('/register')}
               aria-current={register ? 'page' : undefined}
             >
               Создать профиль
@@ -104,6 +131,7 @@ export function Auth({
               register ? styles['register-form'] : styles['login-form'],
             )}
             onSubmit={submit}
+            noValidate
           >
             <h2>{register ? 'Создать профиль' : 'Войти в профиль'}</h2>
             <p>
@@ -121,7 +149,9 @@ export function Auth({
                     placeholder="Придумайте логин"
                     autoComplete="username"
                     minLength={3}
-                    pattern=".*\S.*"
+                    maxLength={32}
+                    pattern="[\p{L}\p{N}._\-]+"
+                    title={profileFieldHints['login']}
                   />
                 </label>
               )}
@@ -152,7 +182,12 @@ export function Auth({
             </div>
             {register ? (
               <label className={styles['consent']}>
-                <input type="checkbox" required name="consent" />
+                <input
+                  type="checkbox"
+                  required
+                  name="consent"
+                  data-required-message="Подтвердите согласие на обработку персональных данных."
+                />
                 <span>
                   Я даю{' '}
                   <button type="button" onClick={() => open('privacy')}>
@@ -174,20 +209,20 @@ export function Auth({
                 {error}
               </p>
             )}
-            <button className={cx(ui['button'], ui['primary'], styles['submit'])} type="submit">
+            <button
+              className={cx(ui['button'], ui['primary'], styles['submit'])}
+              type="submit"
+              disabled={pending}
+            >
               {register ? 'Создать профиль' : 'Войти в профиль'}
             </button>
             <div className={styles['auth-switch']}>
               {register ? 'Уже есть профиль?' : 'Ещё нет профиля?'}{' '}
-              <Link to={register ? '/login' : '/register'}>
+              <Link to={keepNext(register ? '/login' : '/register')}>
                 {register ? 'Войти' : 'Создать профиль'}
               </Link>
             </div>
           </form>
-          <p className={styles['demo-note']}>
-            <Icon name="info" size={15} />
-            Демо-профиль: введите любые данные. Пароль не сохраняется.
-          </p>
         </section>
       </div>
     </div>

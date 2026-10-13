@@ -4,7 +4,7 @@ import { cx, type Open } from '@/shared/lib';
 import { tools } from '@/shared/config';
 import { Icon, ui } from '@/shared/ui';
 import { type Profile } from '@/entities/profile';
-import { objects } from '@/entities/material';
+import { topicHref, useObjects } from '@/entities/material';
 import { SearchForm } from '@/features/search';
 import styles from './styles.module.css';
 
@@ -13,11 +13,12 @@ export function SiteHeader({
   signedIn,
   onOpen,
 }: {
-  profile: Profile;
+  profile: Profile | null;
   signedIn: boolean;
   onOpen: Open;
 }) {
   const [menu, setMenu] = useState(false);
+  const objects = useObjects().data ?? [];
   const menuRef = useRef<HTMLButtonElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
@@ -64,9 +65,9 @@ export function SiteHeader({
           aria-labelledby="account-label"
           to={signedIn ? '/profile' : '/login'}
         >
-          <span id="account-label">{signedIn ? profile.name : 'Личный кабинет'}</span>
+          <span id="account-label">{signedIn && profile ? profile.name : 'Личный кабинет'}</span>
           <span className={styles['avatar']}>
-            {signedIn ? (
+            {signedIn && profile ? (
               profile.name
                 .split(' ')
                 .map((word) => word[0])
@@ -97,7 +98,7 @@ export function SiteHeader({
             </h2>
             <div className={styles['menu-links']}>
               {objects.map((item) => (
-                <Link key={item.id} to={item.href || `/articles?topic=${item.id}`}>
+                <Link key={item.id} to={topicHref(item.id)}>
                   {item.title}
                   {item.id === 'brand'
                     ? ' (логотип, название, коммерческое обозначение и фирменное наименование, домен)'

@@ -13,3 +13,10 @@ export function writeStored(key: string, value: unknown) {
     /* The app also works without browser storage. */
   }
 }
+export function removeStored(key: string) {
+  try {
+    localStorage.removeItem(`moe-pravo:${key}`);
+  } catch {
+    /* The app also works without browser storage. */
+  }
+}

@@ -1,11 +1,14 @@
 export { ArticleButton } from './ui/ArticleButton';
 export { MaterialContent } from './ui/MaterialContent';
-export { articles, design, objects, type DesignNode } from './model/catalog';
+export { useContentSearch, useMaterial, useMaterials, useObjects } from './api/content-api';
+export { materialHref, objectHref, topicHref } from './model/routes';
 export {
-  materials,
   materialLabels,
-  materialSearchText,
-  type Material,
   type ContentBlock,
+  type Material,
+  type MaterialKind,
+  type MaterialSummary,
+  type ProtectionObject,
+  type SearchResult,
   type TextRun,
-} from './model/materials';
+} from './model/types';

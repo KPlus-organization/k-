@@ -2,12 +2,14 @@
   {
     "id": "brand-article",
     "topic": "brand",
+    "kind": "article",
     "title": "Элементный состав бренда в IT-среде: что считать нарушением прав на бренд?",
     "pageTitle": "Элементный состав бренда в IT-среде: что считать нарушением прав на бренд?",
     "description": "Название, логотип, фирменное наименование, коммерческое обозначение и домен.",
-    "kind": "article",
-    "sourceFile": "Статья и чек-лист по защите бренда.docx",
-    "download": "/materials/brand-protection.docx",
+    "file": {
+      "path": "brand-protection.docx",
+      "name": "Статья и чек-лист по защите бренда.docx"
+    },
     "related": [
       "brand-protection",
       "code-0"
@@ -408,12 +410,14 @@
   {
     "id": "brand-protection",
     "topic": "brand",
+    "kind": "checklist",
     "title": "Порядок защиты бренда и домена от копирования: как пресечь нарушение",
     "pageTitle": "Порядок защиты бренда и домена от копирования: как пресечь нарушение",
     "description": "От фиксации нарушения до требований и профилактики.",
-    "kind": "checklist",
-    "sourceFile": "Статья и чек-лист по защите бренда.docx",
-    "download": "/materials/brand-protection.docx",
+    "file": {
+      "path": "brand-protection.docx",
+      "name": "Статья и чек-лист по защите бренда.docx"
+    },
     "related": [
       "brand-article",
       "checklist"
@@ -934,12 +938,14 @@
   {
     "id": "database-registration",
     "topic": "databases",
+    "kind": "checklist",
     "title": "База данных в стартапе: как закрепить права и не потерять актив",
     "pageTitle": "База данных в стартапе: как закрепить права и не потерять актив",
     "description": "Оформление прав, регистрация, депонирование и учет базы данных.",
-    "kind": "checklist",
-    "sourceFile": "чек-лист БД регистрация.docx",
-    "download": "/materials/database-registration.docx",
+    "file": {
+      "path": "database-registration.docx",
+      "name": "чек-лист БД регистрация.docx"
+    },
     "related": [
       "database-protection"
     ],
@@ -1663,12 +1669,14 @@
   {
     "id": "database-protection",
     "topic": "databases",
+    "kind": "checklist",
     "title": "Как зафиксировать авторство на базу данных и доказать его?",
     "pageTitle": "Как зафиксировать авторство на базу данных и доказать его?",
     "description": "Документы, регистрация, цифровые следы и доказательства для суда.",
-    "kind": "checklist",
-    "sourceFile": "ЧЛ защита прав БД.docx",
-    "download": "/materials/database-protection.docx",
+    "file": {
+      "path": "database-protection.docx",
+      "name": "ЧЛ защита прав БД.docx"
+    },
     "related": [
       "database-registration"
     ],
@@ -2353,12 +2361,14 @@
   {
     "id": "checklist",
     "topic": "code",
+    "kind": "checklist",
     "title": "Чек-лист: Защитить программный код",
     "pageTitle": "Защита программного кода",
     "description": "8 шагов · от фиксации до требований",
-    "kind": "checklist",
-    "sourceFile": "Чек-лист программный год - защита прав.docx",
-    "download": "/materials/checklist.docx",
+    "file": {
+      "path": "checklist.docx",
+      "name": "Чек-лист программный год - защита прав.docx"
+    },
     "related": [
       "code-0",
       "code-1",
@@ -3004,12 +3014,14 @@
   {
     "id": "code-0",
     "topic": "code",
+    "kind": "article",
     "title": "Как доказывают заимствование кода",
     "pageTitle": "Как доказывают заимствование кода",
     "description": "Внесудебное исследование и судебная компьютерно-техническая экспертиза.",
-    "kind": "article",
-    "sourceFile": "Статья _Как доказывают заимствование кода_.docx",
-    "download": "/materials/code-0.docx",
+    "file": {
+      "path": "code-0.docx",
+      "name": "Статья _Как доказывают заимствование кода_.docx"
+    },
     "related": [
       "code-expert",
       "checklist",
@@ -3177,12 +3189,14 @@
   {
     "id": "code-1",
     "topic": "code",
+    "kind": "article",
     "title": "Запрет использования, убытки или компенсация: что требовать при копировании программы",
     "pageTitle": "Запрет использования, убытки или компенсация: что требовать при копировании программы",
     "description": "Прекращение нарушения, убытки и способы расчета компенсации.",
-    "kind": "article",
-    "sourceFile": "Статья _Запрет использования, убытки или компенсация что требовать при копировании программы_.docx",
-    "download": "/materials/code-1.docx",
+    "file": {
+      "path": "code-1.docx",
+      "name": "Статья _Запрет использования, убытки или компенсация что требовать при копировании программы_.docx"
+    },
     "related": [
       "checklist",
       "code-0"
@@ -3376,12 +3390,14 @@
   {
     "id": "code-expert",
     "topic": "code",
+    "kind": "reference",
     "title": "Вопросы эксперту компьютерно-технической экспертизы",
     "pageTitle": "Вопросы эксперту компьютерно-технической экспертизы",
     "description": "Пять вопросов для сравнительного исследования программного кода.",
-    "kind": "reference",
-    "sourceFile": "Ссылка _Вопросы эксперту компьютерно-технической экспертизы_.docx",
-    "download": "/materials/code-expert.docx",
+    "file": {
+      "path": "code-expert.docx",
+      "name": "Ссылка _Вопросы эксперту компьютерно-технической экспертизы_.docx"
+    },
     "related": [
       "code-0",
       "checklist"
@@ -3424,22 +3440,22 @@
   {
     "id": "application",
     "topic": "brand",
+    "kind": "article",
     "title": "Как правильно заполнить заявку на товарный знак",
-    "description": "Юридические советы • 5 мин чтения",
-    "kind": "article"
+    "description": "Юридические советы • 5 мин чтения"
   },
   {
     "id": "deadlines",
     "topic": "brand",
+    "kind": "article",
     "title": "Сроки регистрации товарного знака в Роспатенте",
-    "description": "Практика • 3 мин чтения",
-    "kind": "article"
+    "description": "Практика • 3 мин чтения"
   },
   {
     "id": "classes",
     "topic": "brand",
+    "kind": "article",
     "title": "Что такое МКТУ и как правильно выбрать классы",
-    "description": "Базовые знания • 7 мин чтения",
-    "kind": "article"
+    "description": "Базовые знания • 7 мин чтения"
   }
 ]

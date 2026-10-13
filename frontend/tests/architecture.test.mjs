@@ -12,7 +12,7 @@ test('FSD allows a page to import an entity public API', async () => {
   assert.deepEqual(
     await architectureMessages(
       'src/pages/home/ui/Home.tsx',
-      "import { articles } from '@/entities/material'; console.log(articles);",
+      "import { materialLabels } from '@/entities/material'; console.log(materialLabels);",
     ),
     [],
   );
@@ -47,7 +47,7 @@ test('FSD blocks access to another slice internals', async () => {
     (
       await architectureMessages(
         'src/pages/home/ui/Home.tsx',
-        "import { demoProfile } from '@/entities/profile/model/profile'; console.log(demoProfile);",
+        "import { profileFieldHints } from '@/entities/profile/model/types'; console.log(profileFieldHints);",
       )
     ).length > 0,
   );
@@ -57,7 +57,7 @@ test('FSD allows relative imports within a slice', async () => {
   assert.deepEqual(
     await architectureMessages(
       'src/entities/material/ui/ArticleButton.tsx',
-      "import { articles } from '../model/catalog'; console.log(articles);",
+      "import { materialHref } from '../model/routes'; console.log(materialHref);",
     ),
     [],
   );

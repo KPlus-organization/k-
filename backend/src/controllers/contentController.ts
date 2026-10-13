@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 
 import { HttpError } from '../errors/HttpError';
-import { getMaterial, listMaterials, listObjects, toSearchText } from '../services/content';
+import { getMaterial, getMaterialFile, listMaterials, listObjects, toSearchText } from '../services/content';
 
 const MAX_QUERY_LENGTH = 200;
 
@@ -27,6 +27,14 @@ export async function getMaterials(req: Request, res: Response): Promise<void> {
 
 export async function getMaterialById(req: Request<{ id: string }>, res: Response): Promise<void> {
   res.status(200).json(await getMaterial(req.params.id));
+}
+
+export async function downloadMaterialFile(req: Request<{ id: string }>, res: Response): Promise<void> {
+  const file = await getMaterialFile(req.params.id);
+  // Sets Content-Disposition: attachment with the original (UTF-8) file name.
+  await new Promise<void>((resolve, reject) => {
+    res.download(file.path, file.name, (err) => (err ? reject(err) : resolve()));
+  });
 }
 
 export async function search(req: Request, res: Response): Promise<void> {
