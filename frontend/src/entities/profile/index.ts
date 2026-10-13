@@ -1,1 +1,1 @@
-export { demoProfile, type Profile } from './model/profile';
+export { profileFieldHints, type Profile } from './model/types';

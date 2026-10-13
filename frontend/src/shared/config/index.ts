@@ -1,3 +1,6 @@
+/** Backend base URL, e.g. http://localhost:3001. Set VITE_API_URL in frontend/.env to change it. */
+export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
+
 export const tools = [
   {
     id: 'articles',

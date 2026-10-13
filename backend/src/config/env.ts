@@ -20,6 +20,8 @@ export interface Env {
   jwtSecret: string;
   accessTokenTtlSeconds: number;
   refreshTokenTtlDays: number;
+  /** Repository content: objects.json, materials.json, files/. */
+  contentDir: string;
 }
 
 const DEFAULT_PORT = 3001;
@@ -97,6 +99,9 @@ function loadEnv(): Env {
   );
   const refreshTokenTtlDays = readPositiveInt('REFRESH_TOKEN_TTL_DAYS', DEFAULT_REFRESH_TOKEN_TTL_DAYS, problems);
 
+  // Defaults to content/ in the repository root, next to backend/.
+  const contentDir = path.resolve(PROJECT_ROOT, readOptional('CONTENT_DIR') ?? '../content');
+
   if (problems.length > 0) {
     throw new Error(`Invalid environment configuration:\n  - ${problems.join('\n  - ')}`);
   }
@@ -110,6 +115,7 @@ function loadEnv(): Env {
     jwtSecret,
     accessTokenTtlSeconds,
     refreshTokenTtlDays,
+    contentDir,
   };
 }
 

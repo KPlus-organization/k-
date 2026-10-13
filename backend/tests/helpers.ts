@@ -6,7 +6,7 @@ import { after, before } from 'node:test';
 import { createApp } from '../src/app';
 import { closePool, pool } from '../src/config/db';
 import { migrate } from '../src/db/migrate';
-import { seed } from '../src/db/seed';
+import { syncContent } from '../src/db/seed';
 
 export interface ApiResponse<T = any> {
   status: number;
@@ -20,14 +20,14 @@ const createdLogins: string[] = [];
 
 /**
  * Starts the app on a random port against DATABASE_URL, after applying migrations
- * and seeding content (the demo user is not touched). Users created through
+ * and syncing content/ (the demo user is not touched). Users created through
  * `registerUser` are deleted afterwards.
  */
 export function setupApi(): void {
   before(async () => {
     const quiet = () => undefined;
     await migrate(quiet);
-    await seed({ log: quiet });
+    await syncContent({ log: quiet });
     server = createServer(createApp());
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -40,6 +40,10 @@ export function setupApi(): void {
     await new Promise<void>((resolve) => server.close(() => resolve()));
     await closePool();
   });
+}
+
+export function apiUrl(path: string): string {
+  return baseUrl + path;
 }
 
 export async function api<T = any>(

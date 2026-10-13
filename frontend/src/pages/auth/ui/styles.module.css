@@ -209,17 +209,6 @@
   text-align: left;
 }
 
-.demo-note {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  line-height: 17px;
-  margin: 20px 0 0;
-  color: var(--muted);
-}
-
 @media (width <= 1250px) {
   .auth-page {
     max-width: 1040px;
@@ -350,14 +339,6 @@
 @media (width <= 650px) {
   .login-form .auth-switch {
     margin-top: 36px;
-  }
-}
-
-@media (width <= 650px) {
-  .demo-note {
-    font-size: 11px;
-    align-items: flex-start;
-    text-align: center;
   }
 }
 

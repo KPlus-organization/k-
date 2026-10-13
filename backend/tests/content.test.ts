@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { api, setupApi } from './helpers';
+import { api, apiUrl, setupApi } from './helpers';
 
 setupApi();
 
@@ -55,12 +55,31 @@ test('GET /api/materials/:id returns full content with related summaries', async
   assert.equal(res.body.kind, 'checklist');
   assert.equal(res.body.sections.length, 8);
   assert.equal(res.body.stepsCount, 8);
-  assert.equal(res.body.downloadPath, '/materials/checklist.docx');
+  assert.deepEqual(res.body.download, {
+    fileName: 'Чек-лист программный год - защита прав.docx',
+    url: '/api/materials/checklist/file',
+  });
   assert.deepEqual(
     res.body.related.map((item: { id: string }) => item.id),
     ['code-0', 'code-1', 'code-expert'],
   );
   assert.ok(Array.isArray(res.body.sections[0].blocks));
+});
+
+test('GET /api/materials/:id/file downloads the source DOCX under its original name', async () => {
+  const res = await fetch(apiUrl('/api/materials/checklist/file'));
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-disposition') ?? '', /^attachment;.*filename\*=UTF-8''/);
+  assert.match(
+    decodeURIComponent(res.headers.get('content-disposition') ?? ''),
+    /Чек-лист программный год - защита прав\.docx/,
+  );
+  assert.equal(Buffer.from(await res.arrayBuffer()).subarray(0, 2).toString(), 'PK');
+
+  // A placeholder without a file and an unknown material.
+  assert.equal((await api('GET', '/api/materials/classes/file')).status, 404);
+  assert.equal((await api('GET', '/api/materials/nope/file')).status, 404);
+  assert.equal((await api('GET', '/api/materials/classes')).body.download, null);
 });
 
 test('GET /api/materials/:id answers 404 for an unknown material', async () => {

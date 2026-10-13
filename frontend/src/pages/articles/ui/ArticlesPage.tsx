@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { cx, type Open } from '@/shared/lib';
-import { Icon, ui } from '@/shared/ui';
-import { articles, objects, ArticleButton } from '@/entities/material';
+import { Icon, LoadState, ui } from '@/shared/ui';
+import { ArticleButton, useMaterials, useObjects } from '@/entities/material';
 import { Breadcrumbs } from '@/widgets/page-heading';
 
 export function ArticlesPage({
@@ -14,8 +14,21 @@ export function ArticlesPage({
   open: Open;
 }) {
   const [params] = useSearchParams();
-  const topic = objects.find((item) => item.id === params.get('topic'));
-  const shown = topic ? articles.filter((item) => item.topic === topic.id) : articles;
+  const objects = useObjects();
+  // An unknown topic shows the whole catalog.
+  const topic = objects.data?.find((item) => item.id === params.get('topic'));
+  const materials = useMaterials(topic?.id);
+  if (!objects.data || !materials.data)
+    return (
+      <LoadState
+        error={objects.error ?? materials.error}
+        onRetry={() => {
+          objects.reload();
+          materials.reload();
+        }}
+      />
+    );
+  const shown = materials.data;
   return (
     <div className={cx(ui['container'], ui['listing-page'])}>
       <Breadcrumbs current="Информационные статьи" />
@@ -28,7 +41,7 @@ export function ArticlesPage({
         <Link className={!topic ? ui['selected'] : undefined} to="/articles">
           Все материалы
         </Link>
-        {objects.map((item) => (
+        {objects.data.map((item) => (
           <Link
             className={topic?.id === item.id ? ui['selected'] : undefined}
             key={item.id}

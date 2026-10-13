@@ -4,7 +4,13 @@ import { cx, type Open } from '@/shared/lib';
 import { tools } from '@/shared/config';
 import { Icon, Modal, ui } from '@/shared/ui';
 import { type Profile } from '@/entities/profile';
-import { articles, objects, ArticleButton } from '@/entities/material';
+import {
+  ArticleButton,
+  objectHref,
+  useMaterials,
+  useObjects,
+  type MaterialSummary,
+} from '@/entities/material';
 import { ProfileSettings } from '@/features/profile-settings';
 import styles from './styles.module.css';
 
@@ -18,19 +24,23 @@ export function AppModal({
   toggleFavorite,
 }: {
   id: string;
-  profile: Profile;
+  profile: Profile | null;
   open: Open;
   onClose: () => void;
-  onSaveProfile: (profile: Profile) => void;
-  favorites: string[];
+  onSaveProfile: (changes: Partial<Pick<Profile, 'name' | 'login' | 'email'>>) => Promise<void>;
+  favorites: MaterialSummary[];
   toggleFavorite: (id: string) => void;
 }) {
+  const objects = useObjects().data ?? [];
+  const materials = useMaterials().data ?? [];
   const object = id.startsWith('object:')
     ? objects.find((item) => item.id === id.split(':')[1])
     : undefined;
+  const objectPage = object && objectHref(object.id);
   const article = id.startsWith('article:')
-    ? articles.find((item) => item.id === id.split(':')[1])
+    ? materials.find((item) => item.id === id.split(':')[1])
     : undefined;
+  const saved = (materialId: string) => favorites.some((item) => item.id === materialId);
   const titles: Record<string, string> = {
     settings: 'Настройки профиля',
     favorites: 'Все избранные',
@@ -48,25 +58,28 @@ export function AppModal({
   let body: ReactNode;
   if (id === 'definition:presumption')
     body = <p>Суд считает утверждение истинным, пока не доказано обратное.</p>;
-  else if (id === 'settings') body = <ProfileSettings profile={profile} onSave={onSaveProfile} />;
+  else if (id === 'settings')
+    body = profile ? (
+      <ProfileSettings profile={profile} onSave={onSaveProfile} />
+    ) : (
+      <p>Войдите в профиль, чтобы изменить настройки.</p>
+    );
   else if (id === 'favorites')
     body = (
       <div className={ui['favorite-list']}>
         {favorites.length ? (
-          articles
-            .filter((item) => favorites.includes(item.id))
-            .map((item) => (
-              <div className={styles['saved-row']} data-testid="saved-row" key={item.id}>
-                <ArticleButton item={item} open={open} />
-                <button
-                  className={cx(ui['icon-button'], styles['icon-button'])}
-                  aria-label={`Удалить из избранного: ${item.title}`}
-                  onClick={() => toggleFavorite(item.id)}
-                >
-                  <Icon name="close" size={17} />
-                </button>
-              </div>
-            ))
+          favorites.map((item) => (
+            <div className={styles['saved-row']} data-testid="saved-row" key={item.id}>
+              <ArticleButton item={item} open={open} />
+              <button
+                className={cx(ui['icon-button'], styles['icon-button'])}
+                aria-label={`Удалить из избранного: ${item.title}`}
+                onClick={() => toggleFavorite(item.id)}
+              >
+                <Icon name="close" size={17} />
+              </button>
+            </div>
+          ))
         ) : (
           <p>Пока нет сохранённых материалов.</p>
         )}
@@ -76,8 +89,8 @@ export function AppModal({
     body = (
       <>
         <p>{object.description}</p>
-        {object.href ? (
-          <Link className={cx(ui['button'], ui['primary'])} onClick={onClose} to={object.href}>
+        {objectPage ? (
+          <Link className={cx(ui['button'], ui['primary'])} onClick={onClose} to={objectPage}>
             {object.id === 'code' ? 'Открыть чек-лист' : 'Статьи и чек-листы'}{' '}
             <Icon name="arrowRight" />
           </Link>
@@ -108,11 +121,11 @@ export function AppModal({
         </div>
         <button
           className={cx(ui['button'], ui['secondary'])}
-          aria-pressed={favorites.includes(article.id)}
+          aria-pressed={saved(article.id)}
           onClick={() => toggleFavorite(article.id)}
         >
           <Icon name="bookmark" size={18} />
-          {favorites.includes(article.id) ? 'Убрать из избранного' : 'Сохранить в избранное'}
+          {saved(article.id) ? 'Убрать из избранного' : 'Сохранить в избранное'}
         </button>
         {article.id.startsWith('code') && (
           <Link onClick={onClose} className={ui['text-link']} to="/protect/code">
@@ -125,12 +138,12 @@ export function AppModal({
     body = (
       <>
         <p>
-          Это демонстрационная версия «МоёПраво». Данные профиля и избранное сохраняются только в
-          этом браузере.
+          Данные профиля (логин, email, имя), избранное и история навигации хранятся на сервере
+          «МоёПраво» и используются только для работы личного кабинета.
         </p>
         <p>
-          Пароли не сохраняются и не отправляются на сервер. Политика для рабочего сервиса будет
-          доступна после запуска регистрации.
+          Пароль хранится в виде криптографического хеша: восстановить его по сохранённым данным
+          нельзя. Полный текст политики конфиденциальности готовится.
         </p>
         <button className={cx(ui['button'], ui['primary'])} onClick={onClose}>
           Понятно
@@ -141,10 +154,9 @@ export function AppModal({
     body = (
       <>
         <p>
-          В демонстрационной версии восстановление не требуется: для входа можно использовать любой
-          логин и пароль от 8 символов.
+          Восстановление пароля по email пока недоступно: сервис ещё не отправляет письма. Войти
+          можно по логину или email с текущим паролем.
         </p>
-        <p className="text-muted">Письма не отправляются.</p>
         <button className={cx(ui['button'], ui['primary'])} onClick={onClose}>
           Вернуться ко входу
         </button>
@@ -158,7 +170,8 @@ export function AppModal({
           нужному шагу используйте оглавление.
         </p>
         <p>
-          Избранное сохраняется в вашем браузере. Найти материалы можно через поиск вверху страницы.
+          Избранное и история сохраняются в личном кабинете. Найти материалы можно через поиск
+          вверху страницы.
         </p>
         <Link className={cx(ui['button'], ui['primary'])} onClick={onClose} to="/protect">
           Перейти к защите прав

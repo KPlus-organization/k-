@@ -1,1 +1,1 @@
-export { useFavorites } from './model/use-favorites';
+export { useFavorites, type Favorite } from './model/use-favorites';

@@ -3,7 +3,9 @@
 Бэкенд веб-приложения на **TypeScript + Express 5 + PostgreSQL**.
 
 Что реализовано: регистрация и вход по JWT, профиль пользователя, избранное, история навигации,
-объекты защиты, материалы и полнотекстовый поиск. Данные хранятся в PostgreSQL и заменяют моки фронтенда.
+объекты защиты, материалы, их исходные файлы и полнотекстовый поиск. Наполнение сайта (статьи,
+чек-листы) хранится в папке [`../content`](../content/README.md) и при каждом развёртывании
+синхронизируется в PostgreSQL; пользовательские данные живут только в базе.
 Фронтенд живёт в этом же репозитории, в [`../frontend`](../frontend/README.md). Контракт API: [docs/api.md](../docs/api.md).
 
 Все команды ниже выполняются из папки `backend/`.
@@ -21,7 +23,8 @@ cd backend
 npm install
 cp .env.example .env    # заполнить DATABASE_URL и JWT_SECRET
 npm run db:migrate      # создать таблицы
-npm run db:seed         # загрузить контент (и демо-пользователя, если задан SEED_DEMO_PASSWORD)
+npm run db:seed         # загрузить наполнение из ../content
+npm run db:seed:demo    # для разработки: демо-пользователь (нужен SEED_DEMO_PASSWORD)
 npm run dev             # http://localhost:3001
 ```
 
@@ -40,7 +43,8 @@ npm run dev             # http://localhost:3001
 | `JWT_SECRET`               | **да**      | —                       | Секрет подписи access-токенов, не короче 32 символов (`openssl rand -base64 48`) |
 | `ACCESS_TOKEN_TTL_SECONDS` | нет         | `900`                   | Срок жизни access-токена |
 | `REFRESH_TOKEN_TTL_DAYS`   | нет         | `30`                    | Срок жизни refresh-токена |
-| `SEED_DEMO_PASSWORD`       | нет         | —                       | Только для `db:seed`: пароль демо-пользователя `anna_kuznetsova`. Не задан — демо-пользователь не создаётся |
+| `CONTENT_DIR`              | нет         | `../content`            | Папка наполнения относительно `backend/` |
+| `SEED_DEMO_PASSWORD`       | нет         | —                       | Только для `db:seed:demo`: пароль демо-пользователя `anna_kuznetsova` (от 8 символов) |
 
 Подключение к БД задаётся **только** через `DATABASE_URL`:
 
@@ -61,7 +65,9 @@ postgresql://USER:PASSWORD@HOST:PORT/DATABASE
 
 ### Локальная база
 
-Для разработки используется база `k_dev`, её владелец — роль `k_app`. Настройка на Debian/Ubuntu (нужен sudo):
+Для разработки используется база `k_dev`, её владелец — роль `k_app`. Пошаговая инструкция для
+Linux и Windows (установка PostgreSQL, создание базы, `.env`, запуск) — в
+[корневом README](../README.md#локальный-запуск). Кратко для Debian/Ubuntu (нужен sudo):
 
 ```bash
 # 1. PostgreSQL из репозитория дистрибутива (на Debian 13 это версия 17).
@@ -77,6 +83,7 @@ sudo -u postgres psql -v ON_ERROR_STOP=1 -v app_password='ВАШ_ПАРОЛЬ' <
 # 4. Таблицы и данные
 npm run db:migrate
 npm run db:seed
+npm run db:seed:demo
 ```
 
 Проверка: `npm run dev`, затем `curl http://localhost:3001/api/health` → `{"status":"ok","database":"up"}`.
@@ -91,30 +98,34 @@ npm run db:seed
 - **Применённую миграцию не редактируют** — изменения схемы оформляются новым файлом
   (`002_....sql`). Откат не автоматизирован: при необходимости пишется обратная миграция.
 
-Схема (`001_initial_schema.sql`):
+Схема (`001_initial_schema.sql`, `002_content_publication.sql`):
 
 | Таблица | Содержимое |
 | --- | --- |
 | `users` | Пользователи: логин, email (уникальны без учёта регистра), имя, хеш пароля, время согласия на обработку ПДн |
 | `refresh_tokens` | SHA-256-хеши refresh-токенов, срок действия, время отзыва |
-| `protection_objects` | Объекты защиты (код, базы данных, бренд…) |
-| `materials` | Статьи, чек-листы, памятки; содержимое — JSONB-блоки |
+| `protection_objects` | Объекты защиты (код, базы данных, бренд…); `is_published` |
+| `materials` | Статьи, чек-листы, памятки; содержимое — JSONB-блоки; файл DOCX; `is_published` |
 | `material_relations` | Связанные материалы с порядком |
 | `favorites` | Избранное пользователей |
 | `history_entries` | История навигации пользователей |
 
-### Сидер
+### Наполнение и сидеры
 
-`npm run db:seed` загружает данные из `db/seed-data/` — копии моков фронтенда:
+**`npm run db:seed`** синхронизирует базу с папкой `../content` (формат и правила —
+[content/README.md](../content/README.md)). Запускается при каждом развёртывании и в CI:
 
-- `objects.json` — 7 объектов защиты;
-- `materials.json` — 11 материалов (8 полных текстов из DOCX и 3 карточки без текста);
-- если задан `SEED_DEMO_PASSWORD` и `NODE_ENV` не `production` — демо-пользователь
-  `anna_kuznetsova` / `anna@example.com` с тремя избранными материалами и шестью записями истории.
+- всё наполнение сначала проверяется: уникальность и формат `id`, существование тем, связей и файлов.
+  При любой ошибке синхронизация останавливается со списком проблем, база не меняется;
+- записи из `content/` добавляются или обновляются по `id`;
+- записи, которых больше нет в `content/` (или с `"published": false`), **снимаются с публикации**,
+  а не удаляются: API их не отдаёт, а избранное пользователей сохраняется и вернётся вместе с ними;
+- связи между материалами пересобираются целиком; параллельные запуски сериализуются advisory-lock.
 
-Сидер идемпотентен: повторный запуск обновляет контент (upsert) и сбрасывает избранное и историю
-демо-пользователя; данные других пользователей не трогаются. Тексты материалов теперь правятся в
-`db/seed-data/materials.json`, после чего запускается `npm run db:seed`.
+**`npm run db:seed:demo`** — только для разработки и CI: создаёт или сбрасывает демо-пользователя
+`anna_kuznetsova` / `anna@example.com` с паролем из `SEED_DEMO_PASSWORD`, тремя избранными
+материалами и шестью записями истории. С `NODE_ENV=production` не выполняется. Данные других
+пользователей не трогает.
 
 ## Команды
 
@@ -125,11 +136,14 @@ npm run db:seed
 | `npm run build`      | Компиляция в `dist/` |
 | `npm start`          | Запуск собранного приложения (`node dist/index.js`) |
 | `npm run db:migrate` | Сборка и применение новых миграций |
-| `npm run db:seed`    | Сборка и загрузка данных сидера |
+| `npm run db:seed`    | Сборка и синхронизация наполнения из `../content` |
+| `npm run db:seed:demo` | Сборка и создание демо-пользователя (не для production) |
 | `npm test`           | Сборка тестов в `test-dist/` и запуск API-тестов (`node:test`) |
 
-Тесты работают с реальной БД из `DATABASE_URL`: применяют миграции, загружают контент (демо-пользователя
-не трогают), поднимают приложение на случайном порту, а созданных пользователей удаляют в конце.
+Тесты работают с реальной БД из `DATABASE_URL`: применяют миграции, синхронизируют наполнение
+(демо-пользователя не трогают), поднимают приложение на случайном порту, а созданных пользователей
+удаляют в конце. Тесты синхронизации временно публикуют изменённые копии `content/` и после себя
+восстанавливают настоящее наполнение.
 Если задан `SEED_DEMO_PASSWORD`, дополнительно проверяется вход демо-пользователя.
 
 Продакшен-запуск:
@@ -138,7 +152,7 @@ npm run db:seed
 npm ci
 npm run build
 NODE_ENV=production node dist/db/migrate.js
-NODE_ENV=production node dist/db/seed.js     # контент; SEED_DEMO_PASSWORD не задавать
+NODE_ENV=production node dist/db/seed.js     # наполнение из ../content
 NODE_ENV=production npm start
 ```
 
@@ -148,9 +162,10 @@ NODE_ENV=production npm start
 
 ## CI
 
-`.github/workflows/backend.yml` запускается при push и PR с изменениями в `backend/`:
+`.github/workflows/backend.yml` запускается при push и PR с изменениями в `backend/` или `content/`:
 поднимает сервис-контейнер `postgres:17`, затем выполняет `npm ci`, `typecheck`, `build`,
-`db:migrate`, `db:seed` (дважды — проверка идемпотентности) и `npm test`.
+`db:migrate`, `db:seed` (дважды — проверка идемпотентности), `db:seed:demo` и `npm test`.
+Браузерные тесты фронтенда (`frontend.yml`) тоже поднимают этот бэкенд с PostgreSQL.
 Значения `JWT_SECRET`, паролей БД и демо-пользователя в workflow — одноразовые тестовые, не секреты.
 
 ## Структура проекта
@@ -168,6 +183,7 @@ backend/
 │   ├── routes/                   # Маршруты: health, auth, profile, favorites, history, content
 │   ├── controllers/              # Разбор и проверка запросов, формирование ответов
 │   ├── services/                 # Работа с БД: users, auth, favorites, history, content
+│   ├── content/loadContent.ts    # Чтение и проверка ../content
 │   ├── middlewares/
 │   │   ├── requireAuth.ts        # Проверка Bearer-токена, req.userId
 │   │   ├── notFound.ts           # 404 для неизвестных маршрутов
@@ -180,11 +196,11 @@ backend/
 │   ├── types/express.d.ts        # Поле req.userId
 │   └── db/
 │       ├── migrate.ts            # Применение миграций
-│       └── seed.ts               # Сидер
+│       ├── seed.ts               # Синхронизация наполнения из ../content
+│       └── seedDemo.ts           # Демо-пользователь
 ├── db/
 │   ├── create-dev-db.sql         # Создание локальной роли и базы
-│   ├── migrations/               # SQL-миграции
-│   └── seed-data/                # Данные сидера (копия моков фронтенда)
+│   └── migrations/               # SQL-миграции
 └── tests/                        # API-тесты (node:test)
 ```
 

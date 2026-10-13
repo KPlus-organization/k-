@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import { Icon, InfoTooltip, ui } from '@/shared/ui';
-import { objects } from '@/entities/material';
+import { Icon, InfoTooltip, LoadState, ui } from '@/shared/ui';
+import { useObjects } from '@/entities/material';
 import { Breadcrumbs, PageIntro } from '@/widgets/page-heading';
 import styles from './styles.module.css';
 
 export function Protect({ defend = false }: { defend?: boolean }) {
   const title = defend ? 'Оспорить претензию о нарушении чужих прав' : 'Защитить нарушенные права';
+  const objects = useObjects();
   return (
     <div className={ui['container']}>
       <Breadcrumbs current={title} />
@@ -20,8 +21,9 @@ export function Protect({ defend = false }: { defend?: boolean }) {
       <section className={styles['objects-section']}>
         <h2>{defend ? 'К какому объекту относится претензия?' : 'Какой объект защитить?'}</h2>
         <p>Пояснение к каждому объекту — под значком i.</p>
+        {!objects.data && <LoadState error={objects.error} onRetry={objects.reload} />}
         <div className={styles['objects-grid']}>
-          {objects.map((item) => {
+          {objects.data?.map((item) => {
             const available = !defend && item.id === 'code';
             return (
               <div key={item.id} className={styles['object-card']} data-testid="object-card">

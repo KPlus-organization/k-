@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
     "db:migrate": "tsc && node dist/db/migrate.js",
     "db:seed": "tsc && node dist/db/seed.js",
+    "db:seed:demo": "tsc && node dist/db/seedDemo.js",
     "test": "tsc -p tsconfig.test.json && node --test --test-concurrency=1 \"test-dist/tests/**/*.test.js\""
   },
   "repository": {

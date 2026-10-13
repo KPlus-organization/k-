@@ -1,7 +1,8 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { cx, type Open } from '@/shared/lib';
-import { Icon, ui } from '@/shared/ui';
-import { articles, objects, ArticleButton, materialSearchText } from '@/entities/material';
+import { Icon, LoadState, ui } from '@/shared/ui';
+import { ArticleButton, objectHref, useContentSearch } from '@/entities/material';
+import { useRecordVisit } from '@/features/history';
 import { Breadcrumbs } from '@/widgets/page-heading';
 
 export function SearchPage({
@@ -15,25 +16,25 @@ export function SearchPage({
 }) {
   const [params] = useSearchParams();
   const query = params.get('q')?.trim() || '';
-  const normalized = query.toLocaleLowerCase('ru');
-  const found = articles.filter((item) =>
-    (
-      materialSearchText[item.id] || `${item.title} ${item.description}`.toLocaleLowerCase('ru')
-    ).includes(normalized),
-  );
-  const foundObjects = objects.filter((item) =>
-    `${item.title} ${item.description}`.toLocaleLowerCase('ru').includes(normalized),
-  );
+  const search = useContentSearch(query);
+  useRecordVisit(query ? { type: 'search', target: query, title: `Поиск: ${query}` } : null);
+  const foundObjects = search.data?.objects ?? [];
+  const found = search.data?.materials ?? [];
+  const total = foundObjects.length + found.length;
   return (
     <div className={cx(ui['container'], ui['listing-page'])}>
       <Breadcrumbs current="Поиск" />
       <h1>Результаты поиска</h1>
       <p>
-        {query
-          ? `По запросу «${query}» найдено: ${found.length + foundObjects.length}`
-          : 'Введите вопрос в строке поиска или выберите материал ниже.'}
+        {!query
+          ? 'Введите вопрос в строке поиска или выберите материал ниже.'
+          : search.data
+            ? `По запросу «${query}» найдено: ${total}`
+            : `Ищем «${query}»…`}
       </p>
-      {found.length + foundObjects.length === 0 ? (
+      {query && !search.data ? (
+        <LoadState error={search.error} onRetry={search.reload} />
+      ) : total === 0 ? (
         <div className={ui['empty-result']}>
           <Icon name="search" size={32} />
           <h2>Ничего не найдено</h2>
@@ -41,21 +42,24 @@ export function SearchPage({
         </div>
       ) : (
         <div className="mt-7.5 grid max-w-[1000px] gap-4">
-          {foundObjects.map((item) => (
-            <div className={ui['result-card']} key={item.id}>
-              <span className={ui['tag']}>Объект защиты</span>
-              {item.href ? (
-                <Link to={item.href}>
-                  <h2>{item.title}</h2>
-                </Link>
-              ) : (
-                <button onClick={() => open(`object:${item.id}`)}>
-                  <h2>{item.title}</h2>
-                </button>
-              )}
-              <p>{item.description}</p>
-            </div>
-          ))}
+          {foundObjects.map((item) => {
+            const href = objectHref(item.id);
+            return (
+              <div className={ui['result-card']} key={item.id}>
+                <span className={ui['tag']}>Объект защиты</span>
+                {href ? (
+                  <Link to={href}>
+                    <h2>{item.title}</h2>
+                  </Link>
+                ) : (
+                  <button onClick={() => open(`object:${item.id}`)}>
+                    <h2>{item.title}</h2>
+                  </button>
+                )}
+                <p>{item.description}</p>
+              </div>
+            );
+          })}
           {found.map((item) => (
             <div className={ui['result-card']} key={item.id}>
               <ArticleButton item={item} open={open} className={ui['result-item']} />

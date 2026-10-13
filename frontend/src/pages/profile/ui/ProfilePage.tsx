@@ -1,44 +1,108 @@
 import { Link } from 'react-router-dom';
 import { cx, type Open } from '@/shared/lib';
-import { Icon, ui } from '@/shared/ui';
+import { Icon, LoadState, ui } from '@/shared/ui';
 import { type Profile } from '@/entities/profile';
-import { articles, ArticleButton } from '@/entities/material';
+import { ArticleButton, materialHref } from '@/entities/material';
+import { type Favorite } from '@/features/favorites';
+import { useHistory, type HistoryEntry } from '@/features/history';
 import styles from './styles.module.css';
+
+const dayFormat = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
+const timeFormat = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+/** «Сегодня, 14:20», «Вчера, 9:00» or «11 сентября, 9:00». */
+function visitLabel(date: Date) {
+  const days = Math.round(
+    (new Date().setHours(0, 0, 0, 0) - new Date(date).setHours(0, 0, 0, 0)) / 86_400_000,
+  );
+  const day = days === 0 ? 'Сегодня' : days === 1 ? 'Вчера' : dayFormat.format(date);
+  return `${day}, ${timeFormat.format(date)}`;
+}
+
+/** Groups entries by calendar day; each group is labelled with its latest visit. */
+function groupByDay(entries: HistoryEntry[]) {
+  const groups = new Map<string, HistoryEntry[]>();
+  for (const entry of entries) {
+    const day = new Date(entry.visitedAt).toDateString();
+    groups.set(day, [...(groups.get(day) ?? []), entry]);
+  }
+  return [...groups.values()];
+}
+
+function HistoryItem({ entry, open }: { entry: HistoryEntry; open: Open }) {
+  if (entry.type === 'material') return <Link to={materialHref(entry.target)}>{entry.title}</Link>;
+  if (entry.type === 'search')
+    return <Link to={`/search?q=${encodeURIComponent(entry.target)}`}>{entry.title}</Link>;
+  return <button onClick={() => open(entry.target)}>{entry.title}</button>;
+}
+
+function NavigationHistory({ profile, open }: { profile: Profile; open: Open }) {
+  const history = useHistory(profile);
+  const entries = history.data ?? [];
+  return (
+    <section
+      className={cx(styles['panel'], styles['history-panel'])}
+      aria-labelledby="history-heading"
+    >
+      <h2 id="history-heading">История навигации</h2>
+      {history.loading ? (
+        <p>Загрузка…</p>
+      ) : history.error ? (
+        <p>Не удалось загрузить историю.</p>
+      ) : entries.length === 0 ? (
+        <p>Здесь появятся открытые материалы, поисковые запросы и инструменты.</p>
+      ) : (
+        groupByDay(entries).map((group) => (
+          <div className={styles['history-group']} key={group[0]!.id}>
+            <p>
+              <Icon name="clock" size={18} />
+              {visitLabel(new Date(group[0]!.visitedAt))}
+            </p>
+            {group.map((entry) => (
+              <HistoryItem key={entry.id} entry={entry} open={open} />
+            ))}
+          </div>
+        ))
+      )}
+    </section>
+  );
+}
 
 export function ProfilePage({
   profile,
+  status,
   favorites,
   open,
   logout,
-  signedIn,
-  login,
 }: {
-  profile: Profile;
-  favorites: string[];
+  profile: Profile | null;
+  status: 'loading' | 'guest' | 'user';
+  favorites: Favorite[];
   open: Open;
   logout: () => void;
-  signedIn: boolean;
-  login: () => void;
 }) {
-  if (!signedIn)
+  if (status === 'loading') return <LoadState />;
+  if (!profile)
     return (
       <section className={ui['empty-state']}>
         <span className={ui['icon-tile']}>
           <Icon name="user" />
         </span>
         <h1>Ваш личный кабинет</h1>
-        <p>Войдите в профиль или посмотрите, как устроен кабинет.</p>
+        <p>Войдите в профиль или создайте новый, чтобы сохранять материалы.</p>
         <div className={ui['button-row']}>
-          <Link to="/login" className={cx(ui['button'], styles['button'], ui['primary'])}>
+          <Link
+            to="/login?next=/profile"
+            className={cx(ui['button'], styles['button'], ui['primary'])}
+          >
             Войти в профиль
           </Link>
-          <button className={cx(ui['button'], styles['button'], ui['secondary'])} onClick={login}>
-            Открыть демо-профиль
-          </button>
+          <Link to="/register" className={cx(ui['button'], styles['button'], ui['secondary'])}>
+            Создать профиль
+          </Link>
         </div>
       </section>
     );
-  const saved = articles.filter((item) => favorites.includes(item.id));
   return (
     <div className={cx(ui['container'], styles['dashboard'])}>
       <div className={styles['dashboard-heading']}>
@@ -70,10 +134,10 @@ export function ProfilePage({
           <dl>
             <dt>Логин</dt>
             <dd>{profile.login}</dd>
-            <dt>Email</dt>
+            <dt>Электронная почта</dt>
             <dd>{profile.email}</dd>
             <dt>Дата регистрации</dt>
-            <dd>{profile.registered}</dd>
+            <dd>{new Date(profile.registeredAt).toLocaleDateString('ru-RU')}</dd>
           </dl>
         </section>
         <section className={cx(styles['panel'], styles['favorites-panel'])}>
@@ -87,40 +151,18 @@ export function ProfilePage({
             </button>
           </div>
           <div className={ui['favorite-list']}>
-            {saved.length ? (
-              saved
+            {favorites.length ? (
+              favorites
                 .slice(0, 3)
-                .map((item) => <ArticleButton key={item.id} item={item} open={open} />)
+                .map((item) => (
+                  <ArticleButton key={item.material.id} item={item.material} open={open} />
+                ))
             ) : (
               <p>Пока здесь пусто. Сохраняйте статьи и чек-листы, чтобы вернуться к ним позже.</p>
             )}
           </div>
         </section>
-        <section className={cx(styles['panel'], styles['history-panel'])}>
-          <h2>История навигации</h2>
-          <div className={styles['history-group']}>
-            <p>
-              <Icon name="clock" size={18} />
-              Сегодня, 14:20
-            </p>
-            <button onClick={() => open('calculator')}>Калькулятор пошлин</button>
-            <Link to="/protect/code">Чек-лист: Защитить программный код</Link>
-            <button onClick={() => open('documents')}>
-              Конструктор документов: заявка на регистрацию товарного знака
-            </button>
-          </div>
-          <div className={styles['history-group']}>
-            <p>
-              <Icon name="clock" size={18} />
-              11 сентября, 9:00
-            </p>
-            <button onClick={() => open('trademark')}>Проверка товарных знаков</button>
-            <button onClick={() => open('article:classes')}>
-              Статья: Что такое МКТУ и как правильно выбрать классы
-            </button>
-            <Link to="/search?q=МКТУ">Поиск: что такое МКТУ?</Link>
-          </div>
-        </section>
+        <NavigationHistory profile={profile} open={open} />
       </div>
     </div>
   );

@@ -16,10 +16,10 @@
 8. [Эндпоинты: избранное](#8-эндпоинты-избранное)
 9. [Эндпоинты: история](#9-эндпоинты-история)
 10. [Эндпоинты: контент и поиск](#10-эндпоинты-контент-и-поиск)
-11. [Соответствие мокам фронтенда](#11-соответствие-мокам-фронтенда)
+11. [Маршруты сайта и наполнение](#11-маршруты-сайта-и-наполнение)
 12. [CORS](#12-cors)
 13. [Соглашения: JSON, статусы, ошибки](#13-соглашения-json-статусы-ошибки)
-14. [Демо-данные и сидер](#14-демо-данные-и-сидер)
+14. [Наполнение и демо-данные](#14-наполнение-и-демо-данные)
 15. [Не реализовано](#15-не-реализовано)
 
 ---
@@ -89,6 +89,7 @@
 | GET | `/api/objects` | — | Объекты защиты | 200 | — |
 | GET | `/api/materials` | — | Список материалов, фильтр по теме | 200 | 400 |
 | GET | `/api/materials/:id` | — | Материал целиком | 200 | 404 |
+| GET | `/api/materials/:id/file` | — | Скачать исходный DOCX | 200 | 404 |
 | GET | `/api/search` | — | Поиск по объектам и материалам | 200 | 400 |
 
 Любой другой путь → `404 NOT_FOUND`. Любой эндпоинт может вернуть `500 INTERNAL_ERROR`, а эндпоинты,
@@ -137,14 +138,14 @@ type MaterialSummary = {
 
 type Material = MaterialSummary & {
   pageTitle: string;
-  sourceFile: string | null;    // исходное имя файла DOCX
-  downloadPath: string | null;  // путь к файлу на хостинге фронтенда, например '/materials/checklist.docx'
+  // Исходный DOCX: имя файла при скачивании и путь относительно базового URL API
+  download: { fileName: string; url: string } | null;
   related: MaterialSummary[];   // связанные материалы в заданном порядке
   intro: ContentBlock[];
   sections: { id: string; title: string; toc: string; blocks: ContentBlock[] }[];
 };
 
-// Структура блоков совпадает с моками фронтенда (entities/material/model/materials.ts)
+// Блоки текста материалов; формат наполнения описан в content/README.md
 type TextRun = { text: string; bold?: boolean; italic?: boolean; href?: string; action?: string };
 type ContentBlock =
   | { type: 'paragraph' | 'heading' | 'note'; runs: TextRun[] }
@@ -388,7 +389,10 @@ Authorization: Bearer eyJ...
 
 ## 10. Эндпоинты: контент и поиск
 
-Публичные эндпоинты, авторизация не нужна.
+Публичные эндпоинты, авторизация не нужна. Наполнение загружается из папки `content/` в корне
+репозитория (см. [content/README.md](../content/README.md)). API отдаёт только **опубликованные**
+объекты и материалы: снятые с публикации не попадают ни в списки, ни в поиск, ни в избранное,
+а запрос по их id даёт `404`.
 
 ### `GET /api/objects`
 
@@ -415,7 +419,7 @@ Authorization: Bearer eyJ...
 ### `GET /api/materials/:id`
 
 `200 OK` → `Material`. Для карточек без полного текста (`hasContent: false`) `intro` и `sections`
-пустые, `pageTitle` равен `title`. Неизвестный id → `404 MATERIAL_NOT_FOUND`.
+пустые, `pageTitle` равен `title`. Неизвестный или снятый с публикации id → `404 MATERIAL_NOT_FOUND`.
 
 ```json
 {
@@ -427,18 +431,26 @@ Authorization: Bearer eyJ...
   "hasContent": true,
   "stepsCount": 8,
   "pageTitle": "Защита программного кода",
-  "sourceFile": "Чек-лист программный год - защита прав.docx",
-  "downloadPath": "/materials/checklist.docx",
+  "download": {
+    "fileName": "Чек-лист программный год - защита прав.docx",
+    "url": "/api/materials/checklist/file"
+  },
   "related": [{ "id": "code-0", "topic": "code", "kind": "article", "...": "..." }],
   "intro": [{ "type": "paragraph", "runs": [{ "text": "..." }] }],
   "sections": [{ "id": "step-1", "title": "...", "toc": "Зафиксировать нарушение", "blocks": [] }]
 }
 ```
 
+### `GET /api/materials/:id/file`
+
+Отдаёт исходный DOCX материала с заголовком `Content-Disposition: attachment` и исходным именем
+файла (`filename*=UTF-8''…`). Ссылка для фронтенда: базовый URL API + `download.url`.
+Материал без файла, неизвестный или снятый с публикации → `404 MATERIAL_NOT_FOUND`.
+
 ### `GET /api/search?q=код`
 
 Поиск подстроки без учёта регистра: по названию и описанию объектов защиты и по полному тексту
-материалов (название, описание, вступление, разделы). Результаты совпадают с текущим клиентским поиском.
+материалов (название, описание, вступление, разделы).
 
 `q` обрезается по краям, не длиннее 200 символов. Пустой или отсутствующий `q` → пустые результаты.
 
@@ -450,27 +462,14 @@ Authorization: Bearer eyJ...
 }
 ```
 
-## 11. Соответствие мокам фронтенда
+## 11. Маршруты сайта и наполнение
 
-| Мок во фронтенде | Замена в API | Отличия |
-| --- | --- | --- |
-| `useSession().login()` после формы входа | `POST /api/auth/login` | Поле формы `email` (email или логин) передаётся как `identifier` |
-| `login(profile)` после регистрации | `POST /api/auth/register` | `confirm` проверяется на клиенте и не отправляется; `consent` — `true` |
-| `logout()` | `POST /api/auth/logout` + удаление токенов | — |
-| `localStorage['moe-pravo:signed-in']` | наличие действующих токенов | — |
-| `localStorage['moe-pravo:profile']`, `demoProfile` | `GET /api/profile` | `registered` (`12.10.2023`) → `registeredAt` (ISO); добавлен `id` |
-| `updateProfile()` в «Настройках» | `PATCH /api/profile` | Возможен `409`, если логин или email заняты |
-| `localStorage['moe-pravo:favorites']` | `GET`/`PUT`/`DELETE /api/favorites` | Требует входа; в ответе карточки материалов, а не только id |
-| Статичная «История навигации» в `ProfilePage` | `GET /api/history`, `POST /api/history` | Фронтенд сам записывает переходы |
-| `objects` (`design.json` + `objectIds`) | `GET /api/objects` | Добавлен `materialsCount`; `href` (маршрут) остаётся на фронтенде |
-| `articles`, `materials.json` | `GET /api/materials`, `GET /api/materials/:id` | Нет `href` — маршруты определяет фронтенд; `download` → `downloadPath`; `related` — массив карточек вместо id; добавлены `hasContent`, `stepsCount` |
-| `materialSearchText` + фильтр в `SearchPage` | `GET /api/search?q=` | — |
-
-Маршруты, которые сейчас зашиты в моках, остаются на фронтенде: `checklist` → `/protect/code`,
+API не знает адресов страниц сайта: id материалов и объектов постоянны, а маршруты определяет
+фронтенд (`frontend/src/entities/material/model/routes.ts`): `checklist` → `/protect/code`,
 `database-registration` → `/ownership/databases`, остальные материалы → `/articles/:id`;
-объекты `code`, `databases`, `brand` → `/protect/...`.
+объекты `code`, `databases`, `brand` → `/protect/...`, остальные → `/articles?topic=:id`.
 
-Файлы DOCX для скачивания остаются статикой фронтенда (`frontend/public/materials/`), API отдаёт только путь.
+Ссылки внутри текстов материалов (`TextRun.href`, начинающиеся с `/`) — это адреса страниц сайта.
 
 ## 12. CORS
 
@@ -550,22 +549,17 @@ Authorization: Bearer eyJ...
 | `INTERNAL_ERROR` | 500 | Непредвиденная ошибка сервера |
 | `DATABASE_UNAVAILABLE` | 503 | PostgreSQL недоступен |
 
-## 14. Демо-данные и сидер
+## 14. Наполнение и демо-данные
 
-`npm run db:seed` (в `backend/`) заполняет БД данными, перенесёнными из моков фронтенда:
+Команды выполняются в `backend/`:
 
-- 7 объектов защиты и 11 материалов (8 полных текстов из DOCX и 3 карточки без текста:
-  `application`, `deadlines`, `classes`) со связями между материалами;
-- если задан `SEED_DEMO_PASSWORD` — демо-пользователь из макета: логин `anna_kuznetsova`,
-  email `anna@example.com`, имя «Анна Кузнецова», дата регистрации 12.10.2023, три избранных
-  материала и шесть записей истории как на странице профиля.
-
-Сидер можно запускать повторно: он обновляет контент и сбрасывает избранное и историю демо-пользователя.
-Пароль демо-пользователя берётся из `SEED_DEMO_PASSWORD` в `backend/.env`; в production демо-пользователь
-не создаётся. Кнопка «Открыть демо-профиль» может входить под этим пользователем только в среде разработки.
-
-Исходные данные лежат в `backend/db/seed-data/` — это копия моков фронтенда на момент переноса.
-Изменения текстов материалов теперь вносятся туда.
+- `npm run db:seed` — синхронизирует БД с папкой `content/`: 7 объектов защиты и 11 материалов
+  (8 полных текстов и 3 анонса без текста: `application`, `deadlines`, `classes`). Запускается при
+  каждом развёртывании и в CI. Записи, удалённые из `content/`, снимаются с публикации, но не удаляются.
+- `npm run db:seed:demo` — только для разработки и CI: демо-пользователь из макета (логин
+  `anna_kuznetsova`, email `anna@example.com`, имя «Анна Кузнецова», дата регистрации 12.10.2023)
+  с тремя избранными материалами и шестью записями истории. Пароль — из `SEED_DEMO_PASSWORD`
+  в `backend/.env`. С `NODE_ENV=production` команда не выполняется.
 
 ## 15. Не реализовано
 
@@ -575,5 +569,6 @@ Authorization: Bearer eyJ...
 - Ограничение частоты запросов (защита входа от перебора паролей).
 - Инструменты, которые на фронтенде помечены «раздел готовится»: калькулятор госпошлины,
   конструктор документов, проверка товарного знака, каталог юристов, оценка рисков, «Вопрос — ответ».
-- Редактирование контента через API (админка). Сейчас контент меняется через сидер.
+- Редактирование наполнения через API (админка). Наполнение меняется в `content/` и попадает в БД
+  через `npm run db:seed`.
 - Роли и права доступа (`403`).
