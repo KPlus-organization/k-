@@ -5,7 +5,7 @@ import { tools } from '@/shared/config';
 import { cx, type Open } from '@/shared/lib';
 import { Icon, ui } from '@/shared/ui';
 import { useSession, type ProfileChanges } from '@/features/session';
-import { useFavorites } from '@/features/favorites';
+import { useFavorites, rememberPendingFavorite, resumePendingFavorite } from '@/features/favorites';
 import { recordVisit } from '@/features/history';
 import { materialHref, useMaterials } from '@/entities/material';
 import { SiteHeader } from '@/widgets/site-header';
@@ -14,13 +14,13 @@ import { AppModal } from '@/widgets/service-dialog';
 import { Home } from '@/pages/home';
 import { Protect } from '@/pages/protection';
 import { MaterialPage } from '@/pages/material';
-import { ObjectMaterialsPage, OwnershipPage } from '@/pages/object-materials';
 import { Auth } from '@/pages/auth';
 import { ProfilePage } from '@/pages/profile';
 import { SearchPage } from '@/pages/search';
 import { ArticlesPage } from '@/pages/articles';
 import { CalculatorPage } from '@/pages/calculator';
 import styles from './styles.module.css';
+import { ObjectJourneyRoute } from './ObjectJourneyRoute';
 
 const staticTitles: Record<string, string> = {
   '/': 'Мой продукт. Мои права.',
@@ -38,7 +38,12 @@ const staticTitles: Record<string, string> = {
 export function App() {
   const [modalSelection, setModalSelection] = useState<{ id: string; key: string } | null>(null);
   const { profile, status, signedIn, login, register, logout, updateProfile } = useSession();
-  const { favorites, items: favoriteItems, toggleFavorite: toggleSaved } = useFavorites(profile);
+  const {
+    favorites,
+    items: favoriteItems,
+    toggleFavorite: toggleSaved,
+    addFavorite,
+  } = useFavorites(profile);
   const materials = useMaterials().data ?? [];
   const [toast, setToast] = useState('');
   const location = useLocation();
@@ -46,6 +51,22 @@ export function App() {
   const modal = modalSelection?.key === location.key ? modalSelection.id : null;
   const setModal = (id: string | null) => setModalSelection(id ? { id, key: location.key } : null);
   const isAuth = ['/login', '/register'].includes(location.pathname);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    let active = true;
+    resumePendingFavorite(profile.id, addFavorite).then(
+      (added) => {
+        if (active && added) setToast('Добавлено в избранное');
+      },
+      (error: unknown) => {
+        if (active) setToast(`Не удалось добавить материал в избранное. ${errorMessage(error)}`);
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [profile?.id, addFavorite]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -67,6 +88,7 @@ export function App() {
       return;
     }
     if (id === 'ownership') {
+      navigate('/ownership');
       return;
     }
     if (id === 'calculator') {
@@ -80,6 +102,7 @@ export function App() {
   const toggleFavorite = async (id: string) => {
     // Favorites belong to the personal account: a guest signs in and comes back here.
     if (!signedIn) {
+      rememberPendingFavorite(id);
       setToast('Войдите, чтобы сохранять материалы');
       navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`);
       return;
@@ -115,51 +138,51 @@ export function App() {
           <Route path="/protect" element={<Protect />} />
           <Route path="/defend" element={<Protect defend />} />
           <Route
-            path="/protect/code"
-            element={
-              <MaterialPage
-                materialId="checklist"
-                open={open}
-                favorites={favorites}
-                toggleFavorite={toggleFavorite}
-              />
-            }
-          />
-          <Route
             path="/articles/:id"
             element={
               <MaterialPage open={open} favorites={favorites} toggleFavorite={toggleFavorite} />
             }
           />
+          <Route path="/ownership" element={<Protect ownership />} />
+          {(['protect', 'defend', 'ownership'] as const).map((area) => (
+            <Route
+              key={area}
+              path={`/${area}/:objectId`}
+              element={
+                <ObjectJourneyRoute
+                  area={area}
+                  open={open}
+                  favorites={favorites}
+                  toggleFavorite={toggleFavorite}
+                />
+              }
+            />
+          ))}
           <Route
-            path="/protect/brand"
-            element={<ObjectMaterialsPage topic="brand" open={open} />}
-          />
-          <Route
-            path="/protect/databases"
-            element={<ObjectMaterialsPage topic="databases" open={open} />}
-          />
-          <Route path="/ownership" element={<OwnershipPage />} />
-          <Route
-            path="/ownership/databases"
+            path="/login"
             element={
-              <MaterialPage
-                materialId="database-registration"
+              <Auth
+                key="login"
+                register={false}
+                status={status}
+                login={login}
+                signUp={register}
                 open={open}
-                favorites={favorites}
-                toggleFavorite={toggleFavorite}
               />
             }
           />
           <Route
-            path="/login"
-            element={
-              <Auth key="login" register={false} login={login} signUp={register} open={open} />
-            }
-          />
-          <Route
             path="/register"
-            element={<Auth key="register" register login={login} signUp={register} open={open} />}
+            element={
+              <Auth
+                key="register"
+                register
+                status={status}
+                login={login}
+                signUp={register}
+                open={open}
+              />
+            }
           />
           <Route
             path="/profile"
@@ -211,6 +234,10 @@ export function App() {
           open={open}
           onClose={() => setModal(null)}
           onSaveProfile={saveProfile}
+          onRequestSubmitted={() => {
+            setModal(null);
+            setToast('Заявка отправлена');
+          }}
           favorites={favoriteItems.map((item) => item.material)}
           toggleFavorite={toggleFavorite}
         />

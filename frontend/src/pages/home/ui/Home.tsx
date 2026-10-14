@@ -19,10 +19,15 @@ export function Home({ open, toolAction }: { open: Open; toolAction: Open }) {
             первой строки кода до названия. Простым языком.
           </p>
         </div>
-        <img src="/images/product-protection.png" alt="Программный продукт под защитой" />
+        <img
+          src="/images/digital-rights.svg"
+          alt="Авторские права на цифровой продукт: знак © в скобках кода"
+          width={362}
+          height={200}
+        />
       </section>
       <section className={styles['action-grid']} aria-label="С чего начать">
-        <button className={cx(styles['action-card'], styles['emphasized'])} disabled>
+        <Link className={cx(styles['action-card'], styles['emphasized'])} to="/ownership">
           <span className={styles['action-top']}>
             <span className={cx(ui['icon-tile'], ui['filled'])}>
               <Icon name="file" />
@@ -36,7 +41,7 @@ export function Home({ open, toolAction }: { open: Open; toolAction: Open }) {
           <span className={styles['action-link']}>
             Разобраться в оформлении <Icon name="arrowRight" />
           </span>
-        </button>
+        </Link>
         <button className={styles['action-card']} onClick={() => open('risks')}>
           <span className={styles['action-top']}>
             <span className={ui['icon-tile']}>

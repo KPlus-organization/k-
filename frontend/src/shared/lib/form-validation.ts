@@ -6,12 +6,14 @@ function characters(count: number) {
   return count % 10 === 1 && count % 100 !== 11 ? 'символа' : 'символов';
 }
 
-function fieldLabel(input: HTMLInputElement) {
+type FormField = HTMLInputElement | HTMLTextAreaElement;
+
+function fieldLabel(input: FormField) {
   return input.dataset['label'] ?? input.labels?.[0]?.textContent?.trim() ?? 'Поле';
 }
 
 /** Russian description of why `input` is invalid, or null if it is valid. */
-export function fieldError(input: HTMLInputElement): string | null {
+export function fieldError(input: FormField): string | null {
   const label = fieldLabel(input);
   const length = [...input.value].length;
   // Text typed into a number field: the browser reports it as empty.
@@ -27,9 +29,11 @@ export function fieldError(input: HTMLInputElement): string | null {
     return `${label}: не менее ${input.minLength} ${characters(input.minLength)}.`;
   if (input.maxLength > 0 && length > input.maxLength)
     return `${label}: не более ${input.maxLength} ${characters(input.maxLength)}.`;
-  if (input.validity.rangeUnderflow) return `${label}: не меньше ${input.min}.`;
-  if (input.validity.rangeOverflow) return `${label}: не больше ${input.max}.`;
-  if (input.validity.stepMismatch) return `${label}: нужно целое число.`;
+  if (input instanceof HTMLInputElement) {
+    if (input.validity.rangeUnderflow) return `${label}: не меньше ${input.min}.`;
+    if (input.validity.rangeOverflow) return `${label}: не больше ${input.max}.`;
+    if (input.validity.stepMismatch) return `${label}: нужно целое число.`;
+  }
   if (input.validity.patternMismatch)
     return input.title || `Поле «${label}» заполнено в неверном формате.`;
   if (!input.validity.valid) return `Проверьте поле «${label}».`;
@@ -41,9 +45,9 @@ export function fieldError(input: HTMLInputElement): string | null {
  * aria-invalid, focuses the first one and returns its message (null if all are valid).
  */
 export function validateForm(form: HTMLFormElement): string | null {
-  let first: { input: HTMLInputElement; message: string } | undefined;
+  let first: { input: FormField; message: string } | undefined;
   for (const element of Array.from(form.elements)) {
-    if (!(element instanceof HTMLInputElement)) continue;
+    if (!(element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement)) continue;
     const message = fieldError(element);
     if (message) element.setAttribute('aria-invalid', 'true');
     else element.removeAttribute('aria-invalid');

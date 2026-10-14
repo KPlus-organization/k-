@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Fragment } from 'react';
 import { cx } from '@/shared/lib';
-import { Icon, ui } from '@/shared/ui';
+import { Icon, ui, type IconName } from '@/shared/ui';
 import styles from './styles.module.css';
 
 export function Breadcrumbs({
@@ -37,18 +37,22 @@ export function PageIntro({
   title,
   description,
   className,
+  eyebrow = 'НАРУШЕНИЯ И ПРЕТЕНЗИИ',
+  icon = 'shield',
 }: {
   title: string;
   description: string;
   className?: string;
+  eyebrow?: string;
+  icon?: IconName;
 }) {
   return (
     <section className={cx(styles['page-intro'], className)}>
       <div className={cx(ui['eyebrow'], styles['eyebrow'])}>
         <span className={cx(ui['icon-tile'], ui['filled'], ui['small'])}>
-          <Icon name="shield" />
+          <Icon name={icon} />
         </span>
-        НАРУШЕНИЯ И ПРЕТЕНЗИИ
+        {eyebrow}
       </div>
       <h1>{title}</h1>
       <p>{description}</p>

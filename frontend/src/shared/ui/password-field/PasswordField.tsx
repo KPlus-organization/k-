@@ -27,7 +27,8 @@ export function PasswordField({
           type={visible ? 'text' : 'password'}
           placeholder={placeholder}
           required
-          minLength={8}
+          minLength={register ? 8 : 1}
+          maxLength={128}
           autoComplete={register ? 'new-password' : 'current-password'}
         />
         <button

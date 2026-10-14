@@ -12,6 +12,7 @@ import {
   type MaterialSummary,
 } from '@/entities/material';
 import { ProfileSettings } from '@/features/profile-settings';
+import { LawyerRequest } from '@/features/lawyer-request';
 import styles from './styles.module.css';
 
 export function AppModal({
@@ -20,6 +21,7 @@ export function AppModal({
   open,
   onClose,
   onSaveProfile,
+  onRequestSubmitted,
   favorites,
   toggleFavorite,
 }: {
@@ -28,6 +30,7 @@ export function AppModal({
   open: Open;
   onClose: () => void;
   onSaveProfile: (changes: Partial<Pick<Profile, 'name' | 'login' | 'email'>>) => Promise<void>;
+  onRequestSubmitted: () => void;
   favorites: MaterialSummary[];
   toggleFavorite: (id: string) => void;
 }) {
@@ -48,6 +51,7 @@ export function AppModal({
     reset: 'Восстановление пароля',
     help: 'Помощь',
     lawyer: 'Найти юриста',
+    'lawyer-request': 'Обсудить задачу с юристом',
     ownership: 'Оформить права',
     risks: 'Рассчитать риски',
     defend: 'Защититься',
@@ -58,6 +62,14 @@ export function AppModal({
   let body: ReactNode;
   if (id === 'definition:presumption')
     body = <p>Суд считает утверждение истинным, пока не доказано обратное.</p>;
+  else if (id === 'lawyer-request')
+    body = (
+      <LawyerRequest
+        key={profile?.id ?? 'guest'}
+        profile={profile}
+        onSubmitted={onRequestSubmitted}
+      />
+    );
   else if (id === 'settings')
     body = profile ? (
       <ProfileSettings profile={profile} onSave={onSaveProfile} />
