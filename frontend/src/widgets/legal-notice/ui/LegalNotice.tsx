@@ -10,23 +10,27 @@ export function LegalNotice({
   compact?: boolean;
 }) {
   return (
-    <aside className={cx(styles['legal-notice'], compact ? styles['compact'] : undefined)}>
+    <aside
+      className={cx(styles['legal-notice'], compact ? styles['compact'] : undefined)}
+      aria-label="Обратите внимание"
+    >
       <Icon name="info" />
-      <div>
-        <strong>Информация помогает сориентироваться, но не заменяет юриста</strong>
+      <div className={styles['copy']}>
+        <strong>Обратите внимание!</strong>
         <p>
-          Материалы сервиса не являются на 100% точной рекомендацией для вашей ситуации. Для решения
-          конкретного вопроса рекомендуем обратиться к нашим юристам-партнёрам.
+          {compact
+            ? 'Материал носит общий характер и не заменяет консультацию юриста по вашему делу. Правовые нормы сверены с актуальной редакцией, и данный материал актуален на 13.10.26.'
+            : 'Материал носит общий информационный характер и не заменяет консультации юриста.'}
         </p>
       </div>
-      {!compact && (
-        <button
-          className={cx(ui['button'], styles['button'], ui['primary'])}
-          onClick={() => open('lawyer')}
-        >
+      <div className={styles['actions']}>
+        <button className={cx(ui['button'], ui['secondary'])} onClick={() => open('lawyer')}>
           Найти юриста <Icon name="arrowUp" size={18} />
         </button>
-      )}
+        <button className={cx(ui['button'], ui['primary'])} onClick={() => open('lawyer-request')}>
+          Обсудить задачу с юристом <Icon name="messages" size={18} />
+        </button>
+      </div>
     </aside>
   );
 }

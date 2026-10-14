@@ -1,0 +1,63 @@
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.intro {
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.identity {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.textarea::placeholder {
+  color: var(--muted);
+}
+
+.textarea:focus-visible {
+  border-color: var(--green);
+  outline: 2px solid #00865b20;
+  outline-offset: 1px;
+}
+
+.hint {
+  margin-top: -12px;
+  font-size: 12px;
+}
+
+.submit {
+  justify-self: start;
+}
+
+@media (width <= 650px) {
+  .identity {
+    grid-template-columns: 1fr;
+  }
+
+  .identity input,
+  .textarea {
+    font-size: 16px;
+  }
+
+  .submit {
+    width: 100%;
+  }
+}

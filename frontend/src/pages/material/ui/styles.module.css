@@ -10,6 +10,7 @@
 }
 
 .intro h1 {
+  color: var(--green);
   max-width: 1120px;
   overflow-wrap: anywhere;
 }

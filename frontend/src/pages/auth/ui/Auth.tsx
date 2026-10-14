@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useRef, useState, type FormEvent } from 'react';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { errorMessage } from '@/shared/api';
 import { cx, validateForm, type Open } from '@/shared/lib';
 import { Icon, type IconName, PasswordField, ui } from '@/shared/ui';
@@ -9,29 +9,45 @@ import styles from './styles.module.css';
 
 /** Where to go after signing in: ?next= if it is a path on this site, else the profile. */
 function nextPath(next: string | null) {
-  return next?.startsWith('/') && !next.startsWith('//') ? next : '/profile';
+  if (!next?.startsWith('/') || next.startsWith('//') || /[\\\s]/u.test(next)) return '/profile';
+  try {
+    const target = new URL(next, window.location.origin);
+    const pathname = decodeURIComponent(target.pathname).replace(/\/+$/u, '').toLowerCase();
+    if (target.origin !== window.location.origin || ['/login', '/register'].includes(pathname))
+      return '/profile';
+    return target.pathname + target.search + target.hash;
+  } catch {
+    return '/profile';
+  }
 }
 
 export function Auth({
   register,
+  status,
   login,
   signUp,
   open,
 }: {
   register: boolean;
+  status: 'loading' | 'guest' | 'user';
   login: (identifier: string, password: string) => Promise<void>;
   signUp: (data: RegisterData) => Promise<void>;
   open: Open;
 }) {
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
+  const submitting = useRef(false);
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const next = params.get('next');
+  const restoring = status === 'loading';
+  const busy = pending || restoring;
+  const destination = nextPath(next);
   const keepNext = (path: string) => (next ? `${path}?next=${encodeURIComponent(next)}` : path);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting.current || restoring) return;
     const invalid = validateForm(event.currentTarget);
     if (invalid) {
       setError(invalid);
@@ -40,10 +56,16 @@ export function Auth({
     const data = new FormData(event.currentTarget);
     const password = String(data.get('password'));
     if (register && password !== data.get('confirm')) {
+      const confirmation = event.currentTarget.elements.namedItem('confirm');
+      if (confirmation instanceof HTMLInputElement) {
+        confirmation.setAttribute('aria-invalid', 'true');
+        confirmation.focus();
+      }
       setError('Пароли не совпадают. Проверьте повторный ввод.');
       return;
     }
     setError('');
+    submitting.current = true;
     setPending(true);
     try {
       if (register)
@@ -54,12 +76,14 @@ export function Auth({
           consent: true,
         });
       else await login(String(data.get('email')).trim(), password);
-      navigate(nextPath(next));
+      navigate(destination, { replace: true });
     } catch (caught) {
       setError(errorMessage(caught, profileFieldHints));
       setPending(false);
+      submitting.current = false;
     }
   };
+  if (status === 'user') return <Navigate to={destination} replace />;
   return (
     <div className={styles['auth-page']}>
       <Link className={ui['back-link']} to="/">
@@ -69,13 +93,13 @@ export function Auth({
       <div className={styles['auth-grid']}>
         <section className={styles['auth-benefits']}>
           <div className={cx(ui['eyebrow'], styles['eyebrow'])}>ВАШ ЛИЧНЫЙ КАБИНЕТ</div>
-          <h1>
+          <h2>
             Мой продукт.
             <br />
             Мои права.
-          </h1>
-          <p>Наиболее важное для Вас об интеллектуальной собственности — в одном профиле.</p>
-          <img src="/images/profile-protection.png" alt="Код под защитой щита" />
+          </h2>
+          <p>Всё важное об интеллектуальной собственности — в вашем личном кабинете.</p>
+          <img src="/images/profile-protection.png" alt="" width={360} height={200} />
           <div className={styles['benefits']}>
             {(
               [
@@ -90,9 +114,9 @@ export function Auth({
                   text: 'История работы с сервисом в одном месте.',
                 },
                 {
-                  icon: 'files',
-                  title: 'Работайте с документами',
-                  text: 'Инструменты для оформления ваших прав.',
+                  icon: 'user',
+                  title: 'Управляйте своим профилем',
+                  text: 'Личные данные и настройки в одном месте.',
                 },
               ] as { icon: IconName; title: string; text: string }[]
             ).map((item) => (
@@ -108,7 +132,7 @@ export function Auth({
             ))}
           </div>
         </section>
-        <section className={undefined}>
+        <section className={styles['auth-panel']} aria-labelledby="auth-title">
           <nav className={styles['auth-tabs']} aria-label="Вход и регистрация">
             <Link
               className={!register ? cx(ui['selected'], styles['selected']) : undefined}
@@ -126,96 +150,122 @@ export function Auth({
             </Link>
           </nav>
           <form
-            className={cx(
-              styles['auth-form'],
-              register ? styles['register-form'] : styles['login-form'],
-            )}
+            className={styles['auth-form']}
             onSubmit={submit}
+            aria-busy={busy}
+            aria-describedby={error ? 'auth-error' : undefined}
             noValidate
           >
-            <h2>{register ? 'Создать профиль' : 'Войти в профиль'}</h2>
+            <span className={styles['form-icon']}>
+              <Icon name={register ? 'user' : 'lock'} size={23} />
+            </span>
+            <h1 id="auth-title">{register ? 'Создать профиль' : 'Войти в профиль'}</h1>
             <p>
               {register
                 ? 'Сохраните всё важное в личном кабинете.'
-                : 'Рады видеть вас снова. Продолжите работу с материалами и инструментами сервиса.'}
+                : 'Рады видеть вас снова. Ваши материалы и история уже ждут вас.'}
             </p>
-            <div className={styles['form-fields']}>
-              {register && (
+            <fieldset className={styles['form-controls']} disabled={busy}>
+              <legend className={styles['sr-only']}>
+                {register ? 'Данные нового профиля' : 'Данные для входа'}
+              </legend>
+              <div className={styles['form-fields']}>
+                {register && (
+                  <label className={ui['field']}>
+                    Логин
+                    <input
+                      required
+                      name="login"
+                      placeholder="Придумайте логин"
+                      autoComplete="username"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      minLength={3}
+                      maxLength={32}
+                      pattern="[\p{L}\p{N}._\-]+"
+                      title={profileFieldHints['login']}
+                    />
+                  </label>
+                )}
                 <label className={ui['field']}>
-                  Логин
+                  {register ? 'Электронная почта' : 'Электронная почта или логин'}
                   <input
+                    name="email"
+                    type={register ? 'email' : 'text'}
                     required
-                    name="login"
-                    placeholder="Придумайте логин"
-                    autoComplete="username"
-                    minLength={3}
-                    maxLength={32}
-                    pattern="[\p{L}\p{N}._\-]+"
-                    title={profileFieldHints['login']}
+                    placeholder={register ? 'Введите email' : 'Введите email или логин'}
+                    autoComplete={register ? 'email' : 'username'}
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    maxLength={254}
                   />
                 </label>
-              )}
-              <label className={ui['field']}>
-                {register ? 'Электронная почта' : 'Электронная почта или логин'}
-                <input
-                  name="email"
-                  type={register ? 'email' : 'text'}
-                  required
-                  placeholder={register ? 'Введите email' : 'Введите email или логин'}
-                  autoComplete={register ? 'email' : 'username'}
-                />
-              </label>
-              <PasswordField
-                className={styles['password-input']}
-                register={register}
-                placeholder={register ? 'Не менее 8 символов' : 'Введите пароль'}
-              />
-              {register && (
                 <PasswordField
-                  className={styles['password-input']}
-                  register
-                  label="Подтверждение пароля"
-                  name="confirm"
-                  placeholder="Повторите пароль"
+                  register={register}
+                  placeholder={register ? 'Не менее 8 символов' : 'Введите пароль'}
                 />
+                {register && (
+                  <PasswordField
+                    register
+                    label="Подтверждение пароля"
+                    name="confirm"
+                    placeholder="Повторите пароль"
+                  />
+                )}
+              </div>
+              {register && (
+                <p className={styles['password-hint']}>Пароль — от 8 до 128 символов.</p>
               )}
-            </div>
-            {register ? (
-              <label className={styles['consent']}>
-                <input
-                  type="checkbox"
-                  required
-                  name="consent"
-                  data-required-message="Подтвердите согласие на обработку персональных данных."
-                />
-                <span>
-                  Я даю{' '}
-                  <button type="button" onClick={() => open('privacy')}>
-                    согласие на обработку персональных данных
-                  </button>{' '}
-                  и ознакомлен(а) с{' '}
-                  <button type="button" onClick={() => open('privacy')}>
-                    политикой конфиденциальности.
-                  </button>
-                </span>
-              </label>
-            ) : (
-              <button className={styles['forgot']} type="button" onClick={() => open('reset')}>
-                Забыли пароль?
-              </button>
-            )}
+              {register ? (
+                <label className={styles['consent']}>
+                  <input
+                    type="checkbox"
+                    required
+                    name="consent"
+                    data-required-message="Подтвердите согласие на обработку персональных данных."
+                  />
+                  <span>
+                    Я даю{' '}
+                    <button type="button" onClick={() => open('privacy')}>
+                      согласие на обработку персональных данных
+                    </button>{' '}
+                    и ознакомлен(а) с{' '}
+                    <button type="button" onClick={() => open('privacy')}>
+                      политикой конфиденциальности.
+                    </button>
+                  </span>
+                </label>
+              ) : (
+                <button className={styles['forgot']} type="button" onClick={() => open('reset')}>
+                  Забыли пароль?
+                </button>
+              )}
+            </fieldset>
             {error && (
-              <p className={ui['form-error']} role="alert">
+              <p id="auth-error" className={ui['form-error']} role="alert">
                 {error}
               </p>
             )}
             <button
               className={cx(ui['button'], ui['primary'], styles['submit'])}
               type="submit"
-              disabled={pending}
+              disabled={busy}
             >
-              {register ? 'Создать профиль' : 'Войти в профиль'}
+              {busy ? <span className={styles['spinner']} aria-hidden="true" /> : null}
+              {restoring
+                ? 'Восстанавливаем сессию…'
+                : pending
+                  ? register
+                    ? 'Создаём профиль…'
+                    : 'Входим…'
+                  : register
+                    ? 'Создать профиль'
+                    : 'Войти в профиль'}
+              {!busy && <Icon name="arrowRight" size={18} />}
             </button>
+            <span className={styles['sr-only']} role="status">
+              {busy ? 'Пожалуйста, подождите.' : ''}
+            </span>
             <div className={styles['auth-switch']}>
               {register ? 'Уже есть профиль?' : 'Ещё нет профиля?'}{' '}
               <Link to={keepNext(register ? '/login' : '/register')}>

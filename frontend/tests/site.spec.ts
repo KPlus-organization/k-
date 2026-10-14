@@ -20,8 +20,8 @@ test('Figma navigation, complete guide, and persistent favorites', async ({ page
   await page.getByRole('link', { name: /^Защитить нарушенные права/ }).click();
   const objects = page.getByTestId('object-card');
   await expect(objects).toHaveCount(7);
-  await expect(objects.getByRole('link')).toHaveCount(1);
-  await expect(page.getByText('Раздел пока не готов')).toHaveCount(6);
+  await expect(objects.getByRole('link')).toHaveCount(7);
+  await expect(page.getByText('Раздел пока не готов')).toHaveCount(0);
   await expect(page.getByRole('tooltip')).toHaveCount(0);
   const info = page.getByRole('button', { name: 'Об объекте «Программный код»' });
   await info.hover();
@@ -104,7 +104,6 @@ test('wrong password is rejected; a guest saving a material signs in and returns
   await page.getByLabel('Пароль', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: 'Войти в профиль', exact: true }).click();
   await expect(page).toHaveURL(/\/articles\/code-0$/);
-  await page.getByRole('button', { name: 'Сохранить материал' }).click();
   await expect(page.getByRole('button', { name: 'В избранном', exact: true })).toBeVisible();
 
   await page.goto('/profile');

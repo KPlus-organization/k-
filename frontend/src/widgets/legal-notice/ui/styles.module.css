@@ -1,65 +1,55 @@
 .legal-notice {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   padding: 24px;
   margin-top: 29px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--pale);
 }
 
 .legal-notice > svg {
-  color: var(--muted);
+  color: var(--green);
+  align-self: start;
+  margin-top: 2px;
 }
 
-.legal-notice > div {
-  flex: 1;
-}
-
-.legal-notice strong {
-  font-size: 13px;
+.copy strong {
+  font-size: 14px;
   font-weight: 600;
   line-height: 20px;
 }
 
-.legal-notice p {
-  font-size: 12px;
-  line-height: 20px;
-  margin-top: 2px;
+.copy p {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 21px;
 }
 
-.legal-notice .button {
-  white-space: nowrap;
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.legal-notice.compact {
-  background: transparent;
-  border: 0;
-  padding: 20px 4px;
+.compact {
+  grid-template-columns: auto minmax(0, 1fr);
   margin: 0;
 }
 
-.legal-notice.compact > svg {
-  display: none;
+.compact .actions {
+  grid-column: 2;
 }
 
-@media (width <= 950px) {
+@media (width <= 1250px) {
   .legal-notice {
-    align-items: flex-start;
-    flex-wrap: wrap;
+    grid-template-columns: auto minmax(0, 1fr);
   }
-}
 
-@media (width <= 950px) {
-  .legal-notice > div {
-    min-width: 70%;
-  }
-}
-
-@media (width <= 950px) {
-  .legal-notice .button {
-    margin-left: 40px;
+  .actions {
+    grid-column: 2;
   }
 }
 
@@ -67,37 +57,10 @@
   .legal-notice {
     padding: 18px;
     gap: 12px;
-    margin-top: 24px;
   }
-}
 
-@media (width <= 650px) {
-  .legal-notice > div {
-    min-width: 75%;
-  }
-}
-
-@media (width <= 650px) {
-  .legal-notice strong {
-    font-size: 12px;
-  }
-}
-
-@media (width <= 650px) {
-  .legal-notice p {
-    font-size: 11px;
-    line-height: 18px;
-  }
-}
-
-@media (width <= 650px) {
-  .legal-notice .button {
-    margin-left: 32px;
-  }
-}
-
-@media (width <= 650px) {
-  .legal-notice.compact {
-    padding: 20px 0;
+  .legal-notice .actions {
+    grid-column: 1 / -1;
+    flex-direction: column;
   }
 }

@@ -1,1 +1,1 @@
-export { ObjectMaterialsPage, OwnershipPage } from './ui/ObjectMaterialsPage';
+export { ObjectMaterialsPage } from './ui/ObjectMaterialsPage';

@@ -14,9 +14,7 @@ test('brand object opens complete article, source table, and four-step checklist
   await expect(
     page.getByRole('article').getByRole('link', { name: 'ст. 1225 ГК РФ' }),
   ).toHaveAttribute('href', /^https:\/\/www.consultant.ru\//);
-  const download = await page
-    .getByRole('link', { name: 'Скачать исходный DOCX' })
-    .getAttribute('href');
+  const download = await page.getByRole('link', { name: 'Скачать файл' }).getAttribute('href');
   const response = await request.get(download!);
   expect(response.ok()).toBeTruthy();
   expect((await response.body()).subarray(0, 2).toString()).toBe('PK');
@@ -34,7 +32,6 @@ test('database checklists have no completion controls and keep favorites across 
 }) => {
   await signIn(page, request);
   await page.goto('/protect/databases');
-  await page.getByRole('link', { name: /Как зафиксировать авторство/ }).click();
   await expect(page.getByTestId('guide-step')).toHaveCount(7);
   await expect(page.getByRole('checkbox')).toHaveCount(0);
   await expect(page.getByRole('progressbar')).toHaveCount(0);
@@ -92,11 +89,13 @@ test('code checklist links to both articles and expert questions, with full-text
   await expect(page.getByRole('link', { name: /Как доказывают заимствование/ })).toHaveCount(0);
 });
 
-test('ownership entry is inactive and existing materials remain accessible', async ({ page }) => {
+test('ownership entry opens available guides and existing addresses remain accessible', async ({
+  page,
+}) => {
   await page.goto('/');
-  await expect(page.getByRole('button', { name: /Оформить права/ })).toBeDisabled();
-  await expect(page).toHaveURL('/');
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('link', { name: /Оформить права/ }).click();
+  await expect(page).toHaveURL('/ownership');
+  await expect(page.getByTestId('object-card').getByRole('link')).toHaveCount(2);
   await page.goto('/ownership/databases');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
     'База данных в стартапе: как закрепить права и не потерять актив',

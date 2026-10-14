@@ -8,7 +8,13 @@ import {
   ArticleButton,
   topicHref,
   useMaterial,
+  useMaterials,
   useObjects,
+  materialArea,
+  materialAreaTitles,
+  objectActionHref,
+  objectJourney,
+  type MaterialArea,
   type Material,
 } from '@/entities/material';
 import { useRecordVisit } from '@/features/history';
@@ -18,6 +24,7 @@ import styles from './styles.module.css';
 
 type Props = {
   materialId?: string;
+  journeyArea?: MaterialArea;
   favorites: string[];
   toggleFavorite: (id: string) => void;
   open: Open;
@@ -55,14 +62,23 @@ function ReadingSession({
   favorites,
   toggleFavorite,
   open,
+  journeyArea,
 }: Props & { material: Material }) {
   const saved = favorites.includes(material.id);
   const object = useObjects().data?.find((item) => item.id === material.topic);
+  const area = journeyArea ?? materialArea(material.id);
+  const topicMaterials = useMaterials(material.topic).data;
+  const related = journeyArea
+    ? objectJourney(material.topic, journeyArea).materials.flatMap((id) => {
+        const item = (topicMaterials ?? material.related).find((entry) => entry.id === id);
+        return item && item.id !== material.id && item.hasContent ? [item] : [];
+      })
+    : material.related;
   const parents = [
-    material.id === 'database-registration'
-      ? { title: 'Оформить права', href: '/ownership' }
-      : { title: 'Защитить нарушенные права', href: '/protect' },
-    ...(object ? [{ title: object.title, href: topicHref(object.id) }] : []),
+    { title: materialAreaTitles[area], href: `/${area}` },
+    ...(object
+      ? [{ title: object.title, href: objectActionHref(object.id, area) ?? topicHref(object.id) }]
+      : []),
   ];
   return (
     <div className={cx(ui['container'], styles['page'])}>
@@ -126,13 +142,13 @@ function ReadingSession({
             </button>
             {material.download && (
               <a className={styles['download']} href={apiUrl(material.download.url)}>
-                Скачать исходный DOCX ↓
+                Скачать файл ↓
               </a>
             )}
           </div>
           <h2>Разобраться в деталях</h2>
           <div className="mt-4 grid gap-4">
-            {material.related.map((item) => (
+            {related.map((item) => (
               <ArticleButton key={item.id} item={item} open={open} />
             ))}
           </div>

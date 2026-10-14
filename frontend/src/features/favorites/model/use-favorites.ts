@@ -18,6 +18,15 @@ export function useFavorites(profile: Profile | null) {
   const items = data ?? [];
   const favorites = items.map((item) => item.material.id);
 
+  const addFavorite = useCallback(
+    async (id: string) => {
+      if (!key) throw new Error('addFavorite() requires a signed-in user');
+      await apiRequest(`/api/favorites/${encodeURIComponent(id)}`, { method: 'PUT', auth: true });
+      invalidateAsyncData((cached) => cached === key);
+    },
+    [key],
+  );
+
   /** Adds or removes a material; resolves to true if it was added. */
   const toggleFavorite = useCallback(
     async (id: string) => {
@@ -41,5 +50,5 @@ export function useFavorites(profile: Profile | null) {
     [key, favorites],
   );
 
-  return { favorites, items, toggleFavorite };
+  return { favorites, items, toggleFavorite, addFavorite };
 }

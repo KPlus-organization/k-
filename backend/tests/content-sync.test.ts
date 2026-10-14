@@ -51,7 +51,7 @@ test('a material removed from content/ is unpublished, and favorites come back w
   assert.equal((await api('GET', '/api/materials/code-1/file')).status, 404);
   assert.ok(!ids((await api('GET', '/api/materials')).body.items).includes('code-1'));
   const code = (await api('GET', '/api/objects')).body.items.find((item: { id: string }) => item.id === 'code');
-  assert.equal(code.materialsCount, 3);
+  assert.equal(code.materialsCount, 5);
   assert.deepEqual((await api('GET', '/api/favorites', { token })).body.items, []);
   assert.equal((await api('PUT', '/api/favorites/code-1', { token })).status, 404);
   const search = await api('GET', `/api/search?q=${encodeURIComponent('компенсация')}`);

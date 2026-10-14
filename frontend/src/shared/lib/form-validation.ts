@@ -6,12 +6,14 @@ function characters(count: number) {
   return count % 10 === 1 && count % 100 !== 11 ? 'символа' : 'символов';
 }
 
-function fieldLabel(input: HTMLInputElement) {
+type FormField = HTMLInputElement | HTMLTextAreaElement;
+
+function fieldLabel(input: FormField) {
   return input.dataset['label'] ?? input.labels?.[0]?.textContent?.trim() ?? 'Поле';
 }
 
 /** Russian description of why `input` is invalid, or null if it is valid. */
-export function fieldError(input: HTMLInputElement): string | null {
+export function fieldError(input: FormField): string | null {
   const label = fieldLabel(input);
   const length = [...input.value].length;
   if (input.validity.valueMissing)
@@ -36,9 +38,9 @@ export function fieldError(input: HTMLInputElement): string | null {
  * aria-invalid, focuses the first one and returns its message (null if all are valid).
  */
 export function validateForm(form: HTMLFormElement): string | null {
-  let first: { input: HTMLInputElement; message: string } | undefined;
+  let first: { input: FormField; message: string } | undefined;
   for (const element of Array.from(form.elements)) {
-    if (!(element instanceof HTMLInputElement)) continue;
+    if (!(element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement)) continue;
     const message = fieldError(element);
     if (message) element.setAttribute('aria-invalid', 'true');
     else element.removeAttribute('aria-invalid');
