@@ -24,9 +24,21 @@ export type TemplateSummary = {
 };
 export type DocumentTemplate = TemplateSummary & {
   description: string;
+  references?: { title: string; href: string; note?: string }[];
+  attachmentGuidance?: { title: string; intro: string; items: string[]; note: string };
   groups: { id: string; title: string; description: string }[];
   fields: TemplateField[];
-  paragraphs: { text: string; heading?: boolean; when?: Condition; unless?: Condition }[];
+  paragraphs: {
+    text: string;
+    heading?: boolean;
+    when?: Condition;
+    unless?: Condition;
+    sourceParagraph?: number;
+    layout?: 'address' | 'center' | 'body';
+    controlsBefore?: string[];
+    listItem?: boolean;
+    blankBefore?: number;
+  }[];
 };
 export type SavedDocumentSummary = {
   id: string;

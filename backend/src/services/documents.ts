@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { Document, Packer, Paragraph, TextRun } from "docx";
+import { fillSourceDocx } from "../lib/sourceDocx";
 import { pool } from "../config/db";
 import { env } from "../config/env";
 import { HttpError, type FieldIssue } from "../errors/HttpError";
@@ -38,6 +38,13 @@ export interface DocumentTemplate {
   object: string;
   title: string;
   description: string;
+  references?: { title: string; href: string; note?: string }[];
+  attachmentGuidance?: {
+    title: string;
+    intro: string;
+    items: string[];
+    note: string;
+  };
   groups: { id: string; title: string; description: string }[];
   fields: TemplateField[];
   paragraphs: {
@@ -45,7 +52,74 @@ export interface DocumentTemplate {
     heading?: boolean;
     when?: Condition;
     unless?: Condition;
+    sourceParagraph?: number;
+    layout?: "address" | "center" | "body";
+    controlsBefore?: string[];
+    listItem?: boolean;
+    blankBefore?: number;
   }[];
+}
+
+// Saved body text remains unchanged except the retired attachments section.
+// Guidance stays current; version 1 also receives inline editor metadata.
+const legacySourceParagraphs = [
+  0, 1, 1, 3, 5, 7, 9, 12, 13, 14, 15, 15, 15, 16, 17, 17, 17, 18, 18, 20, 21,
+  21, 22, 24, 23, 25, 27, 28, 29, 31, 32, 34, 35, 36, 36, 37, 31, 46, 47, 48,
+  49, 50, 50, 52, 53, 54, 54, 55, 57, 58, 59, 60, 61, 62, 63, 64, 65, 65, 65,
+];
+const legacyControls: Record<number, string[]> = {
+  0: ["applicantType"],
+  18: ["registered"],
+  23: ["contract"],
+  25: ["personalRights"],
+  32: ["physicalCopies"],
+  35: ["disputedRights"],
+  36: ["moneyType"],
+};
+async function withPresentation(
+  template: DocumentTemplate,
+): Promise<DocumentTemplate> {
+  const current = await getTemplate(template.id);
+  return {
+    ...template,
+    references: current.references,
+    attachmentGuidance: current.attachmentGuidance,
+    groups: template.groups.filter((group) => group.id !== "attachments"),
+    fields: template.fields
+      .filter((field) => field.group !== "attachments")
+      .map((field) => ({
+        ...field,
+        hint: current.fields.find((item) => item.id === field.id)?.hint,
+      })),
+    paragraphs: (template.version !== 1
+      ? template.paragraphs
+      : template.paragraphs.map(
+          (paragraph, index): DocumentTemplate["paragraphs"][number] =>
+            paragraph.sourceParagraph !== undefined
+              ? paragraph
+              : {
+                  ...paragraph,
+                  sourceParagraph: legacySourceParagraphs[index],
+                  layout:
+                    index <= 6
+                      ? "address"
+                      : [7, 8].includes(index)
+                        ? "center"
+                        : "body",
+                  controlsBefore:
+                    legacyControls[index] ??
+                    (index === 21 ? ["violationAction"] : undefined),
+                },
+        )
+    ).filter(
+      (paragraph) =>
+        !(
+          paragraph.sourceParagraph !== undefined &&
+          paragraph.sourceParagraph >= 57 &&
+          paragraph.sourceParagraph <= 64
+        ),
+    ),
+  };
 }
 
 export function matches(
@@ -89,6 +163,8 @@ export function validateValues(
   const values: Values = {};
   const ids = new Set(template.fields.map((field) => field.id));
   for (const key of Object.keys(raw)) {
+    // Old drafts can still contain these retired inputs. They are never saved/exported.
+    if (/^(attachment|pages)[1-7]$/.test(key)) continue;
     if (!ids.has(key))
       issues.push({ field: key, message: "Неизвестное поле." });
     else if (typeof raw[key] !== "string")
@@ -165,7 +241,7 @@ function complete(template: DocumentTemplate, fields: Values): boolean {
 export function renderDocument(
   template: DocumentTemplate,
   fields: Values,
-): { text: string; heading?: boolean }[] {
+): (DocumentTemplate["paragraphs"][number] & { text: string })[] {
   const amount = (value: number) =>
     new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(value);
   const textFor = (id: string): string => {
@@ -181,21 +257,25 @@ export function renderDocument(
     }
     const field = template.fields.find((item) => item.id === id);
     const value = fields[id];
-    if (!value) return `[${field?.label ?? id}]`;
+    if (!value)
+      return field?.required === false ? "" : `[${field?.label ?? id}]`;
     const option = field?.options?.find((item) => item.value === value);
     if (option) return option.text ?? option.label;
     if (field?.type === "date") return value.split("-").reverse().join(".");
     if (field?.type === "money") return amount(Number(value));
     return value;
   };
+  let listIndex = 0;
   return template.paragraphs
     .filter(
       (p) =>
         matches(p.when, fields) && (!p.unless || !matches(p.unless, fields)),
     )
     .map((p) => ({
-      text: p.text.replace(/\{\{([\w]+)\}\}/g, (_, id: string) => textFor(id)),
-      ...(p.heading ? { heading: true } : {}),
+      ...p,
+      text:
+        (p.listItem ? `${++listIndex}. ` : "") +
+        p.text.replace(/\{\{([\w]+)\}\}/g, (_, id: string) => textFor(id)),
     }));
 }
 
@@ -203,46 +283,12 @@ export async function createDocx(
   template: DocumentTemplate,
   input: unknown,
 ): Promise<Buffer> {
-  const fields = validateValues(template, input, true);
-  const paragraphs = renderDocument(template, fields);
-  return Packer.toBuffer(
-    new Document({
-      creator: "МоёПраво",
-      title: template.title,
-      styles: {
-        default: {
-          document: {
-            run: { font: "Times New Roman", size: 24 },
-            paragraph: { spacing: { after: 120, line: 276 } },
-          },
-        },
-      },
-      sections: [
-        {
-          properties: {
-            page: {
-              margin: { top: 1134, bottom: 1134, left: 1417, right: 1134 },
-            },
-          },
-          children: paragraphs.map(
-            (p) =>
-              new Paragraph({
-                keepNext: p.heading,
-                children: p.text
-                  .split("\n")
-                  .map(
-                    (line, index) =>
-                      new TextRun({
-                        text: line,
-                        bold: Boolean(p.heading),
-                        ...(index ? { break: 1 } : {}),
-                      }),
-                  ),
-              }),
-          ),
-        },
-      ],
-    }),
+  const presented = await withPresentation(template);
+  const fields = validateValues(presented, input, true);
+  const paragraphs = renderDocument(presented, fields);
+  return fillSourceDocx(
+    path.join(env.contentDir, "templates", "code-claim-source.docx"),
+    paragraphs,
   );
 }
 
@@ -291,8 +337,8 @@ export async function getDocument(userId: string, id: string) {
     throw new HttpError(404, "DOCUMENT_NOT_FOUND", "Document not found");
   return {
     ...toSummary(rows[0]),
-    fields: rows[0].fields,
-    template: rows[0].template,
+    fields: withoutAttachments(rows[0].fields),
+    template: await withPresentation(rows[0].template),
   };
 }
 export async function saveDocument(userId: string, id: string, input: unknown) {
@@ -308,8 +354,9 @@ export async function saveDocument(userId: string, id: string, input: unknown) {
     "SELECT * FROM saved_documents WHERE id=$1 AND user_id=$2",
     [id, userId],
   );
-  const template =
-    existing.rows[0]?.template ?? (await getTemplate(body.templateId));
+  const template = await withPresentation(
+    existing.rows[0]?.template ?? (await getTemplate(body.templateId)),
+  );
   if (body.templateVersion !== template.version)
     throw new HttpError(
       409,
@@ -351,7 +398,7 @@ export async function saveDocument(userId: string, id: string, input: unknown) {
   return {
     ...toSummary(rows[0]),
     fields: rows[0].fields,
-    template: rows[0].template,
+    template: await withPresentation(rows[0].template),
   };
 }
 export async function removeDocument(userId: string, id: string) {
@@ -360,4 +407,12 @@ export async function removeDocument(userId: string, id: string) {
     id,
     userId,
   ]);
+}
+
+function withoutAttachments(fields: Values): Values {
+  return Object.fromEntries(
+    Object.entries(fields).filter(
+      ([key]) => !/^(attachment|pages)[1-7]$/.test(key),
+    ),
+  );
 }

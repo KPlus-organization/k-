@@ -13,7 +13,7 @@ for (const area of ['protect', 'defend']) {
     for (const route of routes) {
       await page.goto(route);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-      if (/\/(code|databases|brand)$/.test(route)) {
+      if (/\/(code|databases|brand|visuals)$/.test(route)) {
         await expect(page.getByText('Материалы по этому объекту готовятся')).toHaveCount(0);
         if (route === '/defend/code') {
           await expect(
@@ -49,14 +49,10 @@ test('database and brand routes distinguish protecting rights from answering cla
   page,
 }) => {
   for (const [route, title, steps] of [
-    ['/protect/databases', 'Как зафиксировать авторство на базу данных и доказать его?', 7],
+    ['/protect/databases', 'База данных как объект прав: как защититься при копировании?', 7],
     ['/defend/databases', 'Содержание базы данных: что делать, если вам предъявили претензию', 6],
     ['/protect/brand', 'Порядок защиты бренда и домена от копирования: как пресечь нарушение', 4],
-    [
-      '/defend/brand',
-      'Требуют компенсацию за чужой товарный знак: за что могут взыскать деньги и как оценить требования',
-      0,
-    ],
+    ['/defend/brand', 'Как защититься от претензии из-за использования чужого обозначения', 7],
   ] as const) {
     await page.goto(route);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);

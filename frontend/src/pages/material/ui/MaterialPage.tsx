@@ -1,4 +1,5 @@
-import { Link, useParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { apiUrl, isNotFound } from '@/shared/api';
 import { cx, useDocumentTitle, type Open } from '@/shared/lib';
 import { Icon, LoadState, ui } from '@/shared/ui';
@@ -20,6 +21,7 @@ import {
 import { useRecordVisit } from '@/features/history';
 import { Breadcrumbs } from '@/widgets/page-heading';
 import { LegalNotice } from '@/widgets/legal-notice';
+import { ObjectSelector } from '@/widgets/object-selector';
 import styles from './styles.module.css';
 
 type Props = {
@@ -64,9 +66,33 @@ function ReadingSession({
   open,
   journeyArea,
 }: Props & { material: Material }) {
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (!hash) return;
+    let anchor: string;
+    try {
+      anchor = decodeURIComponent(hash.slice(1));
+    } catch {
+      return;
+    }
+    const frame = requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView());
+    return () => cancelAnimationFrame(frame);
+  }, [hash, material.id]);
   const saved = favorites.includes(material.id);
   const object = useObjects().data?.find((item) => item.id === material.topic);
   const area = journeyArea ?? materialArea(material.id);
+  const isOverview = ['protect-overview', 'defend-overview'].includes(material.id);
+  const sourceNotice = material.intro.find(
+    (block) => block.type === 'note' && block.anchor === 'legal-notice',
+  );
+  const noticeText =
+    sourceNotice?.type === 'note'
+      ? sourceNotice.runs
+          .map((run) => run.text)
+          .join('')
+          .replace(/^Обратите внимание!\s*/, '')
+      : undefined;
+  const intro = material.intro.filter((block) => block !== sourceNotice);
   const topicMaterials = useMaterials(material.topic ?? undefined).data;
   const related = journeyArea
     ? objectJourney(material.topic ?? '', journeyArea).materials.flatMap((id) => {
@@ -92,10 +118,15 @@ function ReadingSession({
         </div>
         <h1>{material.pageTitle}</h1>
         <p>{material.description}</p>
+        {isOverview && (
+          <a className={cx(ui['text-link'], 'mt-4 inline-block')} href="#objects">
+            Перейти к выбору объекта ↓
+          </a>
+        )}
       </header>
       <div className={styles['layout']}>
         <article className={styles['article']} aria-label={material.title}>
-          <MaterialContent blocks={material.intro} open={open} headingLevel={2} />
+          <MaterialContent blocks={intro} open={open} headingLevel={2} />
           <div className="grid gap-6">
             {material.sections.map((section) => (
               <section
@@ -109,8 +140,9 @@ function ReadingSession({
               </section>
             ))}
           </div>
+          {isOverview && <ObjectSelector area={area} />}
           <div className="mt-8">
-            <LegalNotice open={open} compact />
+            <LegalNotice open={open} compact text={noticeText} />
           </div>
         </article>
         <aside className={styles['sidebar']}>

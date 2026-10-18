@@ -12,12 +12,12 @@ import { SiteHeader } from '@/widgets/site-header';
 import { Footer } from '@/widgets/site-footer';
 import { AppModal } from '@/widgets/service-dialog';
 import { Home } from '@/pages/home';
-import { Protect } from '@/pages/protection';
 import { MaterialPage } from '@/pages/material';
 import { Auth } from '@/pages/auth';
 import { ProfilePage } from '@/pages/profile';
 import { SearchPage } from '@/pages/search';
 import { ArticlesPage } from '@/pages/articles';
+import { QuestionsPage } from '@/pages/questions';
 import { CalculatorPage } from '@/pages/calculator';
 import { DocumentsPage, DocumentEditorPage } from '@/pages/documents';
 import styles from './styles.module.css';
@@ -33,6 +33,7 @@ const staticTitles: Record<string, string> = {
   '/ownership': 'Оформить права',
   '/search': 'Поиск',
   '/articles': 'Информационные статьи',
+  '/questions': 'Вопрос — ответ',
   '/tools/calculator': 'Калькулятор пошлин',
 };
 
@@ -92,6 +93,10 @@ export function App() {
       navigate('/ownership');
       return;
     }
+    if (id === 'questions') {
+      navigate('/questions');
+      return;
+    }
     if (id === 'calculator') {
       navigate('/tools/calculator');
       return;
@@ -141,8 +146,28 @@ export function App() {
       <main id="main">
         <Routes>
           <Route path="/" element={<Home open={open} toolAction={toolAction} />} />
-          <Route path="/protect" element={<Protect />} />
-          <Route path="/defend" element={<Protect defend />} />
+          <Route
+            path="/protect"
+            element={
+              <MaterialPage
+                materialId="protect-overview"
+                open={open}
+                favorites={favorites}
+                toggleFavorite={toggleFavorite}
+              />
+            }
+          />
+          <Route
+            path="/defend"
+            element={
+              <MaterialPage
+                materialId="defend-overview"
+                open={open}
+                favorites={favorites}
+                toggleFavorite={toggleFavorite}
+              />
+            }
+          />
           <Route
             path="/articles/:id"
             element={
@@ -225,6 +250,17 @@ export function App() {
             }
           />
           <Route path="/tools/calculator" element={<CalculatorPage />} />
+          <Route
+            path="/questions"
+            element={
+              <QuestionsPage
+                key={profile?.id ?? 'guest'}
+                userId={profile?.id}
+                ready={status !== 'loading'}
+                open={open}
+              />
+            }
+          />
           <Route element={<RequireProfile status={status} />}>
             <Route path="/documents" element={<DocumentsPage userId={profile?.id} />} />
             <Route path="/documents/:kind" element={<DocumentsPage userId={profile?.id} />} />

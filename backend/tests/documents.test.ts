@@ -2,10 +2,217 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { inflateRawSync } from "node:zlib";
 import { test } from "node:test";
-import { getTemplate, matches, type Values } from "../src/services/documents";
+import { readFile, mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import JSZip from "jszip";
+import { xml2js, type Element } from "xml-js";
+import {
+  getTemplate,
+  createDocx,
+  renderDocument,
+  matches,
+  type Values,
+} from "../src/services/documents";
+import { env } from "../src/config/env";
+import { pool } from "../src/config/db";
 import { api, apiUrl, registerUser, setupApi } from "./helpers";
 
 setupApi();
+
+test("DOCX keeps source page settings, styles and paragraph formatting, without instructions or optional placeholders", async () => {
+  const template = await getTemplate("code-claim");
+  assert.equal(
+    template.fields.find((field) => field.id === "phone")?.hint,
+    undefined,
+  );
+  assert.match(
+    template.fields.find((field) => field.id === "bik")!.hint!,
+    /9 цифр/,
+  );
+  const fields = await filled({
+    moneyType: "fixed",
+    attachment3: "Сравнительная таблица",
+    pages3: "2",
+    circumstances: "Первая строка\nВторая строка <проверка> & текст",
+  });
+  const file = await createDocx(template, fields);
+  const source = await JSZip.loadAsync(
+    await readFile(
+      path.join(env.contentDir, "templates", "code-claim-source.docx"),
+    ),
+  );
+  const generated = await JSZip.loadAsync(file);
+  for (const entry of [
+    "word/styles.xml",
+    "word/theme/theme1.xml",
+    "word/fontTable.xml",
+    "word/settings.xml",
+  ]) {
+    assert.equal(
+      await generated.file(entry)!.async("string"),
+      await source.file(entry)!.async("string"),
+      entry,
+    );
+  }
+  const child = (node: Element, name: string) =>
+    node.elements!.find((item) => item.name === name)!;
+  const body = (xml: string) =>
+    child(child(xml2js(xml) as Element, "w:document"), "w:body");
+  const original = body(
+    await source.file("word/document.xml")!.async("string"),
+  );
+  const xml = await generated.file("word/document.xml")!.async("string");
+  const output = body(xml);
+  assert.deepEqual(child(output, "w:sectPr"), child(original, "w:sectPr"));
+  const originalParagraphs = original.elements!.filter(
+    (item) => item.name === "w:p",
+  );
+  const outputParagraphs = output.elements!.filter(
+    (item) => item.name === "w:p",
+  );
+  const rendered = renderDocument(template, fields);
+  let cursor = 0;
+  for (const paragraph of rendered) {
+    if (paragraph.blankBefore !== undefined) {
+      assert.deepEqual(
+        outputParagraphs[cursor++],
+        originalParagraphs[paragraph.blankBefore],
+      );
+    }
+    assert.deepEqual(
+      child(outputParagraphs[cursor++], "w:pPr"),
+      child(originalParagraphs[paragraph.sourceParagraph!], "w:pPr"),
+      paragraph.text.slice(0, 40),
+    );
+  }
+  assert.equal(cursor, outputParagraphs.length);
+  assert.match(xml, /<w:br\s*\/>/);
+  assert.match(xml, /Вторая строка &lt;проверка&gt; &amp; текст/);
+  assert.doesNotMatch(xml, /Приложения|Сравнительная таблица, на 2 л\./);
+  assert.ok(template.fields.every((field) => field.group !== "attachments"));
+  assert.ok(template.attachmentGuidance);
+  for (const text of [
+    template.attachmentGuidance.title,
+    template.attachmentGuidance.intro,
+    ...template.attachmentGuidance.items,
+    template.attachmentGuidance.note,
+  ]) {
+    assert.ok(!xml.includes(text), "attachment guidance must not be exported");
+  }
+  assert.doesNotMatch(
+    xml,
+    /\{\{|ВАРИАНТ|Обратитесь к статье|\[Должность|\[Название|ИНН получателя:|Дополнительные сведения:/,
+  );
+  for (const field of template.fields)
+    if (field.hint) assert.ok(!xml.includes(field.hint), field.id);
+  for (const reference of template.references ?? []) {
+    assert.ok(!xml.includes(reference.title));
+    assert.ok(!xml.includes(reference.href));
+  }
+  // A reviewable artifact for checking the generated file in Word.
+  await mkdir(path.join(env.contentDir, "..", "tmp", "preview"), {
+    recursive: true,
+  });
+  await writeFile(
+    path.join(
+      env.contentDir,
+      "..",
+      "tmp",
+      "preview",
+      "inline-claim-sample.docx",
+    ),
+    file,
+  );
+});
+
+test("legacy favorites keep their original text and fields while gaining inline controls, hints and source formatting", async () => {
+  const owner = await registerUser();
+  const id = randomUUID();
+  const template = JSON.parse(
+    await readFile(
+      path.join(process.cwd(), "tests", "fixtures", "code-claim-v1.json"),
+      "utf8",
+    ),
+  );
+  const fields = await filled({
+    moneyType: "fixed",
+    recipient: "Адресат старого документа",
+    attachment1: "Старое приложение, которое не должно попасть в экспорт",
+    pages1: "3",
+  });
+  await pool.query(
+    "INSERT INTO saved_documents (id,user_id,title,template_id,template_version,template,fields,complete) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+    [
+      id,
+      owner.user.id,
+      "Старый документ",
+      template.id,
+      1,
+      JSON.stringify(template),
+      JSON.stringify(fields),
+      true,
+    ],
+  );
+  const response = await api("GET", `/api/documents/${id}`, {
+    token: owner.accessToken,
+  });
+  assert.equal(response.status, 200);
+  assert.equal(response.body.templateVersion, 1);
+  assert.deepEqual(
+    response.body.template.paragraphs.map((p: { text: string }) => p.text),
+    template.paragraphs
+      .filter(
+        (p: { text: string }) =>
+          p.text !== "Приложения" && !p.text.includes("{{attachment"),
+      )
+      .map((p: { text: string }) => p.text),
+  );
+  assert.equal(response.body.fields.recipient, fields.recipient);
+  assert.equal(response.body.fields.attachment1, undefined);
+  assert.ok(response.body.template.attachmentGuidance);
+  assert.equal(
+    response.body.template.fields.find(
+      (field: { id: string }) => field.id === "phone",
+    ).hint,
+    undefined,
+  );
+  assert.match(
+    response.body.template.fields.find(
+      (field: { id: string }) => field.id === "bik",
+    ).hint,
+    /9 цифр/,
+  );
+  assert.equal(response.body.template.references.length, 2);
+  assert.deepEqual(response.body.template.paragraphs[0].controlsBefore, [
+    "applicantType",
+  ]);
+  const exported = await createDocx(response.body.template, fields);
+  assert.match(documentXml(exported), /Адресат старого документа/);
+  assert.match(documentXml(exported), /w:left="1701"/);
+  assert.ok(documentXml(exported).includes(fields.signerName!));
+  assert.ok(
+    documentXml(exported).includes(fields.date!.split("-").reverse().join(".")),
+  );
+  assert.doesNotMatch(
+    documentXml(exported),
+    /Приложения|Старое приложение|Что можно приложить к претензии/,
+  );
+  const updated = await api("PUT", `/api/documents/${id}`, {
+    token: owner.accessToken,
+    body: {
+      templateId: template.id,
+      templateVersion: 1,
+      title: "Старый документ",
+      fields: { ...fields, recipient: "Новый адресат старого документа" },
+    },
+  });
+  assert.equal(updated.status, 200);
+  const row = await pool.query(
+    "SELECT template FROM saved_documents WHERE id=$1",
+    [id],
+  );
+  assert.deepEqual(row.rows[0].template, template);
+});
 
 test("optional registration, personal rights, material carriers and license branches export selected content", async () => {
   const { accessToken } = await registerUser();
@@ -28,7 +235,10 @@ test("optional registration, personal rights, material carriers and license bran
     apiUrl("/api/document-templates/code-claim/download"),
     {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
       body: JSON.stringify({ fields }),
     },
   );
@@ -41,7 +251,7 @@ test("optional registration, personal rights, material carriers and license bran
   assert.match(xml, /восстановить указание автора Автор программы/);
   assert.match(xml, /Искажение модуля выгрузки/);
   assert.match(xml, /предоставил доступ к программному коду/);
-  assert.match(xml, /исключительной лицензии, на 2 л\./);
+  assert.doesNotMatch(xml, /исключительной лицензии, на 2 л\./);
   assert.doesNotMatch(xml, /\{\{|\[Дата договора|\[Номер договора/);
 });
 
@@ -179,7 +389,10 @@ test("exports chosen money and contract branches as real DOCX, escaping text and
       apiUrl("/api/document-templates/code-claim/download"),
       {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({ fields }),
       },
     );
@@ -207,7 +420,7 @@ test("saved documents require authentication, are idempotent and isolated betwee
   const id = randomUUID();
   const body = {
     templateId: "code-claim",
-    templateVersion: 1,
+    templateVersion: 3,
     title: "Претензия к адресату",
     fields: { recipient: "Мой адресат" },
   };
@@ -222,7 +435,27 @@ test("saved documents require authentication, are idempotent and isolated betwee
   });
   assert.equal(first.status, 200);
   assert.equal(first.body.complete, false);
-  assert.equal(first.body.template.version, 1);
+  assert.equal(first.body.template.version, 3);
+  // Existing v2 favorites may still contain the old repetitive explanations.
+  const staleSnapshot = structuredClone(first.body.template);
+  staleSnapshot.fields.find(
+    (field: { id: string }) => field.id === "phone",
+  ).hint = "Введите телефон.";
+  staleSnapshot.references = [];
+  await pool.query("UPDATE saved_documents SET template=$1 WHERE id=$2", [
+    JSON.stringify(staleSnapshot),
+    id,
+  ]);
+  const reopened = await api("GET", `/api/documents/${id}`, {
+    token: owner.accessToken,
+  });
+  assert.equal(
+    reopened.body.template.fields.find(
+      (field: { id: string }) => field.id === "phone",
+    ).hint,
+    undefined,
+  );
+  assert.equal(reopened.body.template.references.length, 2);
   assert.equal(
     (
       await api("PUT", `/api/documents/${id}`, {

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { apiRequest } from '@/shared/api';
 import { invalidateAsyncData, useAsyncData } from '@/shared/lib';
 import type {
@@ -14,13 +14,24 @@ const loadTemplates = () =>
     (result) => result.items,
   );
 export const useDocumentTemplates = (userId: string | undefined) =>
-  useAsyncData(userId ? `user:${userId}:document-templates` : null, loadTemplates);
+  useAsyncData(userId ? `user:${userId}:document-templates` : null, loadTemplates, true);
+
+/** Refresh presentation without remounting the editor or replacing entered values. */
+function useCurrentDocument<T>(key: string | null, loader: () => Promise<T>) {
+  const result = useAsyncData(key, loader, true);
+  const reload = result.reload;
+  useEffect(() => {
+    window.addEventListener('focus', reload);
+    return () => window.removeEventListener('focus', reload);
+  }, [reload]);
+  return result;
+}
 export function useDocumentTemplate(userId: string | undefined, id: string | null) {
   const load = useCallback(
     () => apiRequest<DocumentTemplate>(`/api/document-templates/${id}`, { auth: true }),
     [id],
   );
-  return useAsyncData(userId && id ? `user:${userId}:document-template:${id}` : null, load);
+  return useCurrentDocument(userId && id ? `user:${userId}:document-template:${id}` : null, load);
 }
 export function useSavedDocuments(userId: string | undefined) {
   const load = useCallback(
@@ -38,7 +49,7 @@ export function useSavedDocument(userId: string | undefined, id?: string) {
       apiRequest<SavedDocument>(`/api/documents/${encodeURIComponent(id ?? '')}`, { auth: true }),
     [id],
   );
-  return useAsyncData(userId && id ? `user:${userId}:document:${id}` : null, load);
+  return useCurrentDocument(userId && id ? `user:${userId}:document:${id}` : null, load);
 }
 export async function saveDocument(
   userId: string,

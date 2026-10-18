@@ -3,11 +3,17 @@
 
 const materialRoutes: Partial<Record<string, string>> = {
   'ownership-overview': '/ownership',
+  'protect-overview': '/protect',
+  'defend-overview': '/defend',
   checklist: '/protect/code',
   'database-registration': '/ownership/databases',
   'code-ownership': '/ownership/code',
   'database-claim': '/defend/databases',
-  'brand-claim': '/defend/brand',
+  'brand-defense': '/defend/brand',
+  'brand-ownership': '/ownership/brand',
+  'visuals-ownership': '/ownership/visuals',
+  'visuals-protection': '/protect/visuals',
+  'visuals-defense': '/defend/visuals',
   'database-protection': '/protect/databases',
   'brand-protection': '/protect/brand',
 };
@@ -16,6 +22,7 @@ const objectRoutes: Partial<Record<string, string>> = {
   code: '/protect/code',
   databases: '/protect/databases',
   brand: '/protect/brand',
+  visuals: '/protect/visuals',
 };
 
 export function materialHref(id: string) {
@@ -48,10 +55,26 @@ export function materialArea(id: string): MaterialArea {
       'database-coauthors',
       'code-ownership',
       'code-registration',
+      'brand-ownership',
+      'brand-start',
+      'visuals-ownership',
+      'visuals-ai',
     ].includes(id)
   )
     return 'ownership';
-  if (['database-claim', 'brand-claim'].includes(id)) return 'defend';
+  if (
+    [
+      'defend-overview',
+      'database-claim',
+      'database-fair-use',
+      'brand-claim',
+      'brand-defense',
+      'visuals-defense',
+      'visuals-claim',
+      'text-rewrite',
+    ].includes(id)
+  )
+    return 'defend';
   return 'protect';
 }
 
@@ -70,17 +93,32 @@ export function objectJourney(
         primary: 'database-protection',
         materials: [
           'database-protection',
+          'database-elements',
           'database-rights',
           'database-coauthors',
           'database-registration',
         ],
       },
       brand: { primary: 'brand-protection', materials: ['brand-protection', 'brand-article'] },
+      visuals: {
+        primary: 'visuals-protection',
+        materials: ['visuals-protection', 'visuals-copying', 'visuals-ownership'],
+      },
     },
     defend: {
       code: { materials: ['code-0', 'code-expert', 'code-1'] },
-      databases: { primary: 'database-claim', materials: ['database-claim', 'database-rights'] },
-      brand: { primary: 'brand-claim', materials: ['brand-claim', 'brand-article'] },
+      databases: {
+        primary: 'database-claim',
+        materials: ['database-claim', 'database-fair-use', 'database-rights'],
+      },
+      brand: {
+        primary: 'brand-defense',
+        materials: ['brand-defense', 'brand-claim', 'brand-article'],
+      },
+      visuals: {
+        primary: 'visuals-defense',
+        materials: ['visuals-defense', 'visuals-claim', 'visuals-ownership'],
+      },
     },
     ownership: {
       code: { primary: 'code-ownership', materials: ['code-ownership', 'code-registration'] },
@@ -88,6 +126,8 @@ export function objectJourney(
         primary: 'database-registration',
         materials: ['database-registration', 'database-rights', 'database-coauthors'],
       },
+      brand: { primary: 'brand-ownership', materials: ['brand-ownership', 'brand-start'] },
+      visuals: { primary: 'visuals-ownership', materials: ['visuals-ownership', 'visuals-ai'] },
     },
   };
   return journeys[area][id] ?? { materials: [] };

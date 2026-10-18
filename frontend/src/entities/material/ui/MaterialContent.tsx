@@ -41,7 +41,7 @@ export function MaterialContent({
       {blocks.map((block, index) => {
         if (block.type === 'heading')
           return (
-            <Heading key={index}>
+            <Heading key={index} id={block.anchor}>
               <InlineText runs={block.runs} open={open} />
             </Heading>
           );

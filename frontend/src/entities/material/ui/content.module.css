@@ -15,6 +15,7 @@
 }
 
 .content :is(h2, h3) {
+  scroll-margin-top: 24px;
   color: var(--text);
   font-size: 19px;
   line-height: 1.45;

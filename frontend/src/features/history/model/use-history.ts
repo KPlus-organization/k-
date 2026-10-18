@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { type Profile } from '@/entities/profile';
 import { apiRequest, hasSession } from '@/shared/api';
-import { invalidateAsyncData, useAsyncData } from '@/shared/lib';
+import { invalidateAsyncData, readStored, writeStored, useAsyncData } from '@/shared/lib';
 
 export type HistoryEntry = {
   id: string;
@@ -28,8 +28,34 @@ export function useHistory(profile: Profile | null) {
 const REPEAT_WINDOW_MS = 10_000;
 const lastVisits = new Map<string, number>();
 
-/** Records a visit for a signed-in user. Failures are ignored: history is not essential. */
+let visitorId: string | undefined;
+function readerId() {
+  if (visitorId) return visitorId;
+  const stored = readStored<string>('reader-id', '');
+  visitorId = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(stored)
+    ? stored
+    : crypto.randomUUID();
+  writeStored('reader-id', visitorId);
+  return visitorId;
+}
+
+/** Material openings count for everyone; only signed-in visits enter personal history. */
 export function recordVisit(visit: Visit) {
+  if (visit.type === 'material') {
+    // The server atomically deduplicates repeated effects, tabs and reloads.
+    apiRequest(`/api/materials/${encodeURIComponent(visit.target)}/view`, {
+      method: 'POST',
+      body: { visitorId: readerId() },
+      auth: hasSession(),
+    })
+      .then(() =>
+        invalidateAsyncData(
+          (cached) => cached.endsWith(':history') || cached.endsWith(':questions'),
+        ),
+      )
+      .catch(() => undefined);
+    return;
+  }
   if (!hasSession()) return;
   const key = `${visit.type}:${visit.target}`;
   const now = Date.now();
