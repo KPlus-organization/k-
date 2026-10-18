@@ -19,6 +19,7 @@ import { Auth } from '@/pages/auth';
 import { ProfilePage } from '@/pages/profile';
 import { SearchPage } from '@/pages/search';
 import { ArticlesPage } from '@/pages/articles';
+import { CalculatorPage } from '@/pages/calculator';
 import styles from './styles.module.css';
 
 const staticTitles: Record<string, string> = {
@@ -31,6 +32,7 @@ const staticTitles: Record<string, string> = {
   '/ownership': 'Оформить права',
   '/search': 'Поиск',
   '/articles': 'Информационные статьи',
+  '/tools/calculator': 'Калькулятор пошлин',
 };
 
 export function App() {
@@ -65,6 +67,10 @@ export function App() {
       return;
     }
     if (id === 'ownership') {
+      return;
+    }
+    if (id === 'calculator') {
+      navigate('/tools/calculator');
       return;
     }
     const tool = tools.find((item) => item.id === id);
@@ -179,6 +185,7 @@ export function App() {
               <ArticlesPage favorites={favorites} toggleFavorite={toggleFavorite} open={open} />
             }
           />
+          <Route path="/tools/calculator" element={<CalculatorPage />} />
           <Route
             path="*"
             element={

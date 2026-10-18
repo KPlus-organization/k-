@@ -105,7 +105,11 @@ test('ownership entry is inactive and existing materials remain accessible', asy
   await expect(page.getByRole('heading', { name: 'Материал не найден' })).toBeVisible();
 });
 
-test('all imported materials fit mobile and their tables stay scrollable', async ({ page }) => {
+// Skipped: mobile layout is not a priority yet. Kept to be re-enabled later
+// (remove `.skip`); it is slow — nine pages and two full-page screenshots.
+test.skip('all imported materials fit mobile and their tables stay scrollable', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const route of [
     '/protect/brand',

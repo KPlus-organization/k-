@@ -1,6 +1,7 @@
 import { closePool, withTransaction } from '../config/db';
 import { env } from '../config/env';
 import { loadContent, type ContentBlock, type ContentMaterial } from '../content/loadContent';
+import { loadFeeSchedules } from '../content/loadFees';
 import { toSearchText } from '../services/content';
 
 // Serializes concurrent syncs (e.g. two deploys at once). Differs from the migration lock.
@@ -32,7 +33,10 @@ export async function syncContent(
   options: { contentDir?: string; log?: (message: string) => void } = {},
 ): Promise<void> {
   const log = options.log ?? console.log;
-  const { objects, materials } = await loadContent(options.contentDir ?? env.contentDir);
+  const contentDir = options.contentDir ?? env.contentDir;
+  // Everything is checked before anything is written.
+  const { objects, materials } = await loadContent(contentDir);
+  const feeSchedules = await loadFeeSchedules(contentDir);
 
   await withTransaction(async (client) => {
     await client.query('SELECT pg_advisory_xact_lock($1)', [LOCK_ID]);
@@ -105,12 +109,43 @@ export async function syncContent(
       }
     }
 
+    for (const schedule of feeSchedules) {
+      await client.query(
+        `INSERT INTO fee_schedules (id, title, basis, effective_from, reviewed_by, note, parameters, fees, sort_order,
+           reference, is_published, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, now())
+         ON CONFLICT (id) DO UPDATE SET title = $2, basis = $3, effective_from = $4, reviewed_by = $5, note = $6,
+           parameters = $7, fees = $8, sort_order = $9, reference = $10, is_published = true, updated_at = now()`,
+        [
+          schedule.id,
+          schedule.title,
+          schedule.basis,
+          schedule.effectiveFrom,
+          schedule.reviewedBy,
+          schedule.note,
+          JSON.stringify(schedule.parameters),
+          JSON.stringify(schedule.fees),
+          schedule.order,
+          schedule.reference,
+        ],
+      );
+    }
+    const hiddenSchedules = await client.query(
+      'UPDATE fee_schedules SET is_published = false WHERE id <> ALL($1) AND is_published RETURNING id',
+      [feeSchedules.map((schedule) => schedule.id)],
+    );
+
     const published = (items: { published?: boolean }[]) => items.filter((item) => item.published !== false).length;
     log(
       `[seed] content synced: ${published(objects)}/${objects.length} objects and ` +
         `${published(materials)}/${materials.length} materials published`,
     );
-    for (const row of [...hiddenObjects.rows, ...hiddenMaterials.rows]) {
+    log(
+      `[seed] fee schedules synced: ${feeSchedules
+        .map((schedule) => `${schedule.id} (${schedule.fees.length} fees${schedule.reviewedBy ? '' : ', not reviewed yet'})`)
+        .join(', ')}`,
+    );
+    for (const row of [...hiddenObjects.rows, ...hiddenMaterials.rows, ...hiddenSchedules.rows]) {
       log(`[seed] unpublished "${row.id}": no longer in content/`);
     }
   });

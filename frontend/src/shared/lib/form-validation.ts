@@ -14,6 +14,8 @@ function fieldLabel(input: HTMLInputElement) {
 export function fieldError(input: HTMLInputElement): string | null {
   const label = fieldLabel(input);
   const length = [...input.value].length;
+  // Text typed into a number field: the browser reports it as empty.
+  if (input.validity.badInput) return `${label}: введите число.`;
   if (input.validity.valueMissing)
     return input.type === 'checkbox'
       ? (input.dataset['requiredMessage'] ?? 'Отметьте обязательный пункт.')
@@ -25,6 +27,9 @@ export function fieldError(input: HTMLInputElement): string | null {
     return `${label}: не менее ${input.minLength} ${characters(input.minLength)}.`;
   if (input.maxLength > 0 && length > input.maxLength)
     return `${label}: не более ${input.maxLength} ${characters(input.maxLength)}.`;
+  if (input.validity.rangeUnderflow) return `${label}: не меньше ${input.min}.`;
+  if (input.validity.rangeOverflow) return `${label}: не больше ${input.max}.`;
+  if (input.validity.stepMismatch) return `${label}: нужно целое число.`;
   if (input.validity.patternMismatch)
     return input.title || `Поле «${label}» заполнено в неверном формате.`;
   if (!input.validity.valid) return `Проверьте поле «${label}».`;

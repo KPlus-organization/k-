@@ -6,7 +6,7 @@
 | ------------------------- | ---------------------------------------------- | ----------- |
 | [`backend/`](backend/)    | API на TypeScript + Express + PostgreSQL       | `backend/src/index.ts`, `npm run dev` → http://localhost:3001 |
 | [`frontend/`](frontend/)  | React + TypeScript + Vite по макету Figma, данные из API | [`frontend/README.md`](frontend/README.md), dev-сервер → http://localhost:3000 |
-| [`content/`](content/)    | Наполнение сайта: объекты защиты, статьи, чек-листы, DOCX — единственный источник | [`content/README.md`](content/README.md) |
+| [`content/`](content/)    | Наполнение сайта: объекты защиты, статьи, чек-листы, DOCX, пошлины калькулятора — единственный источник | [`content/README.md`](content/README.md) |
 | [`docs/`](docs/)          | Общий контракт API между фронтендом и бэкендом | [`docs/api.md`](docs/api.md) |
 
 ## Локальный запуск

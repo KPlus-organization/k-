@@ -21,6 +21,7 @@ export function ProfileSettings({
       noValidate
       onSubmit={async (event) => {
         event.preventDefault();
+        if (saving) return;
         const invalid = validateForm(event.currentTarget);
         if (invalid) {
           setError(invalid);
@@ -68,7 +69,11 @@ export function ProfileSettings({
           {error}
         </p>
       )}
-      <button className={cx(ui['button'], ui['primary'], 'mt-2')} type="submit" disabled={saving}>
+      <button
+        className={cx(ui['button'], ui['primary'], 'mt-2')}
+        type="submit"
+        aria-disabled={saving}
+      >
         {saving ? 'Сохранение…' : 'Сохранить изменения'}
       </button>
     </form>

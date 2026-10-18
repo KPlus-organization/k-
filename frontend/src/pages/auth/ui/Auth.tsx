@@ -32,6 +32,7 @@ export function Auth({
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (pending) return;
     const invalid = validateForm(event.currentTarget);
     if (invalid) {
       setError(invalid);
@@ -212,7 +213,7 @@ export function Auth({
             <button
               className={cx(ui['button'], ui['primary'], styles['submit'])}
               type="submit"
-              disabled={pending}
+              aria-disabled={pending}
             >
               {register ? 'Создать профиль' : 'Войти в профиль'}
             </button>
