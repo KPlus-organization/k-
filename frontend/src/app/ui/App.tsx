@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { errorMessage } from '@/shared/api';
 import { tools } from '@/shared/config';
 import { cx, type Open } from '@/shared/lib';
-import { Icon, ui } from '@/shared/ui';
+import { Icon, LoadState, ui } from '@/shared/ui';
 import { useSession, type ProfileChanges } from '@/features/session';
 import { useFavorites, rememberPendingFavorite, resumePendingFavorite } from '@/features/favorites';
 import { recordVisit } from '@/features/history';
@@ -19,6 +19,7 @@ import { ProfilePage } from '@/pages/profile';
 import { SearchPage } from '@/pages/search';
 import { ArticlesPage } from '@/pages/articles';
 import { CalculatorPage } from '@/pages/calculator';
+import { DocumentsPage, DocumentEditorPage } from '@/pages/documents';
 import styles from './styles.module.css';
 import { ObjectJourneyRoute } from './ObjectJourneyRoute';
 
@@ -95,6 +96,11 @@ export function App() {
       navigate('/tools/calculator');
       return;
     }
+    if (id === 'documents') {
+      recordVisit({ type: 'tool', target: 'documents', title: 'Конструктор документов' });
+      navigate('/documents');
+      return;
+    }
     const tool = tools.find((item) => item.id === id);
     if (tool) recordVisit({ type: 'tool', target: tool.id, title: tool.title });
     setModal(id);
@@ -143,7 +149,17 @@ export function App() {
               <MaterialPage open={open} favorites={favorites} toggleFavorite={toggleFavorite} />
             }
           />
-          <Route path="/ownership" element={<Protect ownership />} />
+          <Route
+            path="/ownership"
+            element={
+              <MaterialPage
+                materialId="ownership-overview"
+                open={open}
+                favorites={favorites}
+                toggleFavorite={toggleFavorite}
+              />
+            }
+          />
           {(['protect', 'defend', 'ownership'] as const).map((area) => (
             <Route
               key={area}
@@ -209,6 +225,18 @@ export function App() {
             }
           />
           <Route path="/tools/calculator" element={<CalculatorPage />} />
+          <Route element={<RequireProfile status={status} />}>
+            <Route path="/documents" element={<DocumentsPage userId={profile?.id} />} />
+            <Route path="/documents/:kind" element={<DocumentsPage userId={profile?.id} />} />
+            <Route
+              path="/documents/:kind/:objectId"
+              element={<DocumentEditorPage profile={profile} status={status} open={open} />}
+            />
+            <Route
+              path="/documents/saved/:savedId"
+              element={<DocumentEditorPage profile={profile} status={status} open={open} />}
+            />
+          </Route>
           <Route
             path="*"
             element={
@@ -252,4 +280,14 @@ export function App() {
       </div>
     </div>
   );
+}
+
+function RequireProfile({ status }: { status: 'loading' | 'guest' | 'user' }) {
+  const location = useLocation();
+  if (status === 'loading') return <LoadState />;
+  if (status === 'guest') {
+    const next = location.pathname + location.search + location.hash;
+    return <Navigate to={`/login?next=${encodeURIComponent(next)}`} replace />;
+  }
+  return <Outlet />;
 }

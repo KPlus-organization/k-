@@ -27,7 +27,7 @@ test('GET /api/objects lists the seven protection objects in order', async () =>
 test('GET /api/materials lists summaries and filters by topic', async () => {
   const all = await api('GET', '/api/materials');
   assert.equal(all.status, 200);
-  assert.equal(all.body.items.length, 17);
+  assert.equal(all.body.items.length, 18);
   assert.deepEqual(Object.keys(all.body.items[0]).sort(), [
     'description',
     'hasContent',

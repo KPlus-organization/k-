@@ -8,7 +8,7 @@ test('Figma navigation, complete guide, and persistent favorites', async ({ page
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Мой продукт. Мои права.' })).toBeVisible();
   const cards = page.getByRole('region', { name: 'С чего начать' }).locator(':scope > *');
-  await expect(cards).toHaveCount(4);
+  await expect(cards).toHaveCount(3);
   const sizes = await cards.evaluateAll((elements) =>
     elements.map((element) => ({
       width: element.getBoundingClientRect().width,

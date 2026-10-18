@@ -2,6 +2,7 @@
 // routes are decided here.
 
 const materialRoutes: Partial<Record<string, string>> = {
+  'ownership-overview': '/ownership',
   checklist: '/protect/code',
   'database-registration': '/ownership/databases',
   'code-ownership': '/ownership/code',
@@ -41,6 +42,7 @@ export const materialAreaTitles: Record<MaterialArea, string> = {
 export function materialArea(id: string): MaterialArea {
   if (
     [
+      'ownership-overview',
       'database-registration',
       'database-rights',
       'database-coauthors',

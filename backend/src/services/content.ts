@@ -15,7 +15,7 @@ export type MaterialKind = 'article' | 'checklist' | 'reference';
 
 export interface MaterialSummary {
   id: string;
-  topic: string;
+  topic: string | null;
   kind: MaterialKind;
   title: string;
   description: string;
@@ -34,7 +34,7 @@ export interface Material extends MaterialSummary {
 
 interface SummaryRow {
   id: string;
-  topic: string;
+  topic: string | null;
   kind: MaterialKind;
   title: string;
   description: string;

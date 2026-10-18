@@ -11,6 +11,9 @@ const MESSAGES: Record<string, string> = {
   INVALID_REFRESH_TOKEN: 'Сессия завершилась. Войдите снова.',
   TOKEN_EXPIRED: 'Сессия завершилась. Войдите снова.',
   INVALID_TOKEN: 'Сессия завершилась. Войдите снова.',
+  DOCUMENT_NOT_FOUND: 'Документ не найден или недоступен в этом профиле.',
+  DOCUMENT_TEMPLATE_NOT_FOUND: 'Этот шаблон пока недоступен.',
+  DOCUMENT_VERSION_CHANGED: 'Шаблон обновился. Откройте его заново перед сохранением.',
 };
 
 /**
