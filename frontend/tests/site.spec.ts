@@ -168,7 +168,7 @@ test('favorites can be removed and an unavailable tool has an honest state', asy
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).not.toBeVisible();
   await page.goto('/');
-  await page.getByRole('button', { name: /Калькулятор госпошлины Оцените/ }).click();
+  await page.getByRole('button', { name: /Проверка товарного знака Найдите/ }).click();
   await expect(page.getByRole('dialog')).toContainText('Этот раздел готовится');
   await page.getByRole('dialog').getByRole('link', { name: 'Открыть чек-лист' }).click();
   await expect(page).toHaveURL(/\/protect\/code$/);
