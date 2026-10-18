@@ -12,6 +12,7 @@ import { healthRoutes } from './routes/healthRoutes';
 import { historyRoutes } from './routes/historyRoutes';
 import { profileRoutes } from './routes/profileRoutes';
 import { documentsRoutes, templateRoutes } from './routes/documentsRoutes';
+import { questionsRoutes } from './routes/questionsRoutes';
 
 export function createApp(): express.Express {
   const app = express();
@@ -23,6 +24,7 @@ export function createApp(): express.Express {
 
   app.use(healthRoutes);
   app.use('/api', contentRoutes);
+  app.use('/api', questionsRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/profile', profileRoutes);
   app.use('/api/favorites', favoritesRoutes);

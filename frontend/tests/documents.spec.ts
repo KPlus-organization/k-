@@ -47,6 +47,141 @@ async function fillClaim(page: Page) {
     await page.locator(`#document-${id}`).fill(value);
 }
 
+test('every template field can be filled inside the document, with plain-language help and linked repetitions', async ({
+  page,
+  request,
+}) => {
+  const user = await signIn(page, request);
+  const response = await request.get(`${API_URL}/api/document-templates/code-claim`, {
+    headers: { Authorization: `Bearer ${user.accessToken}` },
+  });
+  const template = await response.json();
+  await page.goto('/documents/claim/code');
+  const paper = page.getByRole('article', { name: 'Заполнение документа' });
+  await expect(paper.locator('#document-recipient')).toBeVisible();
+  await expect(paper.locator('[contenteditable="true"]')).toHaveCount(0);
+  await expect(paper).toContainText(
+    'Способы защиты исключительного права предусмотрены статьями 1250 и 1252 ГК РФ.',
+  );
+  await page.locator('#document-recipient').fill('ООО Первый адресат');
+  await expect(paper.locator('[name="recipient"]').nth(1)).toHaveValue('ООО Первый адресат');
+  await paper.locator('[name="recipient"]').nth(1).fill('ООО Новый адресат');
+  await expect(page.locator('#document-recipient')).toHaveValue('ООО Новый адресат');
+  const seen = new Set<string>();
+  const collect = async () => {
+    const controls = await paper
+      .locator('input[name], select[name], textarea[name]')
+      .evaluateAll((nodes) =>
+        nodes.map((node) => ({
+          name: node.getAttribute('name')!,
+          hint:
+            document.getElementById(node.getAttribute('aria-describedby')?.split(' ')[0] ?? '')
+              ?.textContent ?? '',
+        })),
+      );
+    for (const control of controls) {
+      seen.add(control.name);
+      const expected =
+        template.fields.find((field: { id: string }) => field.id === control.name)?.hint ?? '';
+      expect(control.hint, control.name).toBe(expected);
+    }
+  };
+  await collect();
+  for (const [id, value] of Object.entries({
+    applicantType: 'person',
+    rightsBasis: 'order',
+    registered: 'yes',
+    contract: 'yes',
+    personalRights: 'yes',
+    personalAction: 'distorted',
+    physicalCopies: 'yes',
+    disputedRights: 'yes',
+  })) {
+    await paper.locator(`#document-${id}`).selectOption(value);
+  }
+  for (const moneyType of ['losses', 'fixed', 'copies', 'license']) {
+    await paper.locator('#document-moneyType').selectOption(moneyType);
+    await collect();
+  }
+  await collect();
+  await expect(paper.locator('[name^="attachment"], [name^="pages"]')).toHaveCount(0);
+  const guidance = page.getByRole('complementary', { name: 'Что можно приложить к претензии' });
+  await expect(guidance).toContainText('Документы о создании программы и принадлежности прав');
+  await expect(guidance).toContainText('Материалы фиксации нарушения');
+  await expect(guidance).toContainText('не попадёт в скачанный документ');
+  await expect(guidance.locator('input, textarea, select')).toHaveCount(0);
+  expect([...seen].sort()).toEqual(template.fields.map((field: { id: string }) => field.id).sort());
+  for (const label of ['Телефон', 'Адрес получателя', 'Дата претензии']) {
+    await expect(
+      paper.getByRole('button', { name: `Подсказка: ${label}`, exact: true }),
+    ).toHaveCount(0);
+  }
+  await paper.getByRole('button', { name: 'Подсказка: БИК', exact: true }).click();
+  await expect(paper.getByRole('note', { name: 'Подсказка: БИК', exact: true })).toContainText(
+    '9 цифр',
+  );
+  await expect(paper.getByRole('note', { name: 'Подсказка: БИК', exact: true })).toContainText(
+    'Реквизиты счёта',
+  );
+  await paper.locator('#document-phone').focus();
+  await expect(paper.getByRole('note')).toHaveCount(0);
+  await expect(paper.locator('#document-phone')).not.toHaveAttribute('aria-describedby');
+  await paper
+    .getByRole('button', { name: 'Подсказка: Корреспондентский счёт', exact: true })
+    .click();
+  await expect(
+    paper.getByRole('note', { name: 'Подсказка: Корреспондентский счёт', exact: true }),
+  ).toContainText('счёт самого банка');
+  await paper
+    .locator('#document-circumstances')
+    .fill('Подробное описание использования кода с датами и обстоятельствами. '.repeat(15));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect
+    .poll(() =>
+      paper
+        .locator('#document-circumstances')
+        .evaluate((node) => node.scrollHeight <= node.clientHeight + 2),
+    )
+    .toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+test('an open constructor refreshes an old template without losing entered values', async ({
+  page,
+  request,
+}) => {
+  const user = await signIn(page, request);
+  const response = await request.get(`${API_URL}/api/document-templates/code-claim`, {
+    headers: { Authorization: `Bearer ${user.accessToken}` },
+  });
+  const current = await response.json();
+  expect(current.version).toBe(3);
+  expect(current.attachmentGuidance.title).toBe('Что можно приложить к претензии');
+  const old = structuredClone(current);
+  old.version = 2;
+  delete old.attachmentGuidance;
+  old.paragraphs.push({ text: 'Приложения', heading: true, sourceParagraph: 57 });
+  let updated = false;
+  await page.route('**/api/document-templates/code-claim', (route) =>
+    route.fulfill({ json: updated ? current : old }),
+  );
+  await page.goto('/documents/claim/code');
+  const paper = page.getByRole('article', { name: 'Заполнение документа' });
+  await expect(paper.getByText('Приложения', { exact: true })).toBeVisible();
+  await page.locator('#document-recipient').fill('Адресат из незавершённой претензии');
+  updated = true;
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(
+    page.getByRole('heading', { name: 'Что можно приложить к претензии' }),
+  ).toBeVisible();
+  await expect(paper.getByText('Приложения', { exact: true })).toHaveCount(0);
+  await expect(page.locator('#document-recipient')).toHaveValue(
+    'Адресат из незавершённой претензии',
+  );
+  const guidance = page.getByRole('complementary', { name: 'Что можно приложить к претензии' });
+  await guidance.screenshot({ path: '../tmp/preview/claim-attachment-guidance.png' });
+});
+
 test('three home actions, overview checklist and updated profile illustration', async ({
   page,
   request,
@@ -192,6 +327,19 @@ test('source article reference opens the published article without losing form d
     'что требовать при копировании программы',
   );
   await article.close();
+  const calculation = page.getByRole('link', {
+    name: 'Как рассчитывается компенсация ↗',
+    exact: true,
+  });
+  await expect(calculation).toHaveAttribute('href', '/articles/code-1#compensation-calculation');
+  const calculationPopup = page.waitForEvent('popup');
+  await calculation.click();
+  const calculationArticle = await calculationPopup;
+  await expect(calculationArticle.locator('#compensation-calculation')).toHaveText(
+    '3. Взыскание компенсации',
+  );
+  await expect(calculationArticle.locator('#compensation-calculation')).toBeInViewport();
+  await calculationArticle.close();
   await expect(page.locator('#document-recipient')).toHaveValue('Мой адресат');
 });
 
@@ -250,15 +398,16 @@ test('guest signs up before entering the template, then saves, edits, downloads 
   ).toHaveCount(0);
 });
 
-test('conditional fields and preview replace alternatives; network failures preserve input', async ({
+test('inline fields replace alternatives; network failures preserve input', async ({
   page,
   request,
 }) => {
   await signIn(page, request);
   await page.goto('/documents/claim/code');
   await fillClaim(page);
-  const preview = page.getByRole('complementary', { name: 'Предпросмотр документа' });
-  await expect(preview).toContainText('45 000');
+  const preview = page.getByRole('article', { name: 'Заполнение документа' });
+  await expect(preview.locator('#document-fixedAmount')).toHaveValue('45000');
+  await expect(page.getByRole('complementary', { name: 'Предпросмотр документа' })).toHaveCount(0);
   await page.locator('#document-moneyType').selectOption('losses');
   await expect(page.locator('#document-fixedAmount')).toHaveCount(0);
   await page.locator('#document-damage').fill('1000.10');

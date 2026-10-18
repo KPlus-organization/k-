@@ -51,7 +51,7 @@ export function Home({ open, toolAction }: { open: Open; toolAction: Open }) {
           <h2>Защитить нарушенные права</h2>
           <p>Ваш продукт или его часть используют без разрешения? Разберитесь, как действовать.</p>
           <span className={styles['action-link']}>
-            Выбрать объект <Icon name="arrowRight" />
+            Открыть общий чек-лист <Icon name="arrowRight" />
           </span>
         </Link>
         <Link className={styles['action-card']} to="/defend">
@@ -63,7 +63,7 @@ export function Home({ open, toolAction }: { open: Open; toolAction: Open }) {
           <h2>Оспорить претензию о нарушении чужих прав</h2>
           <p>Вам предъявили претензию или иск о нарушении чужих прав? Подготовьте ответ.</p>
           <span className={styles['action-link']}>
-            Выбрать объект <Icon name="arrowRight" />
+            Открыть общий чек-лист <Icon name="arrowRight" />
           </span>
         </Link>
       </section>

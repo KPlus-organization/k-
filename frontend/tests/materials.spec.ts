@@ -37,19 +37,24 @@ test('database checklists have no completion controls and keep favorites across 
   await expect(page.getByRole('progressbar')).toHaveCount(0);
   await page.getByRole('button', { name: 'Сохранить чек-лист' }).click();
   await expect(page.getByRole('button', { name: 'В избранном', exact: true })).toBeVisible();
-  await page.getByRole('link', { name: /База данных в стартапе/ }).click();
+  await page
+    .getByRole('article')
+    .getByRole('link', { name: 'Оформление прав на базу данных', exact: true })
+    .click();
   await expect(page).toHaveURL(/\/ownership\/databases$/);
   await expect(page.getByTestId('guide-step')).toHaveCount(5);
   await expect(page.getByRole('table')).toHaveCount(2);
   await expect(page.getByRole('checkbox')).toHaveCount(0);
   await expect(page.getByRole('progressbar')).toHaveCount(0);
-  await page.getByRole('button', { name: 'презумпция', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('пока не доказано обратное');
-  await page.keyboard.press('Escape');
+  await expect(page.getByRole('cell').filter({ hasText: 'Существенные затраты' })).toContainText(
+    'презумпция — суд считает утверждение истинным, пока не доказано обратное',
+  );
+  await page.getByRole('link', { name: /Все материалы по теме/ }).click();
+  await expect(page).toHaveURL(/\/articles\?topic=databases$/);
   await page
-    .getByRole('article')
-    .getByRole('link', { name: /Как зафиксировать авторство/ })
+    .getByRole('link', { name: /^База данных как объект прав: как защититься при копировании/ })
     .click();
+  await expect(page).toHaveURL(/\/protect\/databases$/);
   await page.reload();
   await expect(page.getByRole('checkbox')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'В избранном', exact: true })).toHaveAttribute(
@@ -84,8 +89,12 @@ test('code checklist links to both articles and expert questions, with full-text
     page.getByRole('link', { name: /Вопросы эксперту компьютерно-технической экспертизы/ }),
   ).toBeVisible();
   await page.goto('/articles?topic=databases');
-  await expect(page.getByRole('link', { name: /Как зафиксировать авторство/ })).toBeVisible();
-  await expect(page.getByRole('link', { name: /База данных в стартапе/ })).toBeVisible();
+  await expect(
+    page.getByRole('link', {
+      name: /^База данных как объект прав: как защититься при копировании/,
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: /^Оформление прав на базу данных/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /Как доказывают заимствование/ })).toHaveCount(0);
 });
 
@@ -103,7 +112,7 @@ test('ownership entry opens available guides and existing addresses remain acces
   ).toBeVisible();
   await page.goto('/ownership/databases');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-    'База данных в стартапе: как закрепить права и не потерять актив',
+    'Оформление прав на базу данных',
   );
   await page.goto('/articles/unknown-material');
   await expect(page.getByRole('heading', { name: 'Материал не найден' })).toBeVisible();

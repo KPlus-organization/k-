@@ -7,7 +7,7 @@ export {
   removeDocument,
   downloadDocument,
 } from './api/documents-api';
-export { activeValues, matches, renderDocument } from './model/render';
+export { activeValues, matches, documentValue } from './model/render';
 export type {
   DocumentTemplate,
   DocumentValues,

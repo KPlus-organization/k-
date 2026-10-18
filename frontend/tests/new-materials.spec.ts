@@ -39,6 +39,9 @@ test('ownership and claims journeys open the new guides and their linked article
   await page.goto('/defend');
   await page.getByRole('link', { name: 'Обозначения бренда', exact: true }).click();
   await expect(page).toHaveURL(/\/defend\/brand$/);
+  await expect(page.getByTestId('guide-step')).toHaveCount(7);
+  await page.getByRole('link', { name: /Требуют компенсацию за чужой товарный знак/ }).click();
+  await expect(page).toHaveURL(/\/articles\/brand-claim$/);
   await expect(page.getByRole('table')).toHaveCount(2);
   await expect(page.getByRole('article')).toContainText('10 000 000 руб.');
 });
@@ -50,7 +53,7 @@ test('seven imported files are downloadable unchanged and their content fits mob
   await page.setViewportSize({ width: 390, height: 844 });
   for (const [id, route, file] of [
     ['database-claim', '/defend/databases', 'database-claim'],
-    ['brand-claim', '/defend/brand', 'brand-claim'],
+    ['brand-claim', '/articles/brand-claim', 'brand-claim'],
     ['code-ownership', '/ownership/code', 'code-ownership'],
     ['code-registration', '/articles/code-registration', 'code-registration'],
     ['database-registration', '/ownership/databases', 'database-ownership'],

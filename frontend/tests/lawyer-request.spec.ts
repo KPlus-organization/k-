@@ -52,7 +52,7 @@ test('material notice has both actions and a request uses profile details', asyn
     'Материал носит общий характер и не заменяет консультацию юриста по вашему делу.',
   );
   await expect(notice).toContainText(
-    'Правовые нормы сверены с актуальной редакцией, и данный материал актуален на 13.10.26.',
+    'Правовые нормы сверены с актуальной редакцией, и данный материал актуален на 19.10.26.',
   );
   await notice.getByRole('button', { name: 'Найти юриста' }).click();
   await expect(page.getByRole('dialog', { name: 'Найти юриста' })).toBeVisible();

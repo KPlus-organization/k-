@@ -9,7 +9,7 @@ export type TextRun = {
 };
 
 export type ContentBlock =
-  | { type: 'paragraph' | 'heading' | 'note'; runs: TextRun[] }
+  | { type: 'paragraph' | 'heading' | 'note'; runs: TextRun[]; anchor?: string }
   | { type: 'list'; ordered: boolean; items: TextRun[][] }
   | { type: 'table'; rows: TextRun[][][] }
   | { type: 'action'; text: string; action: string };

@@ -27,7 +27,7 @@ test('GET /api/objects lists the seven protection objects in order', async () =>
 test('GET /api/materials lists summaries and filters by topic', async () => {
   const all = await api('GET', '/api/materials');
   assert.equal(all.status, 200);
-  assert.equal(all.body.items.length, 18);
+  assert.equal(all.body.items.length, 32);
   assert.deepEqual(Object.keys(all.body.items[0]).sort(), [
     'description',
     'hasContent',
@@ -41,7 +41,7 @@ test('GET /api/materials lists summaries and filters by topic', async () => {
   const brand = await api('GET', '/api/materials?topic=brand');
   assert.deepEqual(
     brand.body.items.map((item: { id: string }) => item.id),
-    ['brand-article', 'brand-protection', 'application', 'deadlines', 'classes', 'brand-claim'],
+    ['brand-article', 'brand-protection', 'application', 'deadlines', 'classes', 'brand-claim', 'brand-ownership', 'brand-start', 'brand-defense'],
   );
   const placeholder = brand.body.items.find((item: { id: string }) => item.id === 'classes');
   assert.equal(placeholder.hasContent, false);
@@ -95,7 +95,7 @@ test('GET /api/search finds objects and materials case-insensitively', async () 
   assert.deepEqual(res.body.objects, []);
   assert.deepEqual(
     res.body.materials.map((item: { id: string }) => item.id),
-    ['classes', 'brand-claim'],
+    ['classes', 'brand-claim', 'brand-ownership', 'brand-start', 'brand-defense'],
   );
 
   const code = await api('GET', `/api/search?q=${encodeURIComponent('Код')}`);

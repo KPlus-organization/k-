@@ -45,7 +45,11 @@ export type AsyncData<T> = {
  * `loader` must be stable for a given key (wrap it in useCallback).
  * A `null` key means "nothing to load", e.g. a guest has no favorites.
  */
-export function useAsyncData<T>(key: string | null, loader: () => Promise<T>): AsyncData<T> {
+export function useAsyncData<T>(
+  key: string | null,
+  loader: () => Promise<T>,
+  refreshOnMount = false,
+): AsyncData<T> {
   const subscribe = useCallback(
     (listener: () => void) => {
       if (key === null) return () => {};
@@ -61,8 +65,8 @@ export function useAsyncData<T>(key: string | null, loader: () => Promise<T>): A
   );
 
   useEffect(() => {
-    if (key !== null && (entries.get(key) ?? IDLE).stale) load(key, loader);
-  }, [key, loader]);
+    if (key !== null && (refreshOnMount || (entries.get(key) ?? IDLE).stale)) load(key, loader);
+  }, [key, loader, refreshOnMount]);
 
   const reload = useCallback(() => {
     if (key !== null) load(key, loader);

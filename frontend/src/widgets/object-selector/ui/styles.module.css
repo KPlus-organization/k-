@@ -1,0 +1,67 @@
+.section {
+  margin-top: 32px;
+  scroll-margin-top: 24px;
+}
+
+.section > h2 {
+  margin-bottom: 12px;
+  color: var(--green);
+}
+
+.section > p {
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.card {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--green);
+  border-radius: 12px;
+  padding: 20px 16px;
+}
+
+.heading {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.title h3 {
+  font-size: 16px;
+}
+
+.title svg,
+a.title:hover {
+  color: var(--green);
+}
+
+.status {
+  display: block;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (width <= 650px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

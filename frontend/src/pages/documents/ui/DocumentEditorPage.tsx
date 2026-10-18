@@ -7,7 +7,6 @@ import type { Profile } from '@/entities/profile';
 import {
   activeValues,
   matches,
-  renderDocument,
   useDocumentTemplate,
   useSavedDocument,
   saveDocument,
@@ -15,10 +14,10 @@ import {
   type DocumentTemplate,
   type DocumentValues,
   type SavedDocument,
-  type TemplateField,
 } from '@/entities/document';
 import { Breadcrumbs } from '@/widgets/page-heading';
 import styles from './styles.module.css';
+import { InlineDocument } from './InlineDocument';
 
 type Props = { profile: Profile | null; status: 'loading' | 'guest' | 'user'; open: Open };
 type Draft = {
@@ -34,7 +33,10 @@ function readDraft(template: DocumentTemplate, ownerId: string): Draft | undefin
     const draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) ?? 'null') as Draft | null;
     if (
       !draft ||
-      draft.templateVersion !== template.version ||
+      !(
+        draft.templateVersion === template.version ||
+        ([1, 2].includes(draft.templateVersion) && template.version === 3)
+      ) ||
       typeof draft.id !== 'string' ||
       typeof draft.title !== 'string' ||
       !draft.fields ||
@@ -152,7 +154,6 @@ function DocumentEditor({
   const shownFields = template.fields.filter((field) => matches(field.when, active));
   const required = shownFields.filter((field) => field.required);
   const remaining = required.filter((field) => !fields[field.id]?.trim()).length;
-  const paragraphs = renderDocument(template, fields);
 
   useEffect(() => {
     if (!saved && !persisted.current)
@@ -309,8 +310,8 @@ function DocumentEditor({
             Очистить форму
           </button>
         </div>
-        <a href="#document-preview" className={ui['text-link']}>
-          Посмотреть текст документа ↓
+        <a href="#document-body" className={ui['text-link']}>
+          Перейти к заполнению документа ↓
         </a>
         {saved && (
           <Link to="/profile" className={ui['text-link']}>
@@ -323,110 +324,78 @@ function DocumentEditor({
           {message}
         </p>
       )}
-      <div className={styles['editor-layout']}>
-        <form
-          className={styles['form']}
-          onSubmit={(event) => {
-            event.preventDefault();
-            void download();
-          }}
-          noValidate
-        >
-          <label className={ui['field']}>
-            Название для избранного
-            <input
-              id="document-title"
-              value={title}
-              disabled={busy}
-              maxLength={160}
-              onChange={(event) => {
-                setTitle(event.target.value);
-                setDirty(true);
-              }}
-              aria-invalid={Boolean(errors.title)}
-            />
-            {errors.title && <span className={styles['error']}>{errors.title}</span>}
-          </label>
-          <p className={styles['hint']}>
-            Поля со звёздочкой обязательны для скачивания. Подсказки и невыбранные варианты в файл
-            не попадут.
-          </p>
-          {template.groups.map((group) => {
-            const items = shownFields.filter((field) => field.group === group.id);
-            if (!items.length) return null;
-            return (
-              <fieldset key={group.id} className={styles['group']}>
-                <legend>{group.title}</legend>
-                <p className={styles['hint']}>{group.description}</p>
-                {group.id === 'money' && (
-                  <div className={styles['reference']}>
-                    <strong>Обратите внимание!</strong>
-                    <p>Перед выбором денежного требования обратитесь к статье:</p>
-                    <Link
-                      className={ui['text-link']}
-                      to="/articles/code-1"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Убытки или компенсация: что требовать при копировании программы? ↗
-                    </Link>
-                  </div>
-                )}
-                {items.map((field) => (
-                  <DocumentField
-                    key={field.id}
-                    field={field}
-                    value={fields[field.id] ?? ''}
-                    error={errors[field.id]}
-                    onChange={(value) => update(field.id, value)}
-                    disabled={busy}
-                  />
-                ))}
-              </fieldset>
-            );
-          })}
-          <div className={ui['button-row']}>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={save}
-              className={cx(ui['button'], ui['secondary'])}
-            >
-              {saved ? 'Сохранить изменения' : 'Сохранить в избранное'}
-            </button>
-            <button disabled={busy} type="submit" className={cx(ui['button'], ui['primary'])}>
-              Скачать DOCX
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={clear}
-              className={cx(ui['button'], ui['secondary'])}
-            >
-              Очистить форму
-            </button>
-          </div>
-        </form>
-        <aside
-          className={styles['preview']}
-          id="document-preview"
-          aria-label="Предпросмотр документа"
-        >
-          <h2>Ваш документ</h2>
-          <p className={styles['hint']}>
-            Текст обновляется при заполнении. Значения в квадратных скобках нужно заполнить.
-          </p>
-          <div className={styles['paper']}>
-            {paragraphs.map((paragraph, index) =>
-              paragraph.heading ? (
-                <h3 key={index}>{paragraph.text}</h3>
-              ) : (
-                <p key={index}>{paragraph.text}</p>
-              ),
-            )}
-          </div>
-        </aside>
-      </div>
+      <form
+        className={styles['document-form']}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void download();
+        }}
+        noValidate
+      >
+        <label className={cx(ui['field'], styles['document-title'])}>
+          Название для избранного
+          <input
+            id="document-title"
+            value={title}
+            disabled={busy}
+            maxLength={160}
+            onChange={(event) => {
+              setTitle(event.target.value);
+              setDirty(true);
+            }}
+            aria-invalid={Boolean(errors.title)}
+          />
+          {errors.title && <span className={styles['error']}>{errors.title}</span>}
+        </label>
+        <p className={styles['editor-instructions']}>
+          Заполняйте выделенные места в тексте. У сложных полей есть i с дополнительным пояснением.
+          Поля со звёздочкой обязательны. Повторяющиеся сведения обновляются автоматически.
+          Остальной текст закреплён. Подсказки и невыбранные варианты в скачанный файл не попадут.
+        </p>
+        <InlineDocument
+          template={template}
+          fields={fields}
+          errors={errors}
+          busy={busy}
+          update={update}
+        />
+        {template.attachmentGuidance && (
+          <aside
+            className={styles['attachment-guidance']}
+            aria-labelledby="attachment-guidance-title"
+          >
+            <h2 id="attachment-guidance-title">{template.attachmentGuidance.title}</h2>
+            <p>{template.attachmentGuidance.intro}</p>
+            <ul>
+              {template.attachmentGuidance.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <p className={styles['attachment-guidance-note']}>{template.attachmentGuidance.note}</p>
+          </aside>
+        )}
+        <div className={ui['button-row']}>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={save}
+            className={cx(ui['button'], ui['secondary'])}
+          >
+            {saved ? 'Сохранить изменения' : 'Сохранить в избранное'}
+          </button>
+          <button disabled={busy} type="submit" className={cx(ui['button'], ui['primary'])}>
+            Скачать DOCX
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={clear}
+            className={cx(ui['button'], ui['secondary'])}
+          >
+            Очистить форму
+          </button>
+        </div>
+      </form>
       <section className={styles['notice']}>
         <strong>Обратите внимание!</strong>
         <p>
@@ -450,69 +419,5 @@ function defaultValues(template: DocumentTemplate): DocumentValues {
     template.fields
       .filter((field) => field.defaultValue !== undefined)
       .map((field) => [field.id, field.defaultValue!]),
-  );
-}
-
-function DocumentField({
-  field,
-  value,
-  error,
-  onChange,
-  disabled,
-}: {
-  field: TemplateField;
-  value: string;
-  error?: string;
-  onChange: (value: string) => void;
-  disabled: boolean;
-}) {
-  const props = {
-    id: `document-${field.id}`,
-    name: field.id,
-    value,
-    disabled,
-    required: field.required,
-    'aria-invalid': Boolean(error),
-    'aria-describedby': field.hint || error ? `document-hint-${field.id}` : undefined,
-  };
-  return (
-    <div className={styles['field']}>
-      <label htmlFor={props.id}>
-        {field.label}
-        {field.required && <span aria-hidden="true"> *</span>}
-      </label>
-      {field.type === 'select' ? (
-        <select {...props} onChange={(event) => onChange(event.target.value)}>
-          <option value="">Выберите вариант</option>
-          {field.options?.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      ) : field.type === 'textarea' ? (
-        <textarea
-          {...props}
-          rows={3}
-          maxLength={field.maxLength}
-          onChange={(event) => onChange(event.target.value)}
-        />
-      ) : (
-        <input
-          {...props}
-          type={field.type === 'money' ? 'number' : field.type}
-          min={field.min}
-          max={field.max}
-          step={field.type === 'money' ? '0.01' : field.type === 'number' ? '1' : undefined}
-          maxLength={field.maxLength}
-          onChange={(event) => onChange(event.target.value)}
-        />
-      )}
-      {(field.hint || error) && (
-        <p id={`document-hint-${field.id}`} className={error ? styles['error'] : styles['hint']}>
-          {error ?? field.hint}
-        </p>
-      )}
-    </div>
   );
 }

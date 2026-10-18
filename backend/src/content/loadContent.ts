@@ -12,7 +12,7 @@ export interface ContentObject {
 
 type Run = { text: string };
 export type ContentBlock =
-  | { type: 'paragraph' | 'heading' | 'note'; runs: Run[] }
+  | { type: 'paragraph' | 'heading' | 'note'; runs: Run[]; anchor?: string }
   | { type: 'list'; items: Run[][] }
   | { type: 'table'; rows: Run[][][] }
   | { type: 'action'; text: string };
