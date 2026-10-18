@@ -13,6 +13,7 @@ import {
 } from '@/entities/material';
 import { ProfileSettings } from '@/features/profile-settings';
 import { LawyerRequest } from '@/features/lawyer-request';
+import { SavedDocuments } from '@/features/saved-documents';
 import styles from './styles.module.css';
 
 export function AppModal({
@@ -53,7 +54,6 @@ export function AppModal({
     lawyer: 'Найти юриста',
     'lawyer-request': 'Обсудить задачу с юристом',
     ownership: 'Оформить права',
-    risks: 'Рассчитать риски',
     defend: 'Защититься',
     'definition:presumption': 'Что такое презумпция?',
   };
@@ -79,6 +79,7 @@ export function AppModal({
   else if (id === 'favorites')
     body = (
       <div className={ui['favorite-list']}>
+        {profile && <SavedDocuments userId={profile.id} />}
         {favorites.length ? (
           favorites.map((item) => (
             <div className={styles['saved-row']} data-testid="saved-row" key={item.id}>

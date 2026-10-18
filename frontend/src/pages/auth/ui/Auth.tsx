@@ -43,6 +43,7 @@ export function Auth({
   const restoring = status === 'loading';
   const busy = pending || restoring;
   const destination = nextPath(next);
+  const enteringConstructor = destination === '/documents' || destination.startsWith('/documents/');
   const keepNext = (path: string) => (next ? `${path}?next=${encodeURIComponent(next)}` : path);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -86,6 +87,11 @@ export function Auth({
   if (status === 'user') return <Navigate to={destination} replace />;
   return (
     <div className={styles['auth-page']}>
+      {enteringConstructor && (
+        <p role="status">
+          Чтобы пользоваться конструктором документов, войдите в профиль или зарегистрируйтесь.
+        </p>
+      )}
       <Link className={ui['back-link']} to="/">
         <Icon name="arrowLeft" size={18} />
         На главную
@@ -99,7 +105,12 @@ export function Auth({
             Мои права.
           </h2>
           <p>Всё важное об интеллектуальной собственности — в вашем личном кабинете.</p>
-          <img src="/images/profile-protection.png" alt="" width={360} height={200} />
+          <img
+            src="/images/digital-rights.svg"
+            alt="Авторские права на цифровой продукт"
+            width={360}
+            height={200}
+          />
           <div className={styles['benefits']}>
             {(
               [

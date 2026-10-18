@@ -95,7 +95,12 @@ test('ownership entry opens available guides and existing addresses remain acces
   await page.goto('/');
   await page.getByRole('link', { name: /Оформить права/ }).click();
   await expect(page).toHaveURL('/ownership');
-  await expect(page.getByTestId('object-card').getByRole('link')).toHaveCount(2);
+  await expect(page.getByTestId('guide-step')).toHaveCount(5);
+  await expect(
+    page
+      .getByRole('article')
+      .getByRole('link', { name: 'Оформить права на программный код', exact: true }),
+  ).toBeVisible();
   await page.goto('/ownership/databases');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
     'База данных в стартапе: как закрепить права и не потерять актив',

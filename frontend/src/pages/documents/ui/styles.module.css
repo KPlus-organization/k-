@@ -1,0 +1,234 @@
+.page {
+  padding-bottom: 64px;
+}
+
+.intro {
+  margin: 30px 0;
+}
+
+.intro h1 {
+  color: var(--green);
+  margin: 12px 0;
+  max-width: 1000px;
+}
+
+.intro p {
+  max-width: 850px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 26px;
+  display: grid;
+  gap: 14px;
+  background: var(--pale);
+}
+
+.card:hover {
+  border-color: var(--green);
+}
+
+.card span,
+.card svg {
+  color: var(--green);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: var(--mint);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.toolbar > div:first-child {
+  flex: 1 1 280px;
+}
+
+.toolbar p {
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+.editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 32px;
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.group {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  margin: 0;
+}
+
+.group legend {
+  color: var(--green);
+  font-size: 18px;
+  font-weight: 600;
+  padding: 0 8px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  margin-top: 18px;
+}
+
+.reference {
+  background: var(--mint);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.field label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: white;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible {
+  outline: 3px solid #51bfa1;
+  outline-offset: 3px;
+}
+
+.field [aria-invalid='true'] {
+  border-color: #b42318;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.error {
+  color: #b42318;
+  font-size: 13px;
+}
+
+.message {
+  border: 1px solid var(--line);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.preview {
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  padding: 24px;
+  background: #f7f9f8;
+  scroll-margin-top: 20px;
+}
+
+.preview h2 {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.paper {
+  background: white;
+  padding: 24px;
+  margin-top: 20px;
+  border: 1px solid var(--line);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.paper p {
+  font-size: 13px;
+  line-height: 1.65;
+  margin-bottom: 14px;
+  color: var(--text);
+}
+
+.paper h3 {
+  font-size: 15px;
+  margin: 20px 0 12px;
+}
+
+.notice {
+  background: var(--pale);
+  padding: 24px;
+  border-radius: 14px;
+  margin-top: 32px;
+}
+
+.notice p {
+  margin: 12px 0 18px;
+}
+
+@media (width <= 950px) {
+  .editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .preview {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (width <= 650px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .group,
+  .preview,
+  .paper {
+    padding: 14px;
+  }
+
+  .intro h1 {
+    font-size: 30px;
+  }
+}

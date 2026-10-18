@@ -1,0 +1,1476 @@
+{
+  "id": "code-claim",
+  "version": 1,
+  "kind": "claim",
+  "object": "code",
+  "title": "Претензия о нарушении прав на программный код",
+  "description": "Заполните сведения о сторонах, правах, обстоятельствах и требованиях. Текст составляется по предоставленному шаблону.",
+  "groups": [
+    {
+      "id": "parties",
+      "title": "1. Стороны и программа",
+      "description": "Укажите лицо, которому принадлежат права, и адресата претензии."
+    },
+    {
+      "id": "rights",
+      "title": "2. Принадлежность прав",
+      "description": "Выберите основание и перечислите подтверждающие документы."
+    },
+    {
+      "id": "violation",
+      "title": "3. Обстоятельства нарушения",
+      "description": "Укажите только фактически установленные действия и доказательства."
+    },
+    {
+      "id": "requirements",
+      "title": "4. Требования о прекращении нарушения",
+      "description": "Включите только применимые к вашей ситуации требования."
+    },
+    {
+      "id": "money",
+      "title": "5. Денежное требование",
+      "description": "Выберите один вариант. Убытки и компенсация за одно нарушение не складываются."
+    },
+    {
+      "id": "payment",
+      "title": "6. Реквизиты для выплаты",
+      "description": "Этот раздел появляется только при денежном требовании."
+    },
+    {
+      "id": "response",
+      "title": "7. Ответ и подпись",
+      "description": "Подготовленный файл можно распечатать и подписать."
+    },
+    {
+      "id": "attachments",
+      "title": "8. Приложения",
+      "description": "Впишите только документы, которые действительно будете направлять. Файлы здесь не загружаются."
+    }
+  ],
+  "fields": [
+    {
+      "id": "applicantType",
+      "group": "parties",
+      "label": "Кто обращается",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "person",
+          "label": "Физическое лицо / ИП"
+        },
+        {
+          "value": "company",
+          "label": "Организация"
+        }
+      ]
+    },
+    {
+      "id": "recipient",
+      "group": "parties",
+      "label": "Кому: Ф. И. О. или наименование",
+      "type": "text",
+      "required": true,
+      "maxLength": 300
+    },
+    {
+      "id": "recipientAddress",
+      "group": "parties",
+      "label": "Адрес получателя",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000
+    },
+    {
+      "id": "recipientIdentifiers",
+      "group": "parties",
+      "label": "Известные идентификаторы получателя",
+      "type": "text",
+      "required": false,
+      "maxLength": 300,
+      "hint": "ИНН, ОГРН или иные известные сведения."
+    },
+    {
+      "id": "applicant",
+      "group": "parties",
+      "label": "Правообладатель / исключительный лицензиат",
+      "type": "text",
+      "required": true,
+      "maxLength": 300
+    },
+    {
+      "id": "applicantAddress",
+      "group": "parties",
+      "label": "Адрес заявителя",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000
+    },
+    {
+      "id": "applicantTax",
+      "group": "parties",
+      "label": "ИНН / ОГРН заявителя",
+      "type": "text",
+      "required": false,
+      "maxLength": 300
+    },
+    {
+      "id": "email",
+      "group": "parties",
+      "label": "Электронная почта для ответа",
+      "type": "email",
+      "required": true,
+      "maxLength": 300
+    },
+    {
+      "id": "phone",
+      "group": "parties",
+      "label": "Телефон",
+      "type": "tel",
+      "required": true,
+      "maxLength": 300
+    },
+    {
+      "id": "program",
+      "group": "parties",
+      "label": "Название программы",
+      "type": "text",
+      "required": true,
+      "maxLength": 300
+    },
+    {
+      "id": "version",
+      "group": "parties",
+      "label": "Версия программы",
+      "type": "text",
+      "required": true,
+      "maxLength": 300
+    },
+    {
+      "id": "programDetails",
+      "group": "parties",
+      "label": "Дополнительные сведения о программе",
+      "type": "textarea",
+      "required": false,
+      "maxLength": 2000
+    },
+    {
+      "id": "createdPeriod",
+      "group": "parties",
+      "label": "Дата или период создания",
+      "type": "text",
+      "required": true,
+      "maxLength": 300
+    },
+    {
+      "id": "purpose",
+      "group": "parties",
+      "label": "Функциональное назначение",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000
+    },
+    {
+      "id": "elements",
+      "group": "parties",
+      "label": "Охраняемые элементы",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000,
+      "hint": "Конкретные файлы, модули, исходный или объектный код. Не ограничивайтесь общей идеей или функциональностью."
+    },
+    {
+      "id": "rightsBasis",
+      "group": "rights",
+      "label": "На каком основании возникли права",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "author",
+          "label": "Программа создана лично",
+          "text": "Программа создана заявителем лично."
+        },
+        {
+          "value": "employer",
+          "label": "Программа создана работником",
+          "text": "Программа создана работником в пределах трудовых обязанностей; исключительное право принадлежит работодателю при соблюдении условий статьи 1295 ГК РФ."
+        },
+        {
+          "value": "assignment",
+          "label": "Договор отчуждения исключительного права",
+          "text": "Исключительное право приобретено по договору отчуждения."
+        },
+        {
+          "value": "order",
+          "label": "Договор заказа / подряда / иной договор",
+          "text": "Право возникло в силу договора с учетом применимых положений статей 1296, 1297 ГК РФ."
+        },
+        {
+          "value": "exclusive",
+          "label": "Исключительная лицензия",
+          "text": "Заявитель является исключительным лицензиатом и вправе защищать право в пределах статьи 1254 ГК РФ."
+        }
+      ]
+    },
+    {
+      "id": "rightsContractType",
+      "group": "rights",
+      "label": "Вид договора о приобретении прав",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "order",
+          "label": "Договор заказа"
+        },
+        {
+          "value": "work",
+          "label": "Договор подряда"
+        },
+        {
+          "value": "other",
+          "label": "Иной договор"
+        }
+      ],
+      "when": {
+        "rightsBasis": "order"
+      }
+    },
+    {
+      "id": "rightsContractNumber",
+      "group": "rights",
+      "label": "Номер договора о правах",
+      "type": "text",
+      "required": true,
+      "maxLength": 300,
+      "when": {
+        "rightsBasis": [
+          "assignment",
+          "order",
+          "exclusive"
+        ]
+      }
+    },
+    {
+      "id": "rightsContractDate",
+      "group": "rights",
+      "label": "Дата договора о правах",
+      "type": "date",
+      "required": true,
+      "maxLength": 300,
+      "when": {
+        "rightsBasis": [
+          "assignment",
+          "order",
+          "exclusive"
+        ]
+      }
+    },
+    {
+      "id": "rightsEvidence",
+      "group": "rights",
+      "label": "Чем подтверждается принадлежность прав",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000,
+      "hint": "Договоры, задания, акты, кадровые документы, история коммитов, архивы, переписка. Проверьте цепочку перехода прав и полномочия подписанта."
+    },
+    {
+      "id": "registered",
+      "group": "rights",
+      "label": "Есть регистрация программы в Роспатенте",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "no",
+          "label": "Нет"
+        },
+        {
+          "value": "yes",
+          "label": "Да"
+        }
+      ],
+      "defaultValue": "no",
+      "hint": "Регистрация добровольна. Её отсутствие само по себе не означает отсутствия авторского права."
+    },
+    {
+      "id": "registrationNumber",
+      "group": "rights",
+      "label": "Номер регистрации",
+      "type": "text",
+      "required": true,
+      "maxLength": 300,
+      "when": {
+        "registered": "yes"
+      }
+    },
+    {
+      "id": "registrationDate",
+      "group": "rights",
+      "label": "Дата регистрации",
+      "type": "date",
+      "required": true,
+      "maxLength": 300,
+      "when": {
+        "registered": "yes"
+      }
+    },
+    {
+      "id": "discovered",
+      "group": "violation",
+      "label": "Когда стало известно о нарушении",
+      "type": "text",
+      "required": true,
+      "maxLength": 300
+    },
+    {
+      "id": "violationAction",
+      "group": "violation",
+      "label": "Действие нарушителя",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "copy",
+          "label": "Воспроизведение",
+          "text": "воспроизвел"
+        },
+        {
+          "value": "web",
+          "label": "Размещение в сети",
+          "text": "разместил в сети"
+        },
+        {
+          "value": "distribution",
+          "label": "Распространение",
+          "text": "распространил"
+        },
+        {
+          "value": "modify",
+          "label": "Модификация",
+          "text": "модифицировал"
+        },
+        {
+          "value": "include",
+          "label": "Включение в собственный продукт",
+          "text": "включил в собственный продукт"
+        },
+        {
+          "value": "access",
+          "label": "Предоставление доступа",
+          "text": "предоставил доступ к"
+        },
+        {
+          "value": "license",
+          "label": "Использование за пределами лицензии",
+          "text": "использовал за пределами лицензии"
+        }
+      ]
+    },
+    {
+      "id": "location",
+      "group": "violation",
+      "label": "Где обнаружено нарушение",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000,
+      "hint": "URL, репозиторий, домен, сервер или наименование продукта."
+    },
+    {
+      "id": "circumstances",
+      "group": "violation",
+      "label": "Конкретные действия и обстоятельства",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000,
+      "hint": "Даты, количество копий, способ использования."
+    },
+    {
+      "id": "comparison",
+      "group": "violation",
+      "label": "Что сопоставляли",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "files",
+          "label": "Файлы",
+          "text": "файлов"
+        },
+        {
+          "value": "fragments",
+          "label": "Фрагменты кода",
+          "text": "фрагментов кода"
+        },
+        {
+          "value": "structure",
+          "label": "Структуру",
+          "text": "структуры"
+        },
+        {
+          "value": "history",
+          "label": "Историю изменений",
+          "text": "истории изменений"
+        }
+      ]
+    },
+    {
+      "id": "matches",
+      "group": "violation",
+      "label": "Выявленные совпадения и признаки",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000
+    },
+    {
+      "id": "violationEvidence",
+      "group": "violation",
+      "label": "Доказательства нарушения",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000,
+      "hint": "Протокол осмотра, скриншоты с датой и URL, выгрузки, контрольные суммы, заключение специалиста. Одно сходство функциональности не доказывает заимствование кода."
+    },
+    {
+      "id": "contract",
+      "group": "violation",
+      "label": "Есть договор с адресатом претензии",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "no",
+          "label": "Договора нет"
+        },
+        {
+          "value": "yes",
+          "label": "Есть договор, нарушены его условия"
+        }
+      ],
+      "hint": "Учитывайте законные случаи свободного использования программы, в том числе статью 1280 ГК РФ, и условия применимых открытых лицензий."
+    },
+    {
+      "id": "contractNumber",
+      "group": "violation",
+      "label": "Номер договора с адресатом",
+      "type": "text",
+      "required": true,
+      "maxLength": 300,
+      "when": {
+        "contract": "yes"
+      }
+    },
+    {
+      "id": "contractDate",
+      "group": "violation",
+      "label": "Дата договора с адресатом",
+      "type": "date",
+      "required": true,
+      "maxLength": 300,
+      "when": {
+        "contract": "yes"
+      }
+    },
+    {
+      "id": "licenseLimits",
+      "group": "violation",
+      "label": "Разрешённые пределы использования",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000,
+      "when": {
+        "contract": "yes"
+      }
+    },
+    {
+      "id": "outsideLimits",
+      "group": "violation",
+      "label": "Какие действия выходят за пределы договора",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000,
+      "when": {
+        "contract": "yes"
+      }
+    },
+    {
+      "id": "personalRights",
+      "group": "violation",
+      "label": "Нарушены также личные права автора",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "no",
+          "label": "Нет"
+        },
+        {
+          "value": "yes",
+          "label": "Да"
+        }
+      ],
+      "defaultValue": "no",
+      "when": {
+        "applicantType": "person"
+      }
+    },
+    {
+      "id": "personalAction",
+      "group": "violation",
+      "label": "В чём нарушение личных прав",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "authorship",
+          "label": "Присвоено авторство",
+          "text": "указал себя автором"
+        },
+        {
+          "value": "removed",
+          "label": "Удалены сведения об авторе",
+          "text": "удалил сведения об авторе"
+        },
+        {
+          "value": "distorted",
+          "label": "Искажено произведение",
+          "text": "исказил произведение"
+        }
+      ],
+      "when": {
+        "applicantType": "person",
+        "personalRights": "yes"
+      }
+    },
+    {
+      "id": "stopDays",
+      "group": "requirements",
+      "label": "Срок прекращения нарушения, календарных дней",
+      "type": "number",
+      "required": true,
+      "maxLength": 300,
+      "min": 1,
+      "max": 365,
+      "defaultValue": "30"
+    },
+    {
+      "id": "stopAction",
+      "group": "requirements",
+      "label": "Какое действие требуется прекратить",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "distribution",
+          "label": "Распространение",
+          "text": "распространение"
+        },
+        {
+          "value": "access",
+          "label": "Предоставление доступа",
+          "text": "предоставление доступа"
+        },
+        {
+          "value": "web",
+          "label": "Размещение",
+          "text": "размещение"
+        },
+        {
+          "value": "copy",
+          "label": "Копирование",
+          "text": "копирование"
+        },
+        {
+          "value": "sale",
+          "label": "Предложение к продаже",
+          "text": "предложение к продаже"
+        },
+        {
+          "value": "license",
+          "label": "Использование за пределами лицензии",
+          "text": "использование за пределами лицензии"
+        }
+      ]
+    },
+    {
+      "id": "stopLocations",
+      "group": "requirements",
+      "label": "Адреса, по которым требуется прекратить нарушение",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000
+    },
+    {
+      "id": "physicalCopies",
+      "group": "requirements",
+      "label": "Есть основания требовать прекращения распространения материальных носителей",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "no",
+          "label": "Нет"
+        },
+        {
+          "value": "yes",
+          "label": "Да"
+        }
+      ],
+      "defaultValue": "no"
+    },
+    {
+      "id": "carriersAction",
+      "group": "requirements",
+      "label": "Порядок обращения с материальными носителями",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "transfer",
+          "label": "Передача",
+          "text": "передачи"
+        },
+        {
+          "value": "destroy",
+          "label": "Изъятие и уничтожение",
+          "text": "изъятия и уничтожения"
+        }
+      ],
+      "when": {
+        "physicalCopies": "yes"
+      }
+    },
+    {
+      "id": "authorName",
+      "group": "requirements",
+      "label": "Имя автора, которое требуется восстановить",
+      "type": "text",
+      "required": true,
+      "maxLength": 300,
+      "when": {
+        "applicantType": "person",
+        "personalRights": "yes"
+      }
+    },
+    {
+      "id": "authorLocations",
+      "group": "requirements",
+      "label": "Где восстановить указание автора",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000,
+      "when": {
+        "applicantType": "person",
+        "personalRights": "yes"
+      }
+    },
+    {
+      "id": "distortions",
+      "group": "requirements",
+      "label": "Какие искажения требуется устранить",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000,
+      "when": {
+        "applicantType": "person",
+        "personalRights": "yes",
+        "personalAction": "distorted"
+      }
+    },
+    {
+      "id": "personalDays",
+      "group": "requirements",
+      "label": "Срок восстановления личных прав, календарных дней",
+      "type": "number",
+      "required": true,
+      "maxLength": 300,
+      "min": 1,
+      "max": 365,
+      "defaultValue": "30",
+      "when": {
+        "applicantType": "person",
+        "personalRights": "yes"
+      }
+    },
+    {
+      "id": "disputedRights",
+      "group": "requirements",
+      "label": "Адресат оспаривает принадлежность исключительного права",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "no",
+          "label": "Нет"
+        },
+        {
+          "value": "yes",
+          "label": "Да"
+        }
+      ],
+      "defaultValue": "no"
+    },
+    {
+      "id": "moneyType",
+      "group": "money",
+      "label": "Вид денежного требования",
+      "type": "select",
+      "required": true,
+      "maxLength": 300,
+      "options": [
+        {
+          "value": "losses",
+          "label": "Убытки"
+        },
+        {
+          "value": "fixed",
+          "label": "Фиксированная компенсация"
+        },
+        {
+          "value": "copies",
+          "label": "Двукратная стоимость контрафактных экземпляров"
+        },
+        {
+          "value": "license",
+          "label": "Двукратная стоимость права использования"
+        },
+        {
+          "value": "none",
+          "label": "Без денежного требования"
+        }
+      ]
+    },
+    {
+      "id": "damage",
+      "group": "money",
+      "label": "Реальный ущерб, руб.",
+      "type": "money",
+      "required": true,
+      "maxLength": 300,
+      "min": 0,
+      "max": 1000000000000,
+      "when": {
+        "moneyType": "losses"
+      }
+    },
+    {
+      "id": "lostProfit",
+      "group": "money",
+      "label": "Упущенная выгода, руб.",
+      "type": "money",
+      "required": true,
+      "maxLength": 300,
+      "min": 0,
+      "max": 1000000000000,
+      "when": {
+        "moneyType": "losses"
+      }
+    },
+    {
+      "id": "moneyEvidence",
+      "group": "money",
+      "label": "Обоснование денежного требования",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000,
+      "when": {
+        "moneyType": [
+          "losses",
+          "fixed",
+          "copies",
+          "license"
+        ]
+      },
+      "hint": "Для убытков — причинная связь и документы; для компенсации — обстоятельства нарушения или доказательства стоимости выбранной базы расчёта."
+    },
+    {
+      "id": "fixedAmount",
+      "group": "money",
+      "label": "Размер фиксированной компенсации, руб.",
+      "type": "money",
+      "required": true,
+      "maxLength": 300,
+      "min": 10000,
+      "max": 10000000,
+      "when": {
+        "moneyType": "fixed"
+      },
+      "hint": "Пределы указаны в предоставленном шаблоне. Окончательный размер при споре определяет суд."
+    },
+    {
+      "id": "copiesCost",
+      "group": "money",
+      "label": "Стоимость контрафактных экземпляров, руб.",
+      "type": "money",
+      "required": true,
+      "maxLength": 300,
+      "min": 0.01,
+      "max": 1000000000000,
+      "when": {
+        "moneyType": "copies"
+      }
+    },
+    {
+      "id": "licenseCost",
+      "group": "money",
+      "label": "Стоимость права использования, руб.",
+      "type": "money",
+      "required": true,
+      "maxLength": 300,
+      "min": 0.01,
+      "max": 1000000000000,
+      "when": {
+        "moneyType": "license"
+      },
+      "hint": "Не подменяйте стоимость права использования стоимостью всей разработки без обоснования."
+    },
+    {
+      "id": "paymentDays",
+      "group": "payment",
+      "label": "Срок выплаты, календарных дней",
+      "type": "number",
+      "required": true,
+      "maxLength": 300,
+      "min": 1,
+      "max": 365,
+      "defaultValue": "30",
+      "when": {
+        "moneyType": [
+          "losses",
+          "fixed",
+          "copies",
+          "license"
+        ]
+      }
+    },
+    {
+      "id": "payee",
+      "group": "payment",
+      "label": "Получатель платежа",
+      "type": "text",
+      "required": true,
+      "maxLength": 300,
+      "when": {
+        "moneyType": [
+          "losses",
+          "fixed",
+          "copies",
+          "license"
+        ]
+      }
+    },
+    {
+      "id": "payeeTax",
+      "group": "payment",
+      "label": "ИНН получателя платежа",
+      "type": "text",
+      "required": false,
+      "maxLength": 300,
+      "when": {
+        "moneyType": [
+          "losses",
+          "fixed",
+          "copies",
+          "license"
+        ]
+      }
+    },
+    {
+      "id": "account",
+      "group": "payment",
+      "label": "Расчётный счёт",
+      "type": "text",
+      "required": true,
+      "maxLength": 300,
+      "pattern": "^\\d{20}$",
+      "hint": "20 цифр.",
+      "when": {
+        "moneyType": [
+          "losses",
+          "fixed",
+          "copies",
+          "license"
+        ]
+      }
+    },
+    {
+      "id": "bank",
+      "group": "payment",
+      "label": "Банк получателя",
+      "type": "text",
+      "required": true,
+      "maxLength": 300,
+      "when": {
+        "moneyType": [
+          "losses",
+          "fixed",
+          "copies",
+          "license"
+        ]
+      }
+    },
+    {
+      "id": "bik",
+      "group": "payment",
+      "label": "БИК",
+      "type": "text",
+      "required": true,
+      "maxLength": 300,
+      "pattern": "^\\d{9}$",
+      "hint": "9 цифр.",
+      "when": {
+        "moneyType": [
+          "losses",
+          "fixed",
+          "copies",
+          "license"
+        ]
+      }
+    },
+    {
+      "id": "correspondent",
+      "group": "payment",
+      "label": "Корреспондентский счёт",
+      "type": "text",
+      "required": true,
+      "maxLength": 300,
+      "pattern": "^\\d{20}$",
+      "hint": "20 цифр.",
+      "when": {
+        "moneyType": [
+          "losses",
+          "fixed",
+          "copies",
+          "license"
+        ]
+      }
+    },
+    {
+      "id": "responseAddress",
+      "group": "response",
+      "label": "Адрес для письменного ответа",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 2000
+    },
+    {
+      "id": "responseDays",
+      "group": "response",
+      "label": "Срок ответа, календарных дней",
+      "type": "number",
+      "required": true,
+      "maxLength": 300,
+      "min": 1,
+      "max": 365,
+      "defaultValue": "30"
+    },
+    {
+      "id": "date",
+      "group": "response",
+      "label": "Дата претензии",
+      "type": "date",
+      "required": true,
+      "maxLength": 300
+    },
+    {
+      "id": "signerPosition",
+      "group": "response",
+      "label": "Должность подписанта",
+      "type": "text",
+      "required": false,
+      "maxLength": 300
+    },
+    {
+      "id": "signerName",
+      "group": "response",
+      "label": "Ф. И. О. подписанта",
+      "type": "text",
+      "required": true,
+      "maxLength": 300
+    },
+    {
+      "id": "attachment1",
+      "group": "attachments",
+      "label": "Документы о создании программы и принадлежности прав",
+      "type": "textarea",
+      "required": false,
+      "maxLength": 1000
+    },
+    {
+      "id": "pages1",
+      "group": "attachments",
+      "label": "Количество листов приложения 1",
+      "type": "number",
+      "required": true,
+      "maxLength": 300,
+      "min": 1,
+      "max": 10000,
+      "when": {
+        "attachment1": "*"
+      }
+    },
+    {
+      "id": "attachment2",
+      "group": "attachments",
+      "label": "Материалы фиксации нарушения",
+      "type": "textarea",
+      "required": false,
+      "maxLength": 1000
+    },
+    {
+      "id": "pages2",
+      "group": "attachments",
+      "label": "Количество листов приложения 2",
+      "type": "number",
+      "required": true,
+      "maxLength": 300,
+      "min": 1,
+      "max": 10000,
+      "when": {
+        "attachment2": "*"
+      }
+    },
+    {
+      "id": "attachment3",
+      "group": "attachments",
+      "label": "Сравнительная таблица / заключение специалиста",
+      "type": "textarea",
+      "required": false,
+      "maxLength": 1000
+    },
+    {
+      "id": "pages3",
+      "group": "attachments",
+      "label": "Количество листов приложения 3",
+      "type": "number",
+      "required": true,
+      "maxLength": 300,
+      "min": 1,
+      "max": 10000,
+      "when": {
+        "attachment3": "*"
+      }
+    },
+    {
+      "id": "attachment4",
+      "group": "attachments",
+      "label": "Расчёт денежного требования и подтверждения",
+      "type": "textarea",
+      "required": false,
+      "maxLength": 1000
+    },
+    {
+      "id": "pages4",
+      "group": "attachments",
+      "label": "Количество листов приложения 4",
+      "type": "number",
+      "required": true,
+      "maxLength": 300,
+      "min": 1,
+      "max": 10000,
+      "when": {
+        "attachment4": "*"
+      }
+    },
+    {
+      "id": "attachment5",
+      "group": "attachments",
+      "label": "Переписка и договор с адресатом",
+      "type": "textarea",
+      "required": false,
+      "maxLength": 1000
+    },
+    {
+      "id": "pages5",
+      "group": "attachments",
+      "label": "Количество листов приложения 5",
+      "type": "number",
+      "required": true,
+      "maxLength": 300,
+      "min": 1,
+      "max": 10000,
+      "when": {
+        "attachment5": "*"
+      }
+    },
+    {
+      "id": "attachment6",
+      "group": "attachments",
+      "label": "Доверенность / документы о полномочиях подписанта",
+      "type": "textarea",
+      "required": false,
+      "maxLength": 1000
+    },
+    {
+      "id": "pages6",
+      "group": "attachments",
+      "label": "Количество листов приложения 6",
+      "type": "number",
+      "required": true,
+      "maxLength": 300,
+      "min": 1,
+      "max": 10000,
+      "when": {
+        "attachment6": "*"
+      }
+    },
+    {
+      "id": "attachment7",
+      "group": "attachments",
+      "label": "Иные документы",
+      "type": "textarea",
+      "required": false,
+      "maxLength": 1000
+    },
+    {
+      "id": "pages7",
+      "group": "attachments",
+      "label": "Количество листов приложения 7",
+      "type": "number",
+      "required": true,
+      "maxLength": 300,
+      "min": 1,
+      "max": 10000,
+      "when": {
+        "attachment7": "*"
+      }
+    }
+  ],
+  "paragraphs": [
+    {
+      "text": "Кому: {{recipient}}"
+    },
+    {
+      "text": "Адрес: {{recipientAddress}}"
+    },
+    {
+      "text": "Идентификаторы: {{recipientIdentifiers}}",
+      "when": {
+        "recipientIdentifiers": "*"
+      }
+    },
+    {
+      "text": "От: {{applicant}}"
+    },
+    {
+      "text": "Адрес: {{applicantAddress}}"
+    },
+    {
+      "text": "ИНН / ОГРН: {{applicantTax}}",
+      "when": {
+        "applicantTax": "*"
+      }
+    },
+    {
+      "text": "Электронная почта: {{email}}; телефон: {{phone}}"
+    },
+    {
+      "text": "ДОСУДЕБНАЯ ПРЕТЕНЗИЯ",
+      "heading": true
+    },
+    {
+      "text": "о нарушении прав на программу для ЭВМ (программный код)"
+    },
+    {
+      "text": "I. Принадлежность прав",
+      "heading": true
+    },
+    {
+      "text": "{{applicant}} обладает исключительным правом на программу для ЭВМ «{{program}}», версия {{version}}, созданную {{createdPeriod}} и предназначенную для {{purpose}}.",
+      "unless": {
+        "rightsBasis": "exclusive"
+      }
+    },
+    {
+      "text": "{{applicant}} является исключительным лицензиатом программы для ЭВМ «{{program}}», версия {{version}}, созданной {{createdPeriod}} и предназначенной для {{purpose}}.",
+      "when": {
+        "rightsBasis": "exclusive"
+      }
+    },
+    {
+      "text": "Дополнительные сведения: {{programDetails}}",
+      "when": {
+        "programDetails": "*"
+      }
+    },
+    {
+      "text": "Охраняемые элементы: {{elements}}."
+    },
+    {
+      "text": "Основание прав: {{rightsBasis}}"
+    },
+    {
+      "text": "Договор № {{rightsContractNumber}} от {{rightsContractDate}}.",
+      "when": {
+        "rightsBasis": [
+          "assignment",
+          "order",
+          "exclusive"
+        ]
+      }
+    },
+    {
+      "text": "Вид договора: {{rightsContractType}}.",
+      "when": {
+        "rightsBasis": "order"
+      }
+    },
+    {
+      "text": "Принадлежность прав подтверждается: {{rightsEvidence}}."
+    },
+    {
+      "text": "Регистрация программы в Роспатенте № {{registrationNumber}} от {{registrationDate}}.",
+      "when": {
+        "registered": "yes"
+      }
+    },
+    {
+      "text": "II. Обстоятельства нарушения",
+      "heading": true
+    },
+    {
+      "text": "{{discovered}} стало известно, что {{recipient}} без необходимого разрешения {{violationAction}} программный код. Нарушение выявлено по адресу: {{location}}. Обстоятельства нарушения: {{circumstances}}.",
+      "unless": {
+        "violationAction": "access"
+      }
+    },
+    {
+      "text": "{{discovered}} стало известно, что {{recipient}} без необходимого разрешения предоставил доступ к программному коду. Нарушение выявлено по адресу: {{location}}. Обстоятельства нарушения: {{circumstances}}.",
+      "when": {
+        "violationAction": "access"
+      }
+    },
+    {
+      "text": "Сопоставление {{comparison}} выявило: {{matches}}. Эти обстоятельства подтверждаются: {{violationEvidence}}."
+    },
+    {
+      "text": "Договор № {{contractNumber}} от {{contractDate}} предоставлял право использования только в следующих пределах: {{licenseLimits}}. Использование: {{outsideLimits}} — выходит за согласованные пределы.",
+      "when": {
+        "contract": "yes"
+      }
+    },
+    {
+      "text": "Согласие на указанные способы использования заявителем не предоставлялось, договор, допускающий такое использование, между сторонами не заключался.",
+      "when": {
+        "contract": "no"
+      }
+    },
+    {
+      "text": "Помимо этого, {{recipient}} {{personalAction}}.",
+      "when": {
+        "applicantType": "person",
+        "personalRights": "yes"
+      }
+    },
+    {
+      "text": "III. Правовое обоснование",
+      "heading": true
+    },
+    {
+      "text": "В соответствии со статьями 1229, 1259, 1261 и 1270 Гражданского кодекса Российской Федерации программы для ЭВМ охраняются авторским правом, а использование охраняемого кода способами, входящими в исключительное право, допускается с согласия правообладателя, кроме предусмотренных законом случаев. Способы защиты исключительного права предусмотрены статьями 1250 и 1252 ГК РФ. За нарушение исключительного права правообладатель вправе требовать возмещения убытков либо, вместо них, компенсации в соответствии со статьями 1252.1 и 1301 ГК РФ."
+    },
+    {
+      "text": "В силу статей 1255, 1265 и 1251 ГК РФ автор вправе требовать защиты принадлежащих ему личных неимущественных прав.",
+      "when": {
+        "applicantType": "person",
+        "personalRights": "yes"
+      }
+    },
+    {
+      "text": "IV. Требования",
+      "heading": true
+    },
+    {
+      "text": "На основании изложенного ТРЕБУЮ:"
+    },
+    {
+      "text": "Не позднее {{stopDays}} календарных дней с даты получения настоящей претензии прекратить {{stopAction}} по адресам {{stopLocations}} программы «{{program}}» и её охраняемых элементов."
+    },
+    {
+      "text": "Прекратить распространение контрафактных материальных носителей и согласовать порядок их {{carriersAction}} в предусмотренном законом порядке; предоставить сведения о местах хранения и количестве экземпляров.",
+      "when": {
+        "physicalCopies": "yes"
+      }
+    },
+    {
+      "text": "Прекратить нарушение личных прав, восстановить указание автора {{authorName}} на {{authorLocations}} в срок {{personalDays}} календарных дней.",
+      "when": {
+        "applicantType": "person",
+        "personalRights": "yes"
+      }
+    },
+    {
+      "text": "Устранить следующие искажения: {{distortions}}.",
+      "when": {
+        "applicantType": "person",
+        "personalRights": "yes",
+        "personalAction": "distorted"
+      }
+    },
+    {
+      "text": "Письменно подтвердить признание исключительного права {{applicant}} на программу «{{program}}» и прекратить распространение утверждений о принадлежности этого права {{recipient}}.",
+      "when": {
+        "disputedRights": "yes"
+      }
+    },
+    {
+      "text": "V. Денежное требование",
+      "heading": true,
+      "when": {
+        "moneyType": [
+          "losses",
+          "fixed",
+          "copies",
+          "license"
+        ]
+      }
+    },
+    {
+      "text": "На основании статей 15 и 1252 ГК РФ возместить убытки в размере {{totalAmount}} руб., включая реальный ущерб {{damage}} руб. и упущенную выгоду {{lostProfit}} руб. Причинная связь с нарушением подтверждается: {{moneyEvidence}}.",
+      "when": {
+        "moneyType": "losses"
+      }
+    },
+    {
+      "text": "На основании подпункта 1 пункта 1 статьи 1301 ГК РФ выплатить компенсацию {{fixedAmount}} руб. Обоснование требования: {{moneyEvidence}}.",
+      "when": {
+        "moneyType": "fixed"
+      }
+    },
+    {
+      "text": "На основании подпункта 2 пункта 1 статьи 1301 ГК РФ выплатить {{totalAmount}} руб. — двукратную стоимость контрафактных экземпляров, стоимость которых составляет {{copiesCost}} руб. Обоснование: {{moneyEvidence}}.",
+      "when": {
+        "moneyType": "copies"
+      }
+    },
+    {
+      "text": "На основании подпункта 3 пункта 1 статьи 1301 ГК РФ выплатить {{totalAmount}} руб. — двукратную стоимость права использования, стоимость которого составляет {{licenseCost}} руб. Обоснование: {{moneyEvidence}}.",
+      "when": {
+        "moneyType": "license"
+      }
+    },
+    {
+      "text": "Денежные средства прошу перечислить в срок {{paymentDays}} календарных дней с даты получения претензии по реквизитам: получатель {{payee}}, счёт {{account}}, банк {{bank}}, БИК {{bik}}, корреспондентский счёт {{correspondent}}. Назначение платежа: «Урегулирование претензии от {{date}}».",
+      "when": {
+        "moneyType": [
+          "losses",
+          "fixed",
+          "copies",
+          "license"
+        ]
+      }
+    },
+    {
+      "text": "ИНН получателя: {{payeeTax}}.",
+      "when": {
+        "moneyType": [
+          "losses",
+          "fixed",
+          "copies",
+          "license"
+        ],
+        "payeeTax": "*"
+      }
+    },
+    {
+      "text": "VI. Порядок ответа и последствия неисполнения",
+      "heading": true
+    },
+    {
+      "text": "Прошу направить мотивированный письменный ответ и документы, подтверждающие исполнение требований, по адресу {{responseAddress}} и электронной почте {{email}} в течение {{responseDays}} календарных дней с момента получения претензии."
+    },
+    {
+      "text": "Предлагаю урегулировать спор добровольно, в том числе посредством подписания соглашения о прекращении нарушения и порядке выплаты денежных средств.",
+      "when": {
+        "moneyType": [
+          "losses",
+          "fixed",
+          "copies",
+          "license"
+        ]
+      }
+    },
+    {
+      "text": "Предлагаю урегулировать спор добровольно, в том числе посредством подписания соглашения о прекращении нарушения.",
+      "when": {
+        "moneyType": "none"
+      }
+    },
+    {
+      "text": "В случае отказа или неисполнения требований оставляю за собой право обратиться в компетентный суд за защитой прав, взысканием заявленных сумм и судебных расходов, а также использовать иные предусмотренные законом способы защиты."
+    },
+    {
+      "text": "Приложения",
+      "heading": true
+    },
+    {
+      "text": "{{attachment1}}, на {{pages1}} л.",
+      "when": {
+        "attachment1": "*"
+      }
+    },
+    {
+      "text": "{{attachment2}}, на {{pages2}} л.",
+      "when": {
+        "attachment2": "*"
+      }
+    },
+    {
+      "text": "{{attachment3}}, на {{pages3}} л.",
+      "when": {
+        "attachment3": "*"
+      }
+    },
+    {
+      "text": "{{attachment4}}, на {{pages4}} л.",
+      "when": {
+        "attachment4": "*"
+      }
+    },
+    {
+      "text": "{{attachment5}}, на {{pages5}} л.",
+      "when": {
+        "attachment5": "*"
+      }
+    },
+    {
+      "text": "{{attachment6}}, на {{pages6}} л.",
+      "when": {
+        "attachment6": "*"
+      }
+    },
+    {
+      "text": "{{attachment7}}, на {{pages7}} л.",
+      "when": {
+        "attachment7": "*"
+      }
+    },
+    {
+      "text": "Дата: {{date}}"
+    },
+    {
+      "text": "Должность: {{signerPosition}}",
+      "when": {
+        "signerPosition": "*"
+      }
+    },
+    {
+      "text": "Подпись: __________________ / {{signerName}}"
+    }
+  ]
+}

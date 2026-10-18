@@ -25,7 +25,7 @@ export type MaterialKind = 'article' | 'checklist' | 'reference';
 
 export type MaterialSummary = {
   id: string;
-  topic: string;
+  topic: string | null;
   kind: MaterialKind;
   title: string;
   description: string;

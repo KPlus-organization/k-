@@ -5,6 +5,7 @@ import { type Profile } from '@/entities/profile';
 import { ArticleButton, materialHref } from '@/entities/material';
 import { type Favorite } from '@/features/favorites';
 import { useHistory, type HistoryEntry } from '@/features/history';
+import { SavedDocuments } from '@/features/saved-documents';
 import styles from './styles.module.css';
 
 const dayFormat = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
@@ -142,7 +143,7 @@ export function ProfilePage({
         </section>
         <section className={cx(styles['panel'], styles['favorites-panel'])}>
           <div className={styles['panel-heading']}>
-            <h2>Избранные статьи</h2>
+            <h2>Избранное</h2>
             <button
               className={cx(ui['button'], styles['button'], ui['tinted'])}
               onClick={() => open('favorites')}
@@ -161,6 +162,7 @@ export function ProfilePage({
               <p>Пока здесь пусто. Сохраняйте статьи и чек-листы, чтобы вернуться к ним позже.</p>
             )}
           </div>
+          <SavedDocuments userId={profile.id} />
         </section>
         <NavigationHistory profile={profile} open={open} />
       </div>

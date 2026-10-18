@@ -11,6 +11,7 @@ import { feesRoutes } from './routes/feesRoutes';
 import { healthRoutes } from './routes/healthRoutes';
 import { historyRoutes } from './routes/historyRoutes';
 import { profileRoutes } from './routes/profileRoutes';
+import { documentsRoutes, templateRoutes } from './routes/documentsRoutes';
 
 export function createApp(): express.Express {
   const app = express();
@@ -27,6 +28,8 @@ export function createApp(): express.Express {
   app.use('/api/favorites', favoritesRoutes);
   app.use('/api/history', historyRoutes);
   app.use('/api/fees', feesRoutes);
+  app.use('/api/document-templates', templateRoutes);
+  app.use('/api/documents', documentsRoutes);
 
   // Must stay after all routes.
   app.use(notFound);

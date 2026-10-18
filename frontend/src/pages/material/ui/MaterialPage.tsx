@@ -67,9 +67,9 @@ function ReadingSession({
   const saved = favorites.includes(material.id);
   const object = useObjects().data?.find((item) => item.id === material.topic);
   const area = journeyArea ?? materialArea(material.id);
-  const topicMaterials = useMaterials(material.topic).data;
+  const topicMaterials = useMaterials(material.topic ?? undefined).data;
   const related = journeyArea
-    ? objectJourney(material.topic, journeyArea).materials.flatMap((id) => {
+    ? objectJourney(material.topic ?? '', journeyArea).materials.flatMap((id) => {
         const item = (topicMaterials ?? material.related).find((entry) => entry.id === id);
         return item && item.id !== material.id && item.hasContent ? [item] : [];
       })
@@ -152,8 +152,11 @@ function ReadingSession({
               <ArticleButton key={item.id} item={item} open={open} />
             ))}
           </div>
-          <Link className={cx(ui['text-link'], 'mt-5')} to={`/articles?topic=${material.topic}`}>
-            Все материалы по теме →
+          <Link
+            className={cx(ui['text-link'], 'mt-5')}
+            to={material.topic ? `/articles?topic=${material.topic}` : '/articles'}
+          >
+            {material.topic ? 'Все материалы по теме' : 'Все материалы'} →
           </Link>
         </aside>
       </div>

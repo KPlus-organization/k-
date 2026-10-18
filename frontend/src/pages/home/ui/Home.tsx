@@ -42,21 +42,6 @@ export function Home({ open, toolAction }: { open: Open; toolAction: Open }) {
             Разобраться в оформлении <Icon name="arrowRight" />
           </span>
         </Link>
-        <button className={styles['action-card']} onClick={() => open('risks')}>
-          <span className={styles['action-top']}>
-            <span className={ui['icon-tile']}>
-              <Icon name="scan" />
-            </span>
-          </span>
-          <h2>Рассчитать риски</h2>
-          <p>
-            Чужой код, шрифты, изображения, название и логотип: узнайте, какие риски стоит учесть до
-            использования.
-          </p>
-          <span className={styles['action-link']}>
-            Оценить риски <Icon name="arrowRight" />
-          </span>
-        </button>
         <Link className={styles['action-card']} to="/protect">
           <div className={styles['action-top']}>
             <span className={ui['icon-tile']}>

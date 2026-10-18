@@ -19,7 +19,7 @@ export type ContentBlock =
 
 export interface ContentMaterial {
   id: string;
-  topic: string;
+  topic: string | null;
   kind: 'article' | 'checklist' | 'reference';
   title: string;
   pageTitle?: string;
@@ -86,9 +86,9 @@ export async function loadContent(dir: string): Promise<Content> {
     }
     seenMaterials.add(material.id);
 
-    if (!objectIds.has(material.topic)) {
+    if (material.topic !== null && !objectIds.has(material.topic)) {
       problems.push(`${where}: topic "${material.topic}" is not in objects.json`);
-    } else if (material.published !== false && !publishedObjects.has(material.topic)) {
+    } else if (material.topic !== null && material.published !== false && !publishedObjects.has(material.topic)) {
       problems.push(`${where}: published material belongs to unpublished object "${material.topic}"`);
     }
     if (!KINDS.includes(material.kind)) problems.push(`${where}: kind must be one of ${KINDS.join(', ')}`);

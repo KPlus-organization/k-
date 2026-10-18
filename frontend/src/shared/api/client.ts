@@ -117,6 +117,7 @@ type RequestOptions = {
   body?: unknown;
   /** Send the access token, refreshing it when needed. */
   auth?: boolean;
+  response?: 'json' | 'blob';
 };
 
 /** Calls the API and returns the parsed JSON; throws ApiError for error responses. */
@@ -140,5 +141,6 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   let response = await request();
   // The access token expired (or the secret changed): refresh once and retry.
   if (auth && response.status === 401 && (await refreshSession())) response = await request();
+  if (options.response === 'blob' && response.ok) return (await response.blob()) as T;
   return parse<T>(response);
 }
