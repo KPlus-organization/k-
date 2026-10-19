@@ -110,7 +110,7 @@ export function SiteHeader({
             </div>
             <h2>Инструменты</h2>
             <div className={styles['menu-links']}>
-              {[tools[3], tools[2], tools[4]].map((tool) => (
+              {[tools[3], tools[2]].map((tool) => (
                 <button key={tool.id} onClick={() => toolAction(tool.id)}>
                   {tool.title}
                 </button>

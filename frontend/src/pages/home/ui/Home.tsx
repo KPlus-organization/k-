@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { cx, type Open } from '@/shared/lib';
-import { tools } from '@/shared/config';
+import { visibleTools } from '@/shared/config';
 import { Icon, ui } from '@/shared/ui';
 import { LegalNotice } from '@/widgets/legal-notice';
 import styles from './styles.module.css';
@@ -73,7 +73,7 @@ export function Home({ open, toolAction }: { open: Open; toolAction: Open }) {
           <p>Для конкретного вопроса — воспользуйтесь поиском</p>
         </div>
         <div className={styles['tools-grid']}>
-          {tools.map((tool) => (
+          {visibleTools.map((tool) => (
             <button
               key={tool.id}
               className={styles['tool-card']}

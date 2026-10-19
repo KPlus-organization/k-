@@ -146,7 +146,7 @@ test('login visibility toggle, menu keyboard handling, search and empty result',
   await expect(history.getByRole('link', { name: 'Поиск: код' })).toBeVisible();
 });
 
-test('favorites can be removed and an unavailable tool has an honest state', async ({
+test('favorites can be removed and the hidden trademark tool is not shown', async ({
   page,
   request,
 }) => {
@@ -167,10 +167,7 @@ test('favorites can be removed and an unavailable tool has an honest state', asy
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).not.toBeVisible();
   await page.goto('/');
-  await page.getByRole('button', { name: /Проверка товарного знака Найдите/ }).click();
-  await expect(page.getByRole('dialog')).toContainText('Этот раздел готовится');
-  await page.getByRole('dialog').getByRole('link', { name: 'Открыть чек-лист' }).click();
-  await expect(page).toHaveURL(/\/protect\/code$/);
+  await expect(page.getByRole('button', { name: /Проверка товарного знака/ })).toHaveCount(0);
 });
 
 test('desktop screenshots for comparison with Figma', async ({ page, request }) => {

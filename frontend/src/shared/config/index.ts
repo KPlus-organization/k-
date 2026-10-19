@@ -33,3 +33,8 @@ export const tools = [
     icon: 'searchCheck',
   },
 ] as const;
+
+/** Tools kept in config (and on the backend) but not shown on the site for now. */
+const hiddenToolIds: readonly string[] = ['trademark'];
+
+export const visibleTools = tools.filter((tool) => !hiddenToolIds.includes(tool.id));
