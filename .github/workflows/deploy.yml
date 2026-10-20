@@ -98,10 +98,12 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # The token goes through stdin, so it never appears in the server's process list.
         # It expires when this job ends; the server logs out right after pulling anyway.
+        # IMAGE_PREFIX is computed as in the images job and overrides the one in the server's
+        # .env, so a renamed or transferred repository keeps deploying.
         run: |
           printf '%s' "$TOKEN" | ssh server "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
           ssh server "cd $DEPLOY_DIR \
-            && export TAG=${{ github.sha }} \
+            && export IMAGE_PREFIX=ghcr.io/${GITHUB_REPOSITORY_OWNER,,} TAG=${{ github.sha }} \
             && docker compose pull --quiet; status=\$?; docker logout ghcr.io; [ \$status -eq 0 ] \
             && docker compose up -d --remove-orphans --wait --wait-timeout 180 \
             && docker image prune -af"

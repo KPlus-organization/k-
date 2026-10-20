@@ -4,8 +4,8 @@
 
 | Контейнер | Образ | Что делает |
 | --- | --- | --- |
-| `web` | `ghcr.io/lisgolub/k-web` | Caddy: отдаёт собранный фронтенд, проксирует `/api/*` в `backend`. Единственный, у кого открыт порт наружу |
-| `backend` | `ghcr.io/lisgolub/k-backend` | API. При каждом старте применяет миграции и синхронизирует `content/` в базу |
+| `web` | `ghcr.io/kplus-organization/k-web` | Caddy: отдаёт собранный фронтенд, проксирует `/api/*` в `backend`. Единственный, у кого открыт порт наружу |
+| `backend` | `ghcr.io/kplus-organization/k-backend` | API. При каждом старте применяет миграции и синхронизирует `content/` в базу |
 | `db` | `postgres:17` | База, данные в volume `k-_pgdata` |
 
 Образы собирает GitHub Actions ([`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)), сервер их только скачивает.
