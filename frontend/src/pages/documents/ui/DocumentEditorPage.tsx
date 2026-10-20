@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ApiError, errorMessage, isNotFound } from '@/shared/api';
-import { cx, useDocumentTitle, type Open } from '@/shared/lib';
+import { cx, randomUuid, useDocumentTitle, type Open } from '@/shared/lib';
 import { LoadState, ui } from '@/shared/ui';
 import type { Profile } from '@/entities/profile';
 import {
@@ -137,7 +137,7 @@ function DocumentEditor({
 }) {
   const navigate = useNavigate();
   const [initial] = useState(() => (saved ? undefined : readDraft(template, profile.id)));
-  const [id] = useState(() => saved?.id ?? initial?.id ?? crypto.randomUUID());
+  const [id] = useState(() => saved?.id ?? initial?.id ?? randomUuid());
   const [title, setTitle] = useState(saved?.title ?? initial?.title ?? template.title);
   const [fields, setFields] = useState<DocumentValues>(() => ({
     ...defaultValues(template),
