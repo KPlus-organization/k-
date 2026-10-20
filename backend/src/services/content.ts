@@ -70,9 +70,17 @@ export async function listObjects(query?: string): Promise<ProtectionObject[]> {
     `SELECT o.id, o.title, o.description,
        (SELECT count(*)::int FROM materials m WHERE m.topic = o.id AND m.is_published) AS materials_count
      FROM protection_objects o
-     WHERE o.is_published AND ($1::text IS NULL OR strpos(o.search_text, $1) > 0)
-     ORDER BY o.sort_order`,
-    [query ?? null],
+     WHERE o.is_published AND (
+       $1::text IS NULL
+       OR o.search_vector @@ plainto_tsquery('russian', $1)
+       OR strpos(o.search_text, $2) > 0
+     )
+     ORDER BY
+       CASE WHEN $1::text IS NOT NULL
+         THEN ts_rank(o.search_vector, plainto_tsquery('russian', $1))
+       END DESC NULLS LAST,
+       o.sort_order`,
+    [query ?? null, query ? toSearchText(query) : null],
   );
   return rows.map((row) => ({
     id: row.id,
@@ -83,13 +91,22 @@ export async function listObjects(query?: string): Promise<ProtectionObject[]> {
 }
 
 export async function listMaterials(filter: { topic?: string; query?: string } = {}): Promise<MaterialSummary[]> {
+  const query = filter.query;
   const { rows } = await pool.query<SummaryRow>(
     `SELECT ${SUMMARY_COLUMNS} FROM materials m
      WHERE m.is_published
        AND ($1::text IS NULL OR m.topic = $1)
-       AND ($2::text IS NULL OR strpos(m.search_text, $2) > 0)
-     ORDER BY m.sort_order`,
-    [filter.topic ?? null, filter.query ?? null],
+       AND (
+         $2::text IS NULL
+         OR m.search_vector @@ plainto_tsquery('russian', $2)
+         OR strpos(m.search_text, $3) > 0
+       )
+     ORDER BY
+       CASE WHEN $2::text IS NOT NULL
+         THEN ts_rank(m.search_vector, plainto_tsquery('russian', $2))
+       END DESC NULLS LAST,
+       m.sort_order`,
+    [filter.topic ?? null, query ?? null, query ? toSearchText(query) : null],
   );
   return rows.map(toSummary);
 }

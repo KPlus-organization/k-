@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 
 import { HttpError } from '../errors/HttpError';
-import { getMaterial, getMaterialFile, listMaterials, listObjects, toSearchText } from '../services/content';
+import { getMaterial, getMaterialFile, listMaterials, listObjects } from '../services/content';
 
 const MAX_QUERY_LENGTH = 200;
 
@@ -49,7 +49,6 @@ export async function search(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const normalized = toSearchText(query);
-  const [objects, materials] = await Promise.all([listObjects(normalized), listMaterials({ query: normalized })]);
+  const [objects, materials] = await Promise.all([listObjects(query), listMaterials({ query })]);
   res.status(200).json({ query, objects, materials });
 }
