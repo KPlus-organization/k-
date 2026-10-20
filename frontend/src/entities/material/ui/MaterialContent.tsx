@@ -4,9 +4,38 @@ import type { Open } from '@/shared/lib';
 import type { ContentBlock, TextRun } from '../model/types';
 import styles from './content.module.css';
 
-function InlineText({ runs, open }: { runs: TextRun[]; open: Open }) {
+function searchTerms(query: string): string[] {
+  const unique = new Map<string, string>();
+  for (const word of query.trim().split(/\s+/)) {
+    const key = word.toLocaleLowerCase('ru');
+    if (key && !unique.has(key)) unique.set(key, word);
+  }
+  return [...unique.values()].sort((a, b) => b.length - a.length);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Marks each query word, including when it sits inside a longer word. */
+export function HighlightedText({ text, query }: { text: string; query: string }) {
+  const terms = searchTerms(query);
+  if (!terms.length) return text;
+  const pattern = new RegExp(`(${terms.map(escapeRegExp).join('|')})`, 'giu');
+  return text.split(pattern).map((part, index) =>
+    part && terms.some((term) => part.toLocaleLowerCase('ru') === term.toLocaleLowerCase('ru')) ? (
+      <mark key={index} className={styles['search-hit']} data-search-hit="">
+        {part}
+      </mark>
+    ) : (
+      <Fragment key={index}>{part}</Fragment>
+    ),
+  );
+}
+
+function InlineText({ runs, open, query }: { runs: TextRun[]; open: Open; query: string }) {
   return runs.map((run, index) => {
-    let text: ReactNode = run.text;
+    let text: ReactNode = <HighlightedText text={run.text} query={query} />;
     if (run.bold) text = <strong>{text}</strong>;
     if (run.italic) text = <em>{text}</em>;
     if (run.action)
@@ -30,10 +59,12 @@ export function MaterialContent({
   blocks,
   open,
   headingLevel = 3,
+  query = '',
 }: {
   blocks: ContentBlock[];
   open: Open;
   headingLevel?: 2 | 3;
+  query?: string;
 }) {
   const Heading = headingLevel === 2 ? 'h2' : 'h3';
   return (
@@ -42,27 +73,27 @@ export function MaterialContent({
         if (block.type === 'heading')
           return (
             <Heading key={index} id={block.anchor}>
-              <InlineText runs={block.runs} open={open} />
+              <InlineText runs={block.runs} open={open} query={query} />
             </Heading>
           );
         if (block.type === 'note')
           return (
             <aside className={styles['note']} key={index}>
               <p>
-                <InlineText runs={block.runs} open={open} />
+                <InlineText runs={block.runs} open={open} query={query} />
               </p>
             </aside>
           );
         if (block.type === 'paragraph')
           return (
             <p key={index}>
-              <InlineText runs={block.runs} open={open} />
+              <InlineText runs={block.runs} open={open} query={query} />
             </p>
           );
         if (block.type === 'action')
           return (
             <button className={styles['action']} key={index} onClick={() => open(block.action)}>
-              {block.text} →
+              <HighlightedText text={block.text} query={query} /> →
             </button>
           );
         if (block.type === 'list') {
@@ -71,7 +102,7 @@ export function MaterialContent({
             <List key={index}>
               {block.items.map((runs, item) => (
                 <li key={item}>
-                  <InlineText runs={runs} open={open} />
+                  <InlineText runs={runs} open={open} query={query} />
                 </li>
               ))}
             </List>
@@ -93,7 +124,7 @@ export function MaterialContent({
                   <tr>
                     {block.rows[0].map((runs, cell) => (
                       <th scope="col" key={cell}>
-                        <InlineText runs={runs} open={open} />
+                        <InlineText runs={runs} open={open} query={query} />
                       </th>
                     ))}
                   </tr>
@@ -103,7 +134,7 @@ export function MaterialContent({
                     <tr key={rowIndex}>
                       {row.map((runs, cell) => (
                         <td key={cell}>
-                          <InlineText runs={runs} open={open} />
+                          <InlineText runs={runs} open={open} query={query} />
                         </td>
                       ))}
                     </tr>

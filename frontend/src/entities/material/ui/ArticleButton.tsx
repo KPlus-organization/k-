@@ -9,11 +9,16 @@ export function ArticleButton({
   item,
   open,
   className,
+  searchQuery,
 }: {
   item: MaterialSummary;
   open: Open;
   className?: string;
+  searchQuery?: string;
 }) {
+  const href = searchQuery
+    ? `${materialHref(item.id)}?q=${encodeURIComponent(searchQuery)}`
+    : materialHref(item.id);
   const content = (
     <>
       <Icon name="bookmark" />
@@ -26,7 +31,7 @@ export function ArticleButton({
   );
   // Materials without published text open a card in a dialog instead of a page.
   return item.hasContent ? (
-    <Link className={cx(styles['favorite-item'], className)} to={materialHref(item.id)}>
+    <Link className={cx(styles['favorite-item'], className)} to={href}>
       {content}
     </Link>
   ) : (

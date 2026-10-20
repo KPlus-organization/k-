@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { apiUrl, isNotFound } from '@/shared/api';
 import { cx, useDocumentTitle, type Open } from '@/shared/lib';
 import { Icon, LoadState, ui } from '@/shared/ui';
 import {
   materialLabels,
+  HighlightedText,
   MaterialContent,
   ArticleButton,
   topicHref,
@@ -59,6 +60,8 @@ export function MaterialPage(props: Props) {
   return <ReadingSession key={material.id} {...props} material={material} />;
 }
 
+const HIGHLIGHT_MS = 2500;
+
 function ReadingSession({
   material,
   favorites,
@@ -67,6 +70,9 @@ function ReadingSession({
   journeyArea,
 }: Props & { material: Material }) {
   const { hash } = useLocation();
+  const [params, setParams] = useSearchParams();
+  const query = params.get('q')?.trim() ?? '';
+  const [shownQuery, setShownQuery] = useState(query);
   useEffect(() => {
     if (!hash) return;
     let anchor: string;
@@ -78,6 +84,27 @@ function ReadingSession({
     const frame = requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView());
     return () => cancelAnimationFrame(frame);
   }, [hash, material.id]);
+  useEffect(() => {
+    if (!query) return undefined;
+    const frame = requestAnimationFrame(() => {
+      document.querySelector('[data-search-hit]')?.scrollIntoView({ block: 'center' });
+    });
+    const timer = window.setTimeout(() => {
+      setShownQuery('');
+      setParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          next.delete('q');
+          return next;
+        },
+        { replace: true },
+      );
+    }, HIGHLIGHT_MS);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
+  }, [query, material.id, setParams]);
   const saved = favorites.includes(material.id);
   const object = useObjects().data?.find((item) => item.id === material.topic);
   const area = journeyArea ?? materialArea(material.id);
@@ -116,8 +143,12 @@ function ReadingSession({
             <span className="text-sm text-muted">Шагов: {material.sections.length}</span>
           )}
         </div>
-        <h1>{material.pageTitle}</h1>
-        <p>{material.description}</p>
+        <h1>
+          <HighlightedText text={material.pageTitle} query={shownQuery} />
+        </h1>
+        <p>
+          <HighlightedText text={material.description} query={shownQuery} />
+        </p>
         {isOverview && (
           <a className={cx(ui['text-link'], 'mt-4 inline-block')} href="#objects">
             Перейти к выбору объекта ↓
@@ -126,7 +157,7 @@ function ReadingSession({
       </header>
       <div className={styles['layout']}>
         <article className={styles['article']} aria-label={material.title}>
-          <MaterialContent blocks={intro} open={open} headingLevel={2} />
+          <MaterialContent blocks={intro} open={open} headingLevel={2} query={shownQuery} />
           <div className="grid gap-6">
             {material.sections.map((section) => (
               <section
@@ -135,8 +166,10 @@ function ReadingSession({
                 data-testid="guide-step"
                 className={styles['step']}
               >
-                <h2>{section.title}</h2>
-                <MaterialContent blocks={section.blocks} open={open} />
+                <h2>
+                  <HighlightedText text={section.title} query={shownQuery} />
+                </h2>
+                <MaterialContent blocks={section.blocks} open={open} query={shownQuery} />
               </section>
             ))}
           </div>

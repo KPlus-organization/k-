@@ -94,8 +94,8 @@ test('GET /api/search finds objects and materials case-insensitively', async () 
   assert.equal(res.body.query, 'МКТУ');
   assert.deepEqual(res.body.objects, []);
   assert.deepEqual(
-    res.body.materials.map((item: { id: string }) => item.id),
-    ['classes', 'brand-claim', 'brand-ownership', 'brand-start', 'brand-defense'],
+    res.body.materials.map((item: { id: string }) => item.id).sort(),
+    ['brand-claim', 'brand-defense', 'brand-ownership', 'brand-start', 'classes'],
   );
 
   const code = await api('GET', `/api/search?q=${encodeURIComponent('Код')}`);
@@ -104,6 +104,12 @@ test('GET /api/search finds objects and materials case-insensitively', async () 
     ['code'],
   );
   assert.ok(code.body.materials.length > 0);
+
+  const inflected = await api('GET', `/api/search?q=${encodeURIComponent('кода')}`);
+  assert.ok(inflected.body.objects.map((item: { id: string }) => item.id).includes('code'));
+
+  const insideWord = await api('GET', `/api/search?q=${encodeURIComponent('кодир')}`);
+  assert.ok(insideWord.body.materials.map((item: { id: string }) => item.id).includes('visuals-copying'));
 });
 
 test('GET /api/search handles empty and too long queries', async () => {
