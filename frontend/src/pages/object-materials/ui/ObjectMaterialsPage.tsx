@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { cx, useDocumentTitle, type Open } from '@/shared/lib';
 import { LoadState, ui } from '@/shared/ui';
 import {
@@ -21,6 +21,8 @@ export function ObjectMaterialsPage({
   area: MaterialArea;
   open: Open;
 }) {
+  const [params] = useSearchParams();
+  const searchQuery = params.get('q')?.trim() || undefined;
   const objects = useObjects();
   const materials = useMaterials(topic);
   const object = objects.data?.find((item) => item.id === topic);
@@ -74,7 +76,7 @@ export function ObjectMaterialsPage({
             {content.map((item) => (
               <section key={item.id} className={ui['result-card']}>
                 <span className={cx(ui['tag'], 'mb-4')}>{materialLabels[item.kind]}</span>
-                <ArticleButton item={item} open={open} />
+                <ArticleButton item={item} open={open} searchQuery={searchQuery} />
               </section>
             ))}
           </div>

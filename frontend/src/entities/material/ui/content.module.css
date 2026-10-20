@@ -107,6 +107,24 @@
   border-bottom: 0;
 }
 
+.search-hit {
+  color: inherit;
+  background-color: #ffe58a;
+  scroll-margin-top: 96px;
+  animation: search-hit-fade 2.5s ease forwards;
+}
+
+@keyframes search-hit-fade {
+  0%,
+  55% {
+    background-color: #ffe58a;
+  }
+
+  100% {
+    background-color: transparent;
+  }
+}
+
 @media (width <= 650px) {
   .content {
     font-size: 14px;

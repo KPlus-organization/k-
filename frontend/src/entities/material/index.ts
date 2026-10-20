@@ -1,5 +1,5 @@
 export { ArticleButton } from './ui/ArticleButton';
-export { MaterialContent } from './ui/MaterialContent';
+export { HighlightedText, MaterialContent } from './ui/MaterialContent';
 export { useContentSearch, useMaterial, useMaterials, useObjects } from './api/content-api';
 export {
   materialHref,

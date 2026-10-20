@@ -48,7 +48,7 @@ export function SearchPage({
               <div className={ui['result-card']} key={item.id}>
                 <span className={ui['tag']}>Объект защиты</span>
                 {href ? (
-                  <Link to={href}>
+                  <Link to={`${href}?q=${encodeURIComponent(query)}`}>
                     <h2>{item.title}</h2>
                   </Link>
                 ) : (
@@ -62,7 +62,12 @@ export function SearchPage({
           })}
           {found.map((item) => (
             <div className={ui['result-card']} key={item.id}>
-              <ArticleButton item={item} open={open} className={ui['result-item']} />
+              <ArticleButton
+                item={item}
+                open={open}
+                className={ui['result-item']}
+                searchQuery={query}
+              />
               <button
                 className={cx(ui['button'], ui['secondary'])}
                 onClick={() => toggleFavorite(item.id)}
