@@ -58,12 +58,15 @@ test('general guides lead to the brand and visual checklists for each task', asy
   }
 });
 
-test('all sixteen unique supplied materials render on mobile and download their originals', async ({
+test('published materials render on mobile with current notices and download their originals', async ({
   page,
   request,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const ids = [
+    'code-1',
+    'brand-article',
+    'brand-protection',
     'database-protection',
     'database-registration',
     'database-fair-use',
@@ -91,20 +94,37 @@ test('all sixteen unique supplied materials render on mobile and download their 
     );
     const notice = page.getByRole('complementary', { name: 'Обратите внимание' });
     await expect(notice.getByRole('button')).toHaveCount(2);
-    if (!id.startsWith('database-')) {
-      await expect(notice).toContainText('18.10.2026');
-      await expect(notice).not.toContainText('13.10.26');
-    }
+    await expect(notice).toContainText(/актуален на 21\.10\.(?:2026|26)/);
+    await expect(notice).not.toContainText(/(?:13|18|19)\.10\.(?:2026|26)/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth), id).toBeLessThanOrEqual(
       390,
     );
     const download = await request.get(`${API_URL}/api/materials/${id}/file`);
     expect(download.status(), id).toBe(200);
-    const file = id === 'database-registration' ? 'database-ownership' : id;
+    const file =
+      id === 'database-registration'
+        ? 'database-ownership'
+        : id === 'brand-article'
+          ? 'brand-protection'
+          : id;
     expect(await download.body(), id).toEqual(await readFile(`../content/files/${file}.docx`));
   }
   await page.goto('/ownership/brand');
   await page.screenshot({ path: '../tmp/preview/brand-ownership-mobile.png', fullPage: true });
+});
+
+test('updated code compensation article retains constructor anchor and practical examples', async ({
+  page,
+}) => {
+  await page.goto('/articles/code-1#compensation-calculation');
+  await expect(page.locator('#compensation-calculation')).toHaveText('3. Взыскание компенсации');
+  await expect(page.locator('#compensation-calculation')).toBeInViewport();
+  const article = page.getByRole('article');
+  await expect(article.getByRole('listitem')).toHaveCount(8);
+  await expect(article).toContainText('Потеря доходов от лицензирования');
+  await expect(article).toContainText('Утрата коммерческого контракта');
+  await expect(article).toContainText('4 000 000 рублей');
+  await expect(article).toContainText('1 000 000 рублей');
 });
 
 test('database, brand and visual questions link to published articles and are searchable', async ({
