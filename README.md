@@ -8,6 +8,7 @@
 | [`frontend/`](frontend/)  | React + TypeScript + Vite по макету Figma, данные из API | [`frontend/README.md`](frontend/README.md), dev-сервер → http://localhost:3000 |
 | [`content/`](content/)    | Наполнение сайта: объекты защиты, статьи, чек-листы, DOCX, пошлины калькулятора — единственный источник | [`content/README.md`](content/README.md) |
 | [`docs/`](docs/)          | Общий контракт API между фронтендом и бэкендом | [`docs/api.md`](docs/api.md) |
+| [`deploy/`](deploy/)      | Docker-образы, docker compose и автодеплой на VPS | [`deploy/README.md`](deploy/README.md) |
 
 ## Локальный запуск
 
