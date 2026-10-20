@@ -1,0 +1,12 @@
+# Builds the images from the working tree instead of pulling them, to try the
+# production stack locally (needs deploy/.env, see .env.example):
+#   docker compose -f deploy/docker-compose.yml -f deploy/compose.build.yml up --build
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+  web:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile

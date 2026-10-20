@@ -1,0 +1,53 @@
+# Production stack. On the server it lives in /opt/k-/ next to .env (see deploy/README.md);
+# the deploy workflow copies this file there on every deploy.
+name: k-
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: k
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: k
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U k -d k']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging: *logging
+
+  backend:
+    image: ${IMAGE_PREFIX:?set IMAGE_PREFIX in .env}/k-backend:${TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://k:${POSTGRES_PASSWORD}@db:5432/k
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      FRONTEND_ORIGIN: ${SITE_ORIGIN:?set SITE_ORIGIN in .env}
+    logging: *logging
+
+  web:
+    image: ${IMAGE_PREFIX}/k-web:${TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - '${WEB_PORT:-80}:80'
+    logging: *logging
+
+volumes:
+  pgdata:

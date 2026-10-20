@@ -1,0 +1,14 @@
+# Images are built from the repository root (see backend/Dockerfile, frontend/Dockerfile).
+# Only sources go into the build context: dependencies and builds are made inside.
+**/node_modules
+**/dist
+**/test-dist
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+**/test-results
+**/playwright-report
+.git
+.github
+docs
+tmp
