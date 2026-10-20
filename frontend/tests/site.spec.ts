@@ -69,6 +69,8 @@ test('registration checks confirmation, profile settings persist, logout works',
   await page.getByRole('button', { name: 'Настройки' }).click();
   await page.getByRole('dialog').getByLabel('Имя', { exact: true }).fill('Мария Иванова');
   await page.getByRole('button', { name: 'Сохранить изменения' }).click();
+  // The window closes once the profile is saved; until then a reload would reopen it.
+  await expect(page.getByRole('dialog')).not.toBeVisible();
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Добро пожаловать, Мария' })).toBeVisible();
   const stored = await page.evaluate(() => JSON.stringify(localStorage));

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { errorMessage } from '@/shared/api';
 import { tools } from '@/shared/config';
@@ -10,7 +10,7 @@ import { recordVisit } from '@/features/history';
 import { materialHref, useMaterials } from '@/entities/material';
 import { SiteHeader } from '@/widgets/site-header';
 import { Footer } from '@/widgets/site-footer';
-import { AppModal } from '@/widgets/service-dialog';
+import { AppModal, isModalId } from '@/widgets/service-dialog';
 import { Home } from '@/pages/home';
 import { MaterialPage } from '@/pages/material';
 import { Auth } from '@/pages/auth';
@@ -37,8 +37,18 @@ const staticTitles: Record<string, string> = {
   '/tools/calculator': 'Калькулятор пошлин',
 };
 
+// The open window lives in the address (?modal=<id>), so it can be linked to and Back closes it.
+const MODAL_PARAM = 'modal';
+
+function withModal(search: string, id: string | null) {
+  const params = new URLSearchParams(search);
+  if (id) params.set(MODAL_PARAM, id);
+  else params.delete(MODAL_PARAM);
+  const next = params.toString();
+  return next ? `?${next}` : '';
+}
+
 export function App() {
-  const [modalSelection, setModalSelection] = useState<{ id: string; key: string } | null>(null);
   const { profile, status, signedIn, login, register, logout, updateProfile } = useSession();
   const {
     favorites,
@@ -50,8 +60,28 @@ export function App() {
   const [toast, setToast] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
-  const modal = modalSelection?.key === location.key ? modalSelection.id : null;
-  const setModal = (id: string | null) => setModalSelection(id ? { id, key: location.key } : null);
+  const requestedModal = new URLSearchParams(location.search).get(MODAL_PARAM);
+  const modal = requestedModal && isModalId(requestedModal) ? requestedModal : null;
+  const pageSearch = withModal(location.search, null);
+  // Windows opened here are history entries of their own: closing one goes back to the page.
+  // Kept in memory, not in history.state: after a reload the entry behind belongs to the
+  // previous page load, and a window from a link has nothing behind it, so these are removed
+  // in place.
+  const modalPushed = useRef(false);
+  const setModal = (id: string | null) => {
+    const to = { pathname: location.pathname, hash: location.hash };
+    if (id) {
+      // A window opened from another one replaces it, so Back still leads to the page.
+      navigate({ ...to, search: withModal(location.search, id) }, { replace: modal !== null });
+      if (!modal) modalPushed.current = true;
+      return;
+    }
+    if (!modal) return;
+    if (modalPushed.current) {
+      modalPushed.current = false;
+      navigate(-1);
+    } else navigate({ ...to, search: pageSearch }, { replace: true });
+  };
   const isAuth = ['/login', '/register'].includes(location.pathname);
 
   useEffect(() => {
@@ -71,11 +101,12 @@ export function App() {
   }, [profile?.id, addFavorite]);
 
   useEffect(() => {
+    // Not on opening or closing a window (?modal): the page stays where it is.
     window.scrollTo(0, 0);
     // Pages with loaded content (materials, objects) set their own titles.
     const title = staticTitles[location.pathname];
     if (title) document.title = `${title} — МоёПраво`;
-  }, [location.pathname, location.search]);
+  }, [location.pathname, pageSearch]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(''), 3500);

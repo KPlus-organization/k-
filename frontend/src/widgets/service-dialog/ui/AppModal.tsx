@@ -14,6 +14,7 @@ import {
 import { ProfileSettings } from '@/features/profile-settings';
 import { LawyerRequest } from '@/features/lawyer-request';
 import { SavedDocuments } from '@/features/saved-documents';
+import { modalTitles } from '../model/modal-ids';
 import styles from './styles.module.css';
 
 export function AppModal({
@@ -45,20 +46,8 @@ export function AppModal({
     ? materials.find((item) => item.id === id.split(':')[1])
     : undefined;
   const saved = (materialId: string) => favorites.some((item) => item.id === materialId);
-  const titles: Record<string, string> = {
-    settings: 'Настройки профиля',
-    favorites: 'Все избранные',
-    privacy: 'Конфиденциальность',
-    reset: 'Восстановление пароля',
-    help: 'Помощь',
-    lawyer: 'Найти юриста',
-    'lawyer-request': 'Обсудить задачу с юристом',
-    ownership: 'Оформить права',
-    defend: 'Защититься',
-    'definition:presumption': 'Что такое презумпция?',
-  };
   const tool = tools.find((item) => item.id === id);
-  const title = object?.title || article?.title || tool?.title || titles[id] || 'Материал';
+  const title = object?.title || article?.title || tool?.title || modalTitles[id] || 'Материал';
   let body: ReactNode;
   if (id === 'definition:presumption')
     body = <p>Суд считает утверждение истинным, пока не доказано обратное.</p>;
@@ -103,18 +92,14 @@ export function AppModal({
       <>
         <p>{object.description}</p>
         {objectPage ? (
-          <Link className={cx(ui['button'], ui['primary'])} onClick={onClose} to={objectPage}>
+          <Link className={cx(ui['button'], ui['primary'])} to={objectPage}>
             {object.id === 'code' ? 'Открыть чек-лист' : 'Статьи и чек-листы'}{' '}
             <Icon name="arrowRight" />
           </Link>
         ) : (
           <>
             <p className="text-muted">Подробный чек-лист для этого объекта готовится.</p>
-            <Link
-              className={cx(ui['button'], ui['secondary'])}
-              onClick={onClose}
-              to={`/articles?topic=${object.id}`}
-            >
+            <Link className={cx(ui['button'], ui['secondary'])} to={`/articles?topic=${object.id}`}>
               Материалы по теме
             </Link>
           </>
@@ -141,7 +126,7 @@ export function AppModal({
           {saved(article.id) ? 'Убрать из избранного' : 'Сохранить в избранное'}
         </button>
         {article.id.startsWith('code') && (
-          <Link onClick={onClose} className={ui['text-link']} to="/protect/code">
+          <Link className={ui['text-link']} to="/protect/code">
             Открыть чек-лист по защите кода →
           </Link>
         )}
@@ -186,7 +171,7 @@ export function AppModal({
           Избранное и история сохраняются в личном кабинете. Найти материалы можно через поиск
           вверху страницы.
         </p>
-        <Link className={cx(ui['button'], ui['primary'])} onClick={onClose} to="/protect">
+        <Link className={cx(ui['button'], ui['primary'])} to="/protect">
           Перейти к защите прав
         </Link>
       </>
@@ -203,7 +188,7 @@ export function AppModal({
               : 'Этот раздел готовится. Пока доступны материалы и чек-лист по защите программного кода.'}
           </p>
         </div>
-        <Link className={cx(ui['button'], ui['primary'])} onClick={onClose} to="/protect/code">
+        <Link className={cx(ui['button'], ui['primary'])} to="/protect/code">
           Открыть чек-лист <Icon name="arrowRight" size={18} />
         </Link>
       </>
