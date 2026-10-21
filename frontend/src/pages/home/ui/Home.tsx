@@ -27,12 +27,12 @@ export function Home({ open, toolAction }: { open: Open; toolAction: Open }) {
         />
       </section>
       <section className={styles['action-grid']} aria-label="С чего начать">
-        <Link className={cx(styles['action-card'], styles['emphasized'])} to="/ownership">
-          <span className={styles['action-top']}>
-            <span className={cx(ui['icon-tile'], ui['filled'])}>
+        <Link className={styles['action-card']} to="/ownership">
+          <div className={styles['action-top']}>
+            <span className={ui['icon-tile']}>
               <Icon name="file" />
             </span>
-          </span>
+          </div>
           <h2>Оформить права</h2>
           <p>
             Кому принадлежат результаты разработки? Как оформить отношения с сотрудниками,

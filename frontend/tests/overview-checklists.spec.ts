@@ -71,7 +71,11 @@ test('overview favorites reopen the checklist and new guides fit mobile', async 
     'true',
   );
   await page.goto('/profile');
-  await page.getByRole('link', { name: /^Как оспорить претензию о нарушении чужих прав/ }).click();
+  await page
+    .getByRole('link', {
+      name: /^(?:Статья|Чек-лист|Памятка)\s*Как оспорить претензию о нарушении чужих прав/,
+    })
+    .click();
   await expect(page).toHaveURL(/\/defend$/);
   await page.setViewportSize({ width: 390, height: 844 });
   for (const area of ['protect', 'defend']) {

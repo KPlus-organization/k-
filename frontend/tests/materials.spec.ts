@@ -52,7 +52,9 @@ test('database checklists have no completion controls and keep favorites across 
   await page.getByRole('link', { name: /Все материалы по теме/ }).click();
   await expect(page).toHaveURL(/\/articles\?topic=databases$/);
   await page
-    .getByRole('link', { name: /^База данных как объект прав: как защититься при копировании/ })
+    .getByRole('link', {
+      name: /^(?:Статья|Чек-лист|Памятка)\s*База данных как объект прав: как защититься при копировании/,
+    })
     .click();
   await expect(page).toHaveURL(/\/protect\/databases$/);
   await page.reload();
@@ -91,10 +93,14 @@ test('code checklist links to both articles and expert questions, with full-text
   await page.goto('/articles?topic=databases');
   await expect(
     page.getByRole('link', {
-      name: /^База данных как объект прав: как защититься при копировании/,
+      name: /^(?:Статья|Чек-лист|Памятка)\s*База данных как объект прав: как защититься при копировании/,
     }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: /^Оформление прав на базу данных/ })).toBeVisible();
+  await expect(
+    page.getByRole('link', {
+      name: /^(?:Статья|Чек-лист|Памятка)\s*Оформление прав на базу данных/,
+    }),
+  ).toBeVisible();
   await expect(page.getByRole('link', { name: /Как доказывают заимствование/ })).toHaveCount(0);
 });
 

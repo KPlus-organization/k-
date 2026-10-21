@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { materialHref, materialLabels } from '@/entities/material';
 import { cx, type Open } from '@/shared/lib';
 import { Icon, LoadState, ui } from '@/shared/ui';
@@ -23,6 +23,16 @@ export function QuestionsPage({
   const [query, setQuery] = useState('');
   const [topic, setTopic] = useState('');
   const [limit, setLimit] = useState(PAGE_SIZE);
+  // /questions#<id>, e.g. from the popular questions in the menu: that question is shown open.
+  const linked = decodeURIComponent(useLocation().hash.slice(1));
+  const loaded = Boolean(data);
+  useEffect(() => {
+    if (!loaded || !linked) return;
+    const question = document.getElementById(`question-${linked}`);
+    if (!(question instanceof HTMLDetailsElement)) return;
+    question.open = true;
+    question.scrollIntoView({ block: 'center' });
+  }, [loaded, linked]);
   if (!data) return <LoadState error={error} onRetry={reload} />;
   const topics = [...new Map(data.items.map((item) => [item.topic, item.topicTitle])).entries()];
   const search = query.trim().toLocaleLowerCase('ru');
@@ -31,7 +41,10 @@ export function QuestionsPage({
       (!topic || item.topic === topic) &&
       `${item.question} ${item.answer} ${item.reference}`.toLocaleLowerCase('ru').includes(search),
   );
-  const visible = filtered.slice(0, limit);
+  const visible = filtered.slice(
+    0,
+    Math.max(limit, filtered.findIndex((item) => item.id === linked) + 1),
+  );
   const personal = data.mode === 'personalized';
   return (
     <div className={cx(ui['container'], styles['page'])}>
@@ -101,7 +114,7 @@ export function QuestionsPage({
         </div>
         <div className={styles['list']}>
           {visible.map((item) => (
-            <details key={item.id} className={styles['question']}>
+            <details key={item.id} id={`question-${item.id}`} className={styles['question']}>
               <summary>
                 <span>
                   <span className={styles['topic']}>{item.topicTitle}</span>

@@ -55,7 +55,16 @@ test('history: entries are returned newest first and validated', async () => {
   assert.equal(created.body.type, 'material');
   assert.ok(Date.parse(created.body.visitedAt));
 
-  await api('POST', '/api/history', { token, body: { type: 'search', target: 'МКТУ', title: 'Поиск: МКТУ' } });
+  const search = { type: 'search', target: 'МКТУ', title: 'Поиск: МКТУ' };
+  const first = await api('POST', '/api/history', { token, body: search });
+  assert.equal(first.status, 201);
+  // A reload of the results or a second tab: still one entry, returned as is.
+  const [again, parallel] = await Promise.all([
+    api('POST', '/api/history', { token, body: search }),
+    api('POST', '/api/history', { token, body: search }),
+  ]);
+  assert.deepEqual([again.status, parallel.status], [200, 200]);
+  assert.equal(again.body.id, first.body.id);
   await api('POST', '/api/history', { token, body: { type: 'tool', target: 'calculator', title: 'Калькулятор пошлин' } });
 
   const list = await api('GET', '/api/history?limit=2', { token });
@@ -64,6 +73,8 @@ test('history: entries are returned newest first and validated', async () => {
     list.body.items.map((item: { type: string }) => item.type),
     ['tool', 'search'],
   );
+  const all = (await api('GET', '/api/history?limit=50', { token })).body.items;
+  assert.equal(all.filter((item: { target: string }) => item.target === 'МКТУ').length, 1);
 
   const invalid = await api('POST', '/api/history', { token, body: { type: 'video', target: '', title: 'x' } });
   assert.equal(invalid.status, 400);

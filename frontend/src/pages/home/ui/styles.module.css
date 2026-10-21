@@ -50,11 +50,6 @@
   min-height: 320px;
 }
 
-.action-card.emphasized {
-  background: var(--mint);
-  border-color: #b8e9d5;
-}
-
 .action-card:not(:disabled):hover {
   border-color: #6bc6a6;
   box-shadow: 0 6px 20px #142f2808;

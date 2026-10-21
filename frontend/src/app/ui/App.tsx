@@ -101,12 +101,13 @@ export function App() {
   }, [profile?.id, addFavorite]);
 
   useEffect(() => {
-    // Not on opening or closing a window (?modal): the page stays where it is.
-    window.scrollTo(0, 0);
+    // Not on opening or closing a window (?modal): the page stays where it is. A link to a
+    // place on a page (#…) is scrolled to by the page itself.
+    if (!location.hash) window.scrollTo(0, 0);
     // Pages with loaded content (materials, objects) set their own titles.
     const title = staticTitles[location.pathname];
     if (title) document.title = `${title} — МоёПраво`;
-  }, [location.pathname, pageSearch]);
+  }, [location.pathname, location.hash, pageSearch]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(''), 3500);
@@ -285,7 +286,8 @@ export function App() {
             path="/questions"
             element={
               <QuestionsPage
-                key={profile?.id ?? 'guest'}
+                // A link to another question (#id) starts again without search and topic filters.
+                key={`${profile?.id ?? 'guest'}${location.hash}`}
                 userId={profile?.id}
                 ready={status !== 'loading'}
                 open={open}
