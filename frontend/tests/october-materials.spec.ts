@@ -153,11 +153,13 @@ test('database, brand and visual questions link to published articles and are se
     .getByRole('article')
     .getByRole('link', { name: /нашим калькулятором/ })
     .click();
-  await expect(page).toHaveURL(/\/tools\/calculator$/);
+  await expect(page).toHaveURL(/\/tools\/calculator\?schedule=trademarks$/);
   await page.goto(
     '/search?q=' + encodeURIComponent('Элементы базы данных как объект правовой защиты'),
   );
-  await page.getByRole('link', { name: /^Элементы базы данных/ }).click();
+  await page
+    .getByRole('link', { name: /^(?:Статья|Чек-лист|Памятка)\s*Элементы базы данных/ })
+    .click();
   await expect(page).toHaveURL(/\/articles\/database-elements$/);
   await page
     .getByRole('article')

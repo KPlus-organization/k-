@@ -11,12 +11,23 @@
   color: var(--muted);
 }
 
-.search-box input:not([type='checkbox']) {
+/* The box itself is the field: the input inside has no shape of its own, so no global
+   focus ring, rounded background or autofill colour can cover its first letters. */
+.search-box input:not([type='checkbox']),
+.search-box input:not([type='checkbox']):focus,
+.search-box input:not([type='checkbox']):focus-visible {
+  align-self: stretch;
   border: 0;
+  border-radius: 0;
   background: transparent;
+  box-shadow: none;
   padding: 0;
   font-size: 13px;
   outline: 0;
+}
+
+.search-box input:not([type='checkbox']):autofill {
+  box-shadow: 0 0 0 40px var(--pale) inset;
 }
 
 .search-box:focus-within {

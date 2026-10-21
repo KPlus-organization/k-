@@ -4,7 +4,8 @@ import { cx, type Open } from '@/shared/lib';
 import { tools } from '@/shared/config';
 import { Icon, ui } from '@/shared/ui';
 import { type Profile } from '@/entities/profile';
-import { topicHref, useObjects } from '@/entities/material';
+import { useObjects } from '@/entities/material';
+import { PopularQuestions } from '@/features/popular-questions';
 import { SearchForm } from '@/features/search';
 import styles from './styles.module.css';
 
@@ -97,8 +98,9 @@ export function SiteHeader({
               <Link to="/articles">Информационные статьи на тему:</Link>
             </h2>
             <div className={styles['menu-links']}>
+              {/* All articles on the topic, as in the catalog; not the object's checklist. */}
               {objects.map((item) => (
-                <Link key={item.id} to={topicHref(item.id)}>
+                <Link key={item.id} to={`/articles?topic=${item.id}`}>
                   {item.title}
                   {item.id === 'brand'
                     ? ' (логотип, название, коммерческое обозначение и фирменное наименование, домен)'
@@ -119,6 +121,7 @@ export function SiteHeader({
             <h2>
               <button onClick={() => open('questions')}>Вопрос — ответ</button>
             </h2>
+            <PopularQuestions />
           </nav>
         </>
       )}

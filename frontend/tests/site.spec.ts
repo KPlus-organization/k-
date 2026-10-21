@@ -110,7 +110,9 @@ test('wrong password is rejected; a guest saving a material signs in and returns
 
   await page.goto('/profile');
   await expect(
-    page.getByRole('main').getByRole('link', { name: /^Как доказывают заимствование кода/ }),
+    page.getByRole('main').getByRole('link', {
+      name: /^(?:Статья|Чек-лист|Памятка)\s*Как доказывают заимствование кода/,
+    }),
   ).toBeVisible();
 });
 
@@ -221,7 +223,9 @@ test('mobile screens fit the viewport and navigation works', async ({ page }) =>
     .getByRole('navigation', { name: 'Основная навигация' })
     .getByRole('link', { name: 'Программный код', exact: true })
     .click();
-  await expect(page).toHaveURL(/\/protect\/code$/);
+  // Topics in the menu open all articles on the topic, not the object's checklist.
+  await expect(page).toHaveURL(/\/articles\?topic=code$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Программный код' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Основная навигация' })).not.toBeVisible();
 });
 

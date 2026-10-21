@@ -56,7 +56,7 @@ test('GET /api/materials/:id returns full content with related summaries', async
   assert.equal(res.body.sections.length, 8);
   assert.equal(res.body.stepsCount, 8);
   assert.deepEqual(res.body.download, {
-    fileName: 'Чек-лист программный год - защита прав.docx',
+    fileName: 'Чек-лист программный код - защита прав.docx',
     url: '/api/materials/checklist/file',
   });
   assert.deepEqual(
@@ -72,7 +72,7 @@ test('GET /api/materials/:id/file downloads the source DOCX under its original n
   assert.match(res.headers.get('content-disposition') ?? '', /^attachment;.*filename\*=UTF-8''/);
   assert.match(
     decodeURIComponent(res.headers.get('content-disposition') ?? ''),
-    /Чек-лист программный год - защита прав\.docx/,
+    /Чек-лист программный код - защита прав\.docx/,
   );
   assert.equal(Buffer.from(await res.arrayBuffer()).subarray(0, 2).toString(), 'PK');
 

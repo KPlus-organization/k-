@@ -333,7 +333,7 @@ Authorization: Bearer eyJ...
         "id": "checklist",
         "topic": "code",
         "kind": "checklist",
-        "title": "Чек-лист: Защитить программный код",
+        "title": "Защитить программный код",
         "description": "...",
         "hasContent": true,
         "stepsCount": 8
@@ -388,7 +388,9 @@ Authorization: Bearer eyJ...
 | `target` | 1–500 символов; для `material` — id существующего материала |
 | `title` | 1–300 символов |
 
-`201 Created` → `HistoryEntry`. Ошибки: `400 VALIDATION_ERROR`, `401`.
+`201 Created` → `HistoryEntry`. Та же запись (`type` и `target`) в течение 30 минут не дублируется:
+перезагрузка результатов поиска, возврат к ним или вторая вкладка получают уже сохранённую
+запись с `200 OK`. Так же считаются открытия материалов. Ошибки: `400 VALIDATION_ERROR`, `401`.
 
 ## 10. Эндпоинты: контент, поиск и пошлины
 
@@ -433,9 +435,9 @@ Authorization: Bearer eyJ...
   "description": "...",
   "hasContent": true,
   "stepsCount": 8,
-  "pageTitle": "Защита программного кода",
+  "pageTitle": "Защитить программный код",
   "download": {
-    "fileName": "Чек-лист программный год - защита прав.docx",
+    "fileName": "Чек-лист программный код - защита прав.docx",
     "url": "/api/materials/checklist/file"
   },
   "related": [{ "id": "code-0", "topic": "code", "kind": "article", "...": "..." }],
@@ -706,11 +708,13 @@ API не знает адресов страниц сайта: id материа�
 
 | Метод и путь | Авторизация | Результат |
 | --- | --- | --- |
-| `GET /api/questions?limit=8&offset=0` | Необязательный Bearer | `{ mode, hasPopularity, total, items }` |
+| `GET /api/questions?limit=8&offset=0&order=popular` | Необязательный Bearer | `{ mode, hasPopularity, total, items }` |
 | `POST /api/materials/:id/view` | Необязательный Bearer | `{ visitorId: UUIDv4 }` → `204` |
 
 `limit`: 1–100, по умолчанию 8; `offset`: целое неотрицательное число. `mode` — `popular`
-или `personalized`. Переданный некорректный токен вызывает `401`, а не переключение на гостя.
+или `personalized`. Необязательный `order=popular` отключает персональную подборку: порядок
+только по популярности, одинаковый для всех (так строится блок популярных вопросов в меню сайта);
+другие значения `order` дают `400`. Переданный некорректный токен вызывает `401`, а не переключение на гостя.
 Оба ответа имеют `Cache-Control: no-store`.
 
 Вопрос содержит `id`, `topic`, `topicTitle`, `question`, `answer`, `reference` и `material`.

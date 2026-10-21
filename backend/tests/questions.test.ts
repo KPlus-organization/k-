@@ -78,6 +78,10 @@ test('popularity follows material openings and a new account receives the same r
   const fresh = (await api('GET', '/api/questions', { token: user.accessToken })).body;
   assert.equal(fresh.mode, 'popular');
   assert.deepEqual(fresh.items, popular.items);
+  const top = (await api('GET', '/api/questions?order=popular&limit=5')).body;
+  assert.equal(top.mode, 'popular');
+  assert.deepEqual(top.items, popular.items.slice(0, 5));
+  assert.equal((await api('GET', '/api/questions?order=recent')).status, 400);
 });
 
 test('personal recommendations use only the account history and prioritize unread related materials', async () => {
@@ -99,6 +103,7 @@ test('personal recommendations use only the account history and prioritize unrea
   assert.equal(personal.mode, 'personalized');
   assert.equal(personal.items[0].material.topic, 'databases');
   assert.notEqual(personal.items[0].material.id, 'database-rights');
+  assert.equal((await api('GET', '/api/questions?order=popular', { token })).body.mode, 'popular');
   assert.equal((await api('GET', '/api/questions', { token: other.accessToken })).body.mode, 'popular');
   assert.deepEqual((await api('GET', '/api/history', { token: other.accessToken })).body.items, []);
   // A previous history entry (before analytics existed) also enables recommendations.

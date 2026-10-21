@@ -1,9 +1,16 @@
 import { Link } from 'react-router-dom';
 import { cx, type Open } from '@/shared/lib';
-import { Icon } from '@/shared/ui';
+import { Icon, type IconName } from '@/shared/ui';
 import { materialHref } from '../model/routes';
-import type { MaterialSummary } from '../model/types';
+import { materialLabels, type MaterialKind, type MaterialSummary } from '../model/types';
 import styles from './styles.module.css';
+
+// Articles keep the bookmark; checklists show steps checked one after another.
+const kindIcons: Record<MaterialKind, IconName> = {
+  article: 'bookmark',
+  checklist: 'checks',
+  reference: 'file',
+};
 
 export function ArticleButton({
   item,
@@ -21,8 +28,9 @@ export function ArticleButton({
     : materialHref(item.id);
   const content = (
     <>
-      <Icon name="bookmark" />
+      <Icon name={kindIcons[item.kind]} />
       <span>
+        <span className={styles['kind']}>{materialLabels[item.kind]}</span>
         <strong>{item.title}</strong>
         <small>{item.description}</small>
       </span>

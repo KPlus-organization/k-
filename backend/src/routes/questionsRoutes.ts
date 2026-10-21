@@ -22,7 +22,12 @@ questionsRoutes.get('/questions', optionalAuth, async (req, res) => {
   if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0) {
     throw new HttpError(400, 'VALIDATION_ERROR', 'Invalid pagination');
   }
-  const result = await listQuestions(req.userId);
+  // order=popular ranks by openings only, the same for everyone (e.g. the site menu).
+  const order = req.query['order'];
+  if (order !== undefined && order !== 'popular') {
+    throw new HttpError(400, 'VALIDATION_ERROR', 'Invalid order');
+  }
+  const result = await listQuestions(order === 'popular' ? undefined : req.userId);
   res.json({ ...result, total: result.items.length, items: result.items.slice(offset, offset + limit) });
 });
 

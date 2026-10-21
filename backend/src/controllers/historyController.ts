@@ -35,6 +35,10 @@ export async function postHistory(req: Request, res: Response): Promise<void> {
   }
   throwIfIssues(issues);
 
-  const entry = await addHistoryEntry(authUserId(req), { type: type as HistoryType, target: target!, title: title! });
-  res.status(201).json(entry);
+  const { entry, created } = await addHistoryEntry(authUserId(req), {
+    type: type as HistoryType,
+    target: target!,
+    title: title!,
+  });
+  res.status(created ? 201 : 200).json(entry);
 }

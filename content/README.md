@@ -102,10 +102,10 @@ npm run db:seed      # наполнение из content/
   "id": "checklist",
   "topic": "code",
   "kind": "checklist",
-  "title": "Чек-лист: Защитить программный код",
-  "pageTitle": "Защита программного кода",
+  "title": "Защитить программный код",
+  "pageTitle": "Защитить программный код",
   "description": "8 шагов · от фиксации до требований",
-  "file": { "path": "checklist.docx", "name": "Чек-лист программный год - защита прав.docx" },
+  "file": { "path": "checklist.docx", "name": "Чек-лист программный код - защита прав.docx" },
   "related": ["code-0", "code-1", "code-expert"],
   "intro": [],
   "sections": [{ "id": "step-1", "title": "…", "toc": "Зафиксировать нарушение", "blocks": [] }]
