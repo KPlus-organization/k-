@@ -1,11 +1,8 @@
 {
-	# No domain yet: plain HTTP by IP. With a domain, replace ":80" below with
-	# the domain name and remove auto_https off — Caddy will obtain HTTPS itself.
-	auto_https off
 	admin off
 }
 
-:80 {
+(site) {
 	encode zstd gzip
 
 	handle /api/* {
@@ -25,4 +22,20 @@
 		try_files {path} /index.html
 		file_server
 	}
+}
+
+# SITE_DOMAIN comes from .env. Caddy obtains and renews the Let's Encrypt certificate
+# (kept in the /data volume) and redirects http:// to https:// by itself.
+{$SITE_DOMAIN} {
+	header Strict-Transport-Security "max-age=31536000"
+	import site
+}
+
+# The site has one address: www and plain HTTP by IP lead to the domain, keeping the path.
+www.{$SITE_DOMAIN} {
+	redir https://{$SITE_DOMAIN}{uri} permanent
+}
+
+http:// {
+	redir https://{$SITE_DOMAIN}{uri} permanent
 }

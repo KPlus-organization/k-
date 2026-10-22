@@ -45,9 +45,19 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?set SITE_DOMAIN in .env}
     ports:
       - '${WEB_PORT:-80}:80'
+      - '${HTTPS_PORT:-443}:443'
+      - '${HTTPS_PORT:-443}:443/udp'
+    volumes:
+      # HTTPS certificates: without them Caddy would request new ones on every restart.
+      - caddy_data:/data
+      - caddy_config:/config
     logging: *logging
 
 volumes:
   pgdata:
+  caddy_data:
+  caddy_config:
