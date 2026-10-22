@@ -4,7 +4,7 @@
 
 | Контейнер | Образ | Что делает |
 | --- | --- | --- |
-| `web` | `ghcr.io/kplus-organization/k-web` | Caddy: отдаёт собранный фронтенд, проксирует `/api/*` в `backend`. Единственный, у кого открыт порт наружу |
+| `web` | `ghcr.io/kplus-organization/k-web` | Caddy: HTTPS для домена, отдаёт собранный фронтенд, проксирует `/api/*` в `backend`. Единственный, у кого открыты порты наружу (80 и 443) |
 | `backend` | `ghcr.io/kplus-organization/k-backend` | API. При каждом старте применяет миграции и синхронизирует `content/` в базу |
 | `db` | `postgres:17` | База, данные в volume `k-_pgdata` |
 
@@ -39,13 +39,15 @@ adduser --disabled-password --gecos "" deploy
 usermod -aG docker deploy
 install -d -o deploy -g deploy /opt/k-
 
-# Файрвол: SSH и порт сайта
+# Файрвол: SSH, HTTP и HTTPS (443/udp — для HTTP/3)
 ufw allow OpenSSH
 ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 443/udp
 ufw enable
 ```
 
-Порты, опубликованные Docker, открываются в обход `ufw`. Поэтому наружу публикуется только порт `web`, а у базы и бэкенда портов нет.
+Порты, опубликованные Docker, открываются в обход `ufw`. Поэтому наружу публикуются только порты `web`, а у базы и бэкенда портов нет.
 Членство в группе `docker` по сути равно правам root, так что ключ `deploy` храните так же бережно, как root-доступ.
 
 ### 2. SSH-ключ для GitHub Actions
@@ -87,7 +89,7 @@ nano /opt/k-/.env      # содержимое — из deploy/.env.example, за
 chmod 600 /opt/k-/.env
 ```
 
-`SITE_ORIGIN` должен точно совпадать с адресом в браузере: `http://<IP>` при `WEB_PORT=80`, иначе `http://<IP>:<порт>`. Иначе API будет отвечать ошибками CORS.
+`SITE_DOMAIN` — домен сайта, его A-запись должна указывать на IP сервера. `SITE_ORIGIN` — адрес сайта в браузере, `https://<домен>`.
 
 ### 4. Секреты в GitHub
 
@@ -103,7 +105,7 @@ Settings → Secrets and variables → Actions → New repository secret:
 
 ### 5. Первый деплой
 
-Смёржите ветку с этими файлами в `main` — запустится Deploy. После него сайт открывается по `http://<IP>/`.
+Смёржите ветку с этими файлами в `main` — запустится Deploy. После него сайт открывается по `https://<домен>/`.
 Кнопка Run workflow появляется только после того, как `deploy.yml` окажется в `main`.
 
 ## Работа на сервере
@@ -140,19 +142,21 @@ Volume — это не бэкап. Ежедневный дамп с хранен
 docker compose exec -T db pg_restore -U k -d k --clean --if-exists < backups/k-ГГГГ-ММ-ДД.dump
 ```
 
+## HTTPS и домен
+
+Сайт работает по адресу `https://moepravoplus.ru`. Сертификат Let's Encrypt Caddy получает сам при первом запуске и сам продлевает. Сертификаты хранятся в volume `k-_caddy_data`, переживают передеплой. Покупать или ставить сертификат у хостера не нужно.
+
+- `http://…`, `www.moepravoplus.ru` и `http://<IP>` перенаправляются на `https://moepravoplus.ru` с тем же путём, так что старые ссылки работают.
+- Ссылки внутри сайта относительные (`/articles/…`, `/api/…`), от домена они не зависят.
+- Чтобы получить сертификат, домен должен указывать на сервер, а порты 80 и 443 должны быть открыты снаружи. Если сертификат не выдаётся, причина будет в `docker compose logs web`.
+- Сменить домен: A-запись нового домена на сервер, затем в `.env` поменять `SITE_DOMAIN` и `SITE_ORIGIN` и выполнить `docker compose up -d`.
+
 ## Проверить продакшен-сборку локально
 
-Нужен Docker. Создайте `deploy/.env` по примеру с `SITE_ORIGIN=http://localhost:8080` и `WEB_PORT=8080`, затем:
+Нужен Docker. Создайте `deploy/.env` по примеру с `SITE_DOMAIN=localhost`, `WEB_PORT=8080`, `HTTPS_PORT=8443` и `SITE_ORIGIN=https://localhost:8443`, затем:
 
 ```bash
 docker compose -f deploy/docker-compose.yml -f deploy/compose.build.yml up --build
 ```
 
-## Когда появится домен
-
-Сейчас сайт работает по HTTP: пароли и токены идут по сети открытым текстом. С доменом:
-
-1. A-запись домена направить на IP сервера.
-2. В [`Caddyfile`](Caddyfile) заменить `:80` на домен и убрать `auto_https off`. Caddy сам получит и будет продлевать сертификат Let's Encrypt.
-3. В `docker-compose.yml` у `web` опубликовать порты `80:80`, `443:443`, `443:443/udp` и добавить volume для `/data`, где хранятся сертификаты.
-4. В `.env` на сервере: `SITE_ORIGIN=https://домен`. В `ufw` открыть 443.
+Сайт откроется по `https://localhost:8443`. Сертификат для `localhost` Caddy выпускает сам, браузер предупредит, что не доверяет ему.
