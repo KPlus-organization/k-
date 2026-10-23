@@ -37,6 +37,9 @@ const ids = (items: { id: string }[]) => items.map((item) => item.id);
 test('a material removed from content/ is unpublished, and favorites come back when it returns', async () => {
   const { accessToken: token } = await registerUser();
   assert.equal((await api('PUT', '/api/favorites/code-1', { token })).status, 204);
+  const originalCode = (await api('GET', '/api/objects')).body.items.find((item: { id: string }) => item.id === 'code');
+  const originalCount = originalCode.materialsCount;
+  assert.ok(originalCount > 0);
 
   const withoutCode1 = await contentCopy((materials) =>
     materials
@@ -51,7 +54,7 @@ test('a material removed from content/ is unpublished, and favorites come back w
   assert.equal((await api('GET', '/api/materials/code-1/file')).status, 404);
   assert.ok(!ids((await api('GET', '/api/materials')).body.items).includes('code-1'));
   const code = (await api('GET', '/api/objects')).body.items.find((item: { id: string }) => item.id === 'code');
-  assert.equal(code.materialsCount, 5);
+  assert.equal(code.materialsCount, originalCount - 1);
   assert.deepEqual((await api('GET', '/api/favorites', { token })).body.items, []);
   assert.equal((await api('PUT', '/api/favorites/code-1', { token })).status, 404);
   const search = await api('GET', `/api/search?q=${encodeURIComponent('компенсация')}`);
@@ -60,6 +63,8 @@ test('a material removed from content/ is unpublished, and favorites come back w
   // Restoring the real content publishes the material again with the same favorite.
   await syncContent({ log: quiet });
   assert.equal((await api('GET', '/api/materials/code-1')).status, 200);
+  const restoredCode = (await api('GET', '/api/objects')).body.items.find((item: { id: string }) => item.id === 'code');
+  assert.equal(restoredCode.materialsCount, originalCount);
   assert.deepEqual(
     (await api('GET', '/api/favorites', { token })).body.items.map((item: { material: { id: string } }) => item.material.id),
     ['code-1'],
