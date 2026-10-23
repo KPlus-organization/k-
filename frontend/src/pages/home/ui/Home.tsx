@@ -13,7 +13,7 @@ export function Home({ open, toolAction }: { open: Open; toolAction: Open }) {
           <div className={cx(ui['eyebrow'], styles['eyebrow'])}>
             ДЛЯ СОЗДАТЕЛЕЙ САЙТОВ И ПРИЛОЖЕНИЙ
           </div>
-          <h1>Мой продукт. Мои права.</h1>
+          <h1>Мой продукт Мои права</h1>
           <p>
             Разрабатываете сайт или приложение? Разберитесь в правах на все элементы продукта — от
             первой строки кода до названия. Простым языком.
@@ -70,7 +70,6 @@ export function Home({ open, toolAction }: { open: Open; toolAction: Open }) {
       <section className={styles['tools-section']}>
         <div className={styles['section-heading']}>
           <h2>Ответы и инструменты под рукой</h2>
-          <p>Для конкретного вопроса — воспользуйтесь поиском</p>
         </div>
         <div className={styles['tools-grid']}>
           {visibleTools.map((tool) => (

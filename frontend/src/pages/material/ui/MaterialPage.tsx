@@ -108,7 +108,9 @@ function ReadingSession({
   const saved = favorites.includes(material.id);
   const object = useObjects().data?.find((item) => item.id === material.topic);
   const area = journeyArea ?? materialArea(material.id);
-  const isOverview = ['protect-overview', 'defend-overview'].includes(material.id);
+  const isOverview = ['ownership-overview', 'protect-overview', 'defend-overview'].includes(
+    material.id,
+  );
   const sourceNotice = material.intro.find(
     (block) => block.type === 'note' && block.anchor === 'legal-notice',
   );

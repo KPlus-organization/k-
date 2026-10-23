@@ -24,7 +24,7 @@ import styles from './styles.module.css';
 import { ObjectJourneyRoute } from './ObjectJourneyRoute';
 
 const staticTitles: Record<string, string> = {
-  '/': 'Мой продукт. Мои права.',
+  '/': 'Мой продукт Мои права',
   '/defend': 'Оспорить претензию о нарушении чужих прав',
   '/login': 'Войти в профиль',
   '/register': 'Создать профиль',

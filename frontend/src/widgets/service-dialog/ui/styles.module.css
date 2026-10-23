@@ -49,3 +49,20 @@
     padding: 16px;
   }
 }
+
+.consent-document {
+  display: grid;
+  gap: 16px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.consent-document ul {
+  margin: 0;
+  padding-left: 24px;
+  list-style: disc;
+}
+
+.consent-document li + li {
+  margin-top: 6px;
+}

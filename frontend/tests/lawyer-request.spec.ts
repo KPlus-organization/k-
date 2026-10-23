@@ -15,7 +15,7 @@ test('request validates, closes the dialog and shows a frontend submission notif
     'Материал носит общий информационный характер и не заменяет консультации юриста.',
   );
   await expect(notice.getByRole('button', { name: 'Найти юриста' })).toBeVisible();
-  await notice.getByRole('button', { name: 'Обсудить задачу с юристом' }).click();
+  await notice.getByRole('button', { name: 'Обсудить задачу с нами' }).click();
   const dialog = page.getByRole('dialog');
   const submit = dialog.getByRole('button', { name: 'Отправить заявку' });
   await submit.click();
@@ -33,7 +33,7 @@ test('request validates, closes the dialog and shows a frontend submission notif
   await submit.click();
   await expect(dialog).not.toBeVisible();
   await expect(page.getByRole('status')).toHaveText('Заявка отправлена');
-  await notice.getByRole('button', { name: 'Обсудить задачу с юристом' }).click();
+  await notice.getByRole('button', { name: 'Обсудить задачу с нами' }).click();
   await expect(dialog.getByLabel('Коротко о задаче')).toHaveValue('');
   expect(requests).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
@@ -57,7 +57,7 @@ test('material notice has both actions and a request uses profile details', asyn
   await notice.getByRole('button', { name: 'Найти юриста' }).click();
   await expect(page.getByRole('dialog', { name: 'Найти юриста' })).toBeVisible();
   await page.keyboard.press('Escape');
-  await notice.getByRole('button', { name: 'Обсудить задачу с юристом' }).click();
+  await notice.getByRole('button', { name: 'Обсудить задачу с нами' }).click();
   await expect(page.getByRole('dialog').getByLabel('Имя', { exact: true })).toHaveValue(user.login);
   await expect(page.getByRole('dialog').getByLabel('Логин', { exact: true })).toHaveValue(
     user.login,

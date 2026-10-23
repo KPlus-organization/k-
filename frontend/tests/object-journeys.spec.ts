@@ -13,11 +13,13 @@ for (const area of ['protect', 'defend']) {
     for (const route of routes) {
       await page.goto(route);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-      if (/\/(code|databases|brand|visuals)$/.test(route)) {
+      if (/\/(code|design|databases|brand|visuals)$/.test(route)) {
         await expect(page.getByText('Материалы по этому объекту готовятся')).toHaveCount(0);
         if (route === '/defend/code') {
           await expect(
-            page.getByRole('main').getByRole('link', { name: /Как доказывают заимствование кода/ }),
+            page
+              .getByRole('article')
+              .getByRole('link', { name: 'Как доказывают заимствование кода', exact: true }),
           ).toBeVisible();
           await expect(
             page.getByRole('main').getByRole('link', { name: /Вопросы эксперту/ }),
@@ -37,7 +39,7 @@ for (const area of ['protect', 'defend']) {
         await expect(
           page.getByRole('heading', { name: 'Материалы по этому объекту готовятся' }),
         ).toBeVisible();
-        await page.getByRole('button', { name: 'Обсудить задачу с юристом' }).click();
+        await page.getByRole('button', { name: 'Обсудить задачу с нами' }).click();
         await expect(page.getByRole('dialog').getByLabel('Коротко о задаче')).toBeVisible();
         await page.keyboard.press('Escape');
       }

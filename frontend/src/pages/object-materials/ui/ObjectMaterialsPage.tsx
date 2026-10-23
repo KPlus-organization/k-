@@ -92,7 +92,7 @@ export function ObjectMaterialsPage({
             className={cx(ui['button'], ui['primary'])}
             onClick={() => open('lawyer-request')}
           >
-            Обсудить задачу с юристом
+            Обсудить задачу с нами
           </button>
         </section>
       )}

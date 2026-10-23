@@ -25,7 +25,7 @@ test('the supplied questions have answers and only published, complete material 
   assert.equal(result.body.mode, 'popular');
   const all = (await api('GET', '/api/questions?limit=100')).body.items;
   assert.equal(new Set(all.map((item: { id: string }) => item.id)).size, 39);
-  assert.equal(all.filter((item: { material: unknown }) => item.material).length, 23);
+  assert.equal(all.filter((item: { material: unknown }) => item.material).length, 31);
   for (const item of all) {
     assert.ok(item.question && item.answer && item.reference && item.topicTitle);
     assert.equal(item.source, undefined);

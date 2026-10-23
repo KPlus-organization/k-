@@ -100,9 +100,9 @@ export function Auth({
         <section className={styles['auth-benefits']}>
           <div className={cx(ui['eyebrow'], styles['eyebrow'])}>ВАШ ЛИЧНЫЙ КАБИНЕТ</div>
           <h2>
-            Мой продукт.
+            Мой продукт
             <br />
-            Мои права.
+            Мои права
           </h2>
           <p>Всё важное об интеллектуальной собственности — в вашем личном кабинете.</p>
           <img
@@ -237,7 +237,7 @@ export function Auth({
                   />
                   <span>
                     Я даю{' '}
-                    <button type="button" onClick={() => open('privacy')}>
+                    <button type="button" onClick={() => open('personal-data-consent')}>
                       согласие на обработку персональных данных
                     </button>{' '}
                     и ознакомлен(а) с{' '}

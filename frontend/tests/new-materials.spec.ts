@@ -8,8 +8,8 @@ test('ownership and claims journeys open the new guides and their linked article
   await page.goto('/');
   await page.getByRole('link', { name: /Оформить права/ }).click();
   await page
-    .getByRole('article')
-    .getByRole('link', { name: 'Оформить права на программный код', exact: true })
+    .getByTestId('object-card')
+    .getByRole('link', { name: 'Программный код', exact: true })
     .click();
   await expect(page).toHaveURL(/\/ownership\/code$/);
   await expect(page.getByTestId('guide-step')).toHaveCount(8);

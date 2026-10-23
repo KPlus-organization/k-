@@ -9,13 +9,13 @@ export function PopularQuestions() {
   if (!data?.items.length) return null;
   return (
     <div className={styles['popular']}>
-      <p className={styles['note']}>
-        {data.hasPopularity ? 'Наиболее популярные' : 'С чего начать'}
-      </p>
       <ul>
         {data.items.map((item) => (
           <li key={item.id}>
-            <Link to={`/questions#${item.id}`}>{item.question}</Link>
+            <Link className={styles['question']} to={`/questions#${item.id}`}>
+              <span>{item.question}</span>
+              <Icon name="chevron" size={18} />
+            </Link>
           </li>
         ))}
       </ul>

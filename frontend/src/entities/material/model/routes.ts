@@ -8,6 +8,10 @@ const materialRoutes: Partial<Record<string, string>> = {
   checklist: '/protect/code',
   'database-registration': '/ownership/databases',
   'code-ownership': '/ownership/code',
+  'code-defense': '/defend/code',
+  'design-ownership': '/ownership/design',
+  'design-protection': '/protect/design',
+  'design-defense': '/defend/design',
   'database-claim': '/defend/databases',
   'brand-defense': '/defend/brand',
   'brand-ownership': '/ownership/brand',
@@ -23,6 +27,7 @@ const objectRoutes: Partial<Record<string, string>> = {
   databases: '/protect/databases',
   brand: '/protect/brand',
   visuals: '/protect/visuals',
+  design: '/protect/design',
 };
 
 export function materialHref(id: string) {
@@ -59,6 +64,8 @@ export function materialArea(id: string): MaterialArea {
       'brand-start',
       'visuals-ownership',
       'visuals-ai',
+      'design-ownership',
+      'design-figma',
     ].includes(id)
   )
     return 'ownership';
@@ -72,6 +79,11 @@ export function materialArea(id: string): MaterialArea {
       'visuals-defense',
       'visuals-claim',
       'text-rewrite',
+      'code-defense',
+      'code-contractor',
+      'design-defense',
+      'design-ui-kit',
+      'design-contractor',
     ].includes(id)
   )
     return 'defend';
@@ -89,6 +101,10 @@ export function objectJourney(
   > = {
     protect: {
       code: { primary: 'checklist', materials: ['checklist', 'code-0', 'code-1', 'code-expert'] },
+      design: {
+        primary: 'design-protection',
+        materials: ['design-protection', 'design-comparison', 'design-ownership', 'design-figma'],
+      },
       databases: {
         primary: 'database-protection',
         materials: [
@@ -106,7 +122,14 @@ export function objectJourney(
       },
     },
     defend: {
-      code: { materials: ['code-0', 'code-expert', 'code-1'] },
+      code: {
+        primary: 'code-defense',
+        materials: ['code-defense', 'code-0', 'code-contractor', 'code-expert', 'code-1'],
+      },
+      design: {
+        primary: 'design-defense',
+        materials: ['design-defense', 'design-ui-kit', 'design-contractor', 'design-comparison'],
+      },
       databases: {
         primary: 'database-claim',
         materials: ['database-claim', 'database-fair-use', 'database-rights'],
@@ -122,6 +145,10 @@ export function objectJourney(
     },
     ownership: {
       code: { primary: 'code-ownership', materials: ['code-ownership', 'code-registration'] },
+      design: {
+        primary: 'design-ownership',
+        materials: ['design-ownership', 'design-figma', 'design-ui-kit'],
+      },
       databases: {
         primary: 'database-registration',
         materials: ['database-registration', 'database-rights', 'database-coauthors'],

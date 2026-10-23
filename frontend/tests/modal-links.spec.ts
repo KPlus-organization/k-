@@ -9,8 +9,8 @@ test('an opened window is in the address, Back closes it and the page keeps its 
   const scrolled = await page.evaluate(() => window.scrollY);
   expect(scrolled).toBeGreaterThan(0);
 
-  await notice.getByRole('button', { name: 'Обсудить задачу с юристом' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Обсудить задачу с юристом' });
+  await notice.getByRole('button', { name: 'Обсудить задачу с нами' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Обсудить задачу с нами' });
   await expect(dialog).toBeVisible();
   await expect(page).toHaveURL(/\/protect\?modal=lawyer-request$/);
 
@@ -28,7 +28,7 @@ test('an opened window is in the address, Back closes it and the page keeps its 
 
 test('a link with ?modal opens the window, closing it leaves the page', async ({ page }) => {
   await page.goto('/?modal=lawyer-request');
-  const dialog = page.getByRole('dialog', { name: 'Обсудить задачу с юристом' });
+  const dialog = page.getByRole('dialog', { name: 'Обсудить задачу с нами' });
   await expect(dialog.getByLabel('Коротко о задаче')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();

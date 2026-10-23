@@ -31,7 +31,7 @@ export function LegalNotice({
           Найти юриста <Icon name="arrowUp" size={18} />
         </button>
         <button className={cx(ui['button'], ui['primary'])} onClick={() => open('lawyer-request')}>
-          Обсудить задачу с юристом <Icon name="messages" size={18} />
+          Обсудить задачу с нами <Icon name="messages" size={18} />
         </button>
       </div>
     </aside>
