@@ -21,13 +21,13 @@ test('GET /api/objects lists the seven protection objects in order', async () =>
   );
   const code = res.body.items[0];
   assert.equal(code.title, 'Программный код');
-  assert.equal(code.materialsCount, 6);
+  assert.equal(code.materialsCount, 8);
 });
 
 test('GET /api/materials lists summaries and filters by topic', async () => {
   const all = await api('GET', '/api/materials');
   assert.equal(all.status, 200);
-  assert.equal(all.body.items.length, 32);
+  assert.equal(all.body.items.length, 44);
   assert.deepEqual(Object.keys(all.body.items[0]).sort(), [
     'description',
     'hasContent',

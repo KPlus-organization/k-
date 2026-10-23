@@ -4,14 +4,6 @@
   gap: 10px;
 }
 
-.note {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
 .popular ul {
   display: flex;
   flex-direction: column;
@@ -23,8 +15,28 @@
   line-height: 1.4;
 }
 
-.popular ul a {
-  color: var(--text);
+.question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--green);
+  font-weight: 600;
+}
+
+.question svg {
+  flex-shrink: 0;
+}
+
+.question:hover,
+.question:focus-visible {
+  border-color: var(--green);
+  background: var(--mint);
 }
 
 .all {

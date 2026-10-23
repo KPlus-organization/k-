@@ -118,9 +118,7 @@ export function SiteHeader({
                 </button>
               ))}
             </div>
-            <h2>
-              <button onClick={() => open('questions')}>Вопрос — ответ</button>
-            </h2>
+            <h2>Вопрос — ответ</h2>
             <PopularQuestions />
           </nav>
         </>

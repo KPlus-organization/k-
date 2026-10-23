@@ -99,7 +99,7 @@ export function DocumentEditorPage({ profile, status, open }: Props) {
               className={cx(ui['button'], ui['secondary'])}
               onClick={() => open('lawyer-request')}
             >
-              Обсудить задачу с юристом
+              Обсудить задачу с нами
             </button>
           </div>
         </section>
@@ -407,7 +407,7 @@ function DocumentEditor({
           className={cx(ui['button'], ui['secondary'])}
           onClick={() => open('lawyer-request')}
         >
-          Обсудить задачу с юристом
+          Обсудить задачу с нами
         </button>
       </section>
     </div>

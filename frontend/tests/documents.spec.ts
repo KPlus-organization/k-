@@ -200,8 +200,8 @@ test('three home actions, overview checklist and updated profile illustration', 
   const download = await request.get(`${API_URL}/api/materials/ownership-overview/file`);
   expect(await download.body()).toEqual(await readFile('../content/files/ownership-overview.docx'));
   await page
-    .getByRole('article')
-    .getByRole('link', { name: 'Оформить права на базу данных', exact: true })
+    .getByTestId('object-card')
+    .getByRole('link', { name: 'Базы данных', exact: true })
     .click();
   await expect(page).toHaveURL('/ownership/databases');
   await page.goto('/login');

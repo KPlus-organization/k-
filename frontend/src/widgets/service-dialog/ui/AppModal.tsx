@@ -15,6 +15,7 @@ import { ProfileSettings } from '@/features/profile-settings';
 import { LawyerRequest } from '@/features/lawyer-request';
 import { SavedDocuments } from '@/features/saved-documents';
 import { modalTitles } from '../model/modal-ids';
+import { personalDataConsent } from '../model/personal-data-consent';
 import styles from './styles.module.css';
 
 export function AppModal({
@@ -131,6 +132,25 @@ export function AppModal({
           </Link>
         )}
       </>
+    );
+  else if (id === 'personal-data-consent')
+    body = (
+      <div className={styles['consent-document']}>
+        <p>(далее — Согласие)</p>
+        <p>{personalDataConsent.intro}</p>
+        <ul>
+          {personalDataConsent.purposes.map((purpose) => (
+            <li key={purpose}>{purpose}</li>
+          ))}
+        </ul>
+        {personalDataConsent.paragraphs.map((paragraph) => (
+          <p key={paragraph}>{paragraph}</p>
+        ))}
+        <p>{personalDataConsent.date}</p>
+        <button className={cx(ui['button'], ui['primary'])} onClick={onClose}>
+          Вернуться к регистрации
+        </button>
+      </div>
     );
   else if (id === 'privacy')
     body = (

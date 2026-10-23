@@ -25,22 +25,24 @@ test('questions open from home and sidebar, show eight answers and link to mater
   await page.getByRole('button', { name: 'Открыть меню' }).click();
   await page
     .getByRole('navigation', { name: 'Основная навигация' })
-    .getByRole('button', { name: 'Вопрос — ответ' })
+    .getByRole('link', { name: 'Все вопросы' })
     .click();
   await expect(page).toHaveURL(/\/questions$/);
   await expect(page.locator('details')).toHaveCount(8);
 });
 
-test('pending references, filters, keyboard access and mobile layout', async ({ page }) => {
+test('published design references, filters, keyboard access and mobile layout', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/questions');
   await page.getByLabel('Тема', { exact: true }).selectOption('design');
   await expect(page.locator('details')).toHaveCount(4);
-  await page.locator('summary').first().focus();
+  await page.locator('#question-design-10 summary').focus();
   await page.keyboard.press('Enter');
   const expanded = page.locator('details[open]');
-  await expect(expanded).toContainText('Подробный материал готовится');
-  await expect(expanded.getByRole('link')).toHaveCount(0);
+  await expect(expanded).not.toContainText('Подробный материал готовится');
+  await expect(expanded.getByRole('link')).toHaveAttribute('href', '/articles/design-figma');
   await expect(expanded).toContainText('Передача файла Figma');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,

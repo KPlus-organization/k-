@@ -76,7 +76,7 @@ test('code checklist links to both articles and expert questions, with full-text
   await expect(page.getByRole('article')).toContainText('Согласно статье 82 АПК РФ');
   await page
     .getByRole('article')
-    .getByRole('link', { name: 'Вопросы эксперту компьютерно-технической экспертизы', exact: true })
+    .getByRole('link', { name: 'Сформулировать вопросы эксперту.', exact: true })
     .click();
   await expect(page.getByRole('article').getByRole('listitem')).toHaveCount(5);
   await expect(page.getByRole('article')).toContainText('специфические ошибки');
@@ -112,9 +112,7 @@ test('ownership entry opens available guides and existing addresses remain acces
   await expect(page).toHaveURL('/ownership');
   await expect(page.getByTestId('guide-step')).toHaveCount(5);
   await expect(
-    page
-      .getByRole('article')
-      .getByRole('link', { name: 'Оформить права на программный код', exact: true }),
+    page.getByTestId('object-card').getByRole('link', { name: 'Программный код', exact: true }),
   ).toBeVisible();
   await page.goto('/ownership/databases');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(

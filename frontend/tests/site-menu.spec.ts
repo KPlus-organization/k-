@@ -17,7 +17,6 @@ test('the menu lists the three most popular questions and each opens its answer'
   await page.goto('/articles');
   await page.getByRole('button', { name: 'Открыть меню' }).click();
   const menu = page.getByRole('navigation', { name: 'Основная навигация' });
-  await expect(menu.getByText('Наиболее популярные')).toBeVisible();
   const links = menu.getByRole('listitem').getByRole('link');
   await expect(links).toHaveText(popular.items.map((item) => item.question));
 
@@ -95,5 +94,5 @@ test('links to tools are one plain in-site link each', async ({ page }) => {
   await page.goto('/articles/brand-start');
   await expect(page.locator('main a[href*="168.113"]')).toHaveCount(0);
   await page.getByRole('button', { name: 'обратитесь к нашему юристу' }).click();
-  await expect(page.getByRole('dialog', { name: 'Обсудить задачу с юристом' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Обсудить задачу с нами' })).toBeVisible();
 });

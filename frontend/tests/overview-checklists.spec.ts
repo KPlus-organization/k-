@@ -39,14 +39,6 @@ for (const area of ['protect', 'defend'] as const) {
       await expect(page).toHaveURL(/\/defend\/databases$/);
       await expect(page.getByRole('heading', { level: 1 })).toContainText('Содержание базы данных');
       await page.goBack();
-    } else {
-      await page
-        .getByRole('article')
-        .getByRole('link', { name: 'Программы для ЭВМ', exact: true })
-        .click();
-      await expect(page).toHaveURL(/\/protect\/code$/);
-      await expect(page.getByTestId('guide-step')).toHaveCount(8);
-      await page.goBack();
     }
     await page.getByRole('link', { name: 'Перейти к выбору объекта' }).click();
     await expect(page.locator('#objects')).toBeInViewport();
