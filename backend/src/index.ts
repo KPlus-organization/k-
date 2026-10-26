@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { createApp } from './app';
 import { closePool } from './config/db';
 import { env } from './config/env';
+import { startDeletingWithdrawnAccounts } from './jobs/deleteWithdrawnAccounts';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -21,11 +22,14 @@ server.listen(env.port, () => {
   console.log(`[server] CORS allowed origins: ${env.frontendOrigins.join(', ')}`);
 });
 
+const stopDeletingWithdrawnAccounts = startDeletingWithdrawnAccounts();
+
 let shuttingDown = false;
 
 async function shutdown(signal: NodeJS.Signals): Promise<void> {
   if (shuttingDown) return;
   shuttingDown = true;
+  stopDeletingWithdrawnAccounts();
   console.log(`[server] Received ${signal}, shutting down...`);
 
   const forceExit = setTimeout(() => {

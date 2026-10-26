@@ -23,6 +23,18 @@
   margin-top: 2px;
 }
 
+.dashboard-footer {
+  max-width: 1201px;
+  margin-top: 32px;
+  font-size: 13px;
+}
+
+.dashboard-footer button {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

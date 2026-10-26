@@ -18,12 +18,11 @@ test('registration opens the supplied consent without losing form data or accept
     exact: true,
   });
   await expect(dialog).toContainText('ООО «МоёПраво»');
-  await expect(dialog).toContainText('регистрация и ведение учетной записи');
-  await expect(dialog).toContainText('support_moepravo@yandex.ru');
-  await expect(dialog).toContainText('23.10.2026');
-  await expect(dialog).not.toContainText(
-    /\(\?\)|если мы предусматриваем|это если у нас|Или:|путём нажатия кнопки/,
-  );
+  await expect(dialog).toContainText('регистрации и ведения учетной записи');
+  await expect(dialog).toContainText('сохранения черновиков (драфтов) договоров');
+  await expect(dialog).toContainText('Отозвать согласие на обработку персональных данных');
+  await expect(dialog).toContainText('25.10.2026');
+  await expect(dialog).not.toContainText(/\(\?\)|если мы предусматриваем|это если у нас|Или:/);
   await dialog.getByRole('button', { name: 'Вернуться к регистрации' }).click();
   await expect(checkbox).not.toBeChecked();
   await expect(page.getByLabel('Логин', { exact: true })).toHaveValue('consent-check');
@@ -58,4 +57,18 @@ test('the consent deep link fits a phone and keeps the intended registration des
   await dialog.getByRole('button', { name: 'Вернуться к регистрации' }).click();
   await expect(page).toHaveURL('/register?next=%2Fdocuments');
   await expect(page.getByRole('checkbox')).not.toBeChecked();
+});
+
+test('registration links to the full privacy policy', async ({ page }) => {
+  await page.goto('/register');
+  await page.getByRole('button', { name: 'политикой конфиденциальности.' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Политика конфиденциальности' });
+  await expect(
+    dialog.getByRole('heading', { name: '10. Отзыв согласия и управление данными' }),
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole('heading', { name: '11. Изменение настоящей Политики' }),
+  ).toBeVisible();
+  await expect(dialog).toContainText('Дата публикации: 25.10.2026');
+  await expect(dialog).not.toContainText('готовится');
 });

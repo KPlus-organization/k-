@@ -66,11 +66,12 @@ export function useSession() {
     setState({ status: 'user', profile: session.user });
   };
 
-  const login = async (identifier: string, password: string) =>
+  /** `consent` is sent again only after the server answered CONSENT_REQUIRED. */
+  const login = async (identifier: string, password: string, consent = false) =>
     signIn(
       await apiRequest<AuthSession>('/api/auth/login', {
         method: 'POST',
-        body: { identifier, password },
+        body: consent ? { identifier, password, consent: true } : { identifier, password },
       }),
     );
 
@@ -90,6 +91,15 @@ export function useSession() {
       );
   };
 
+  // The server revokes every session of the user, so nothing is left to log out from.
+  const withdrawConsent = async () => {
+    await apiRequest('/api/profile/consent/withdraw', { method: 'POST', auth: true });
+    endSession();
+    forgetUserData();
+    setState(guest);
+    navigate('/login', { replace: true });
+  };
+
   const updateProfile = async (changes: ProfileChanges) => {
     const { user } = await apiRequest<{ user: Profile }>('/api/profile', {
       method: 'PATCH',
@@ -106,6 +116,7 @@ export function useSession() {
     login,
     register,
     logout,
+    withdrawConsent,
     updateProfile,
   };
 }

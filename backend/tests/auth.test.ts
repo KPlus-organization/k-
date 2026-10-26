@@ -3,7 +3,9 @@ import { test } from 'node:test';
 
 import { SignJWT } from 'jose';
 
+import { pool } from '../src/config/db';
 import { env } from '../src/config/env';
+import { deleteWithdrawnAccounts } from '../src/services/users';
 import { api, registerUser, setupApi, TEST_PASSWORD, trackLogin, uniqueLogin } from './helpers';
 
 setupApi();
@@ -163,4 +165,67 @@ test('PATCH /api/profile updates allowed fields and enforces uniqueness', async 
 
   const empty = await api('PATCH', '/api/profile', { token: accessToken, body: {} });
   assert.equal(empty.status, 400);
+});
+
+test('withdrawing consent blocks the account until the consent is given again at sign-in', async () => {
+  const { accessToken, refreshToken, user } = await registerUser();
+  assert.equal((await api('POST', '/api/profile/consent/withdraw')).status, 401);
+
+  assert.equal((await api('POST', '/api/profile/consent/withdraw', { token: accessToken })).status, 204);
+
+  // Tokens issued before the withdrawal stop working at once.
+  const profile = await api('GET', '/api/profile', { token: accessToken });
+  assert.equal(profile.status, 401);
+  assert.equal(profile.body.error.code, 'CONSENT_WITHDRAWN');
+  assert.equal((await api('POST', '/api/auth/refresh', { body: { refreshToken } })).status, 401);
+
+  // The password is checked before the consent is asked for.
+  const wrongPassword = await api('POST', '/api/auth/login', { body: { identifier: user.login, password: 'wrong-password' } });
+  assert.equal(wrongPassword.body.error.code, 'INVALID_CREDENTIALS');
+  const blocked = await api('POST', '/api/auth/login', { body: { identifier: user.login, password: TEST_PASSWORD } });
+  assert.equal(blocked.status, 403);
+  assert.equal(blocked.body.error.code, 'CONSENT_REQUIRED');
+  const invalid = await api('POST', '/api/auth/login', {
+    body: { identifier: user.login, password: TEST_PASSWORD, consent: 'yes' },
+  });
+  assert.equal(invalid.status, 400);
+
+  // The account was kept with its data and works again after the consent is renewed.
+  const renewed = await api('POST', '/api/auth/login', {
+    body: { identifier: user.email, password: TEST_PASSWORD, consent: true },
+  });
+  assert.equal(renewed.status, 200);
+  assert.deepEqual(renewed.body.user, (await api('GET', '/api/profile', { token: renewed.body.accessToken })).body.user);
+  assert.equal(renewed.body.user.id, user.id);
+  const again = await api('POST', '/api/auth/login', { body: { identifier: user.login, password: TEST_PASSWORD } });
+  assert.equal(again.status, 200);
+});
+
+test('accounts are deleted with their data 30 days after the consent was withdrawn', async () => {
+  const expired = await registerUser();
+  const recent = await registerUser();
+  const renewed = await registerUser();
+  assert.equal((await api('PUT', '/api/favorites/checklist', { token: expired.accessToken })).status, 204);
+  for (const { accessToken } of [expired, recent, renewed]) {
+    await api('POST', '/api/profile/consent/withdraw', { token: accessToken });
+  }
+  const backdate = (id: string, days: number) =>
+    pool.query(`UPDATE users SET consent_withdrawn_at = now() - $2::interval WHERE id = $1`, [id, `${days} days`]);
+  await backdate(expired.user.id, 31);
+  await backdate(recent.user.id, 29);
+  await backdate(renewed.user.id, 31);
+  const login = await api('POST', '/api/auth/login', {
+    body: { identifier: renewed.user.login, password: TEST_PASSWORD, consent: true },
+  });
+  assert.equal(login.status, 200);
+
+  assert.ok((await deleteWithdrawnAccounts('30 days')) >= 1);
+  const { rows } = await pool.query<{ id: string }>('SELECT id FROM users WHERE id = ANY($1)', [
+    [expired.user.id, recent.user.id, renewed.user.id],
+  ]);
+  assert.deepEqual(rows.map((row) => row.id).sort(), [recent.user.id, renewed.user.id].sort());
+  const favorites = await pool.query('SELECT 1 FROM favorites WHERE user_id = $1', [expired.user.id]);
+  assert.equal(favorites.rowCount, 0);
+  const gone = await api('POST', '/api/auth/login', { body: { identifier: expired.user.login, password: TEST_PASSWORD } });
+  assert.equal(gone.body.error.code, 'INVALID_CREDENTIALS');
 });

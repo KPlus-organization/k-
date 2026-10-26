@@ -49,7 +49,8 @@ function withModal(search: string, id: string | null) {
 }
 
 export function App() {
-  const { profile, status, signedIn, login, register, logout, updateProfile } = useSession();
+  const { profile, status, signedIn, login, register, logout, withdrawConsent, updateProfile } =
+    useSession();
   const {
     favorites,
     items: favoriteItems,
@@ -160,6 +161,12 @@ export function App() {
     if (Object.keys(changes).length > 0) await updateProfile(changes);
     setModal(null);
     setToast('Настройки сохранены');
+  };
+  const withdraw = async () => {
+    await withdrawConsent();
+    // The window was closed by leaving the profile, not by going back.
+    modalPushed.current = false;
+    setToast('Согласие отозвано. Без нового согласия профиль удалится через 30 дней');
   };
   const toolAction = (id: string) => (id === 'articles' ? navigate('/articles') : open(id));
 
@@ -331,6 +338,7 @@ export function App() {
           open={open}
           onClose={() => setModal(null)}
           onSaveProfile={saveProfile}
+          onWithdrawConsent={withdraw}
           onRequestSubmitted={() => {
             setModal(null);
             setToast('Заявка отправлена');
