@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg';
 
-import { pool } from '../config/db';
+import { pool, withTransaction } from '../config/db';
 import { HttpError } from '../errors/HttpError';
 
 export interface User {
@@ -21,6 +21,7 @@ export interface UserRow {
 
 export interface UserWithPassword extends User {
   passwordHash: string;
+  consentWithdrawn: boolean;
 }
 
 export const USER_COLUMNS = 'id, name, login, email, created_at';
@@ -74,12 +75,13 @@ export async function createUser(
 /** Finds a user by email (if the identifier contains "@") or by login. */
 export async function findUserByIdentifier(identifier: string): Promise<UserWithPassword | undefined> {
   const column = identifier.includes('@') ? 'email_key' : 'login_key';
-  const { rows } = await pool.query<UserRow & { password_hash: string }>(
-    `SELECT ${USER_COLUMNS}, password_hash FROM users WHERE ${column} = $1`,
+  const { rows } = await pool.query<UserRow & { password_hash: string; consent_withdrawn: boolean }>(
+    `SELECT ${USER_COLUMNS}, password_hash, consent_withdrawn_at IS NOT NULL AS consent_withdrawn
+     FROM users WHERE ${column} = $1`,
     [normalizeKey(identifier)],
   );
   const row = rows[0];
-  return row && { ...toUser(row), passwordHash: row.password_hash };
+  return row && { ...toUser(row), passwordHash: row.password_hash, consentWithdrawn: row.consent_withdrawn };
 }
 
 export async function getUserById(id: string): Promise<User> {
@@ -90,6 +92,52 @@ export async function getUserById(id: string): Promise<User> {
     throw new HttpError(401, 'INVALID_TOKEN', 'Access token is invalid');
   }
   return toUser(row);
+}
+
+/** Days after a consent withdrawal until the account and its data are deleted. */
+export const WITHDRAWN_ACCOUNT_RETENTION_DAYS = 30;
+
+/**
+ * Withdraws the consent to personal data processing: every session is revoked and signing
+ * in requires accepting the consent again. Unless that happens, the account is deleted
+ * after WITHDRAWN_ACCOUNT_RETENTION_DAYS (see deleteWithdrawnAccounts).
+ */
+export async function withdrawConsent(id: string): Promise<void> {
+  await withTransaction(async (client) => {
+    await client.query('UPDATE users SET consent_withdrawn_at = now(), updated_at = now() WHERE id = $1', [id]);
+    await client.query('UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL', [id]);
+  });
+}
+
+/**
+ * Deletes accounts whose consent was withdrawn at least `retention` ago, with their data
+ * (favorites, history, documents, sessions are removed by ON DELETE CASCADE).
+ * Returns the number of deleted accounts.
+ */
+export async function deleteWithdrawnAccounts(retention: string): Promise<number> {
+  const { rowCount } = await pool.query(
+    'DELETE FROM users WHERE consent_withdrawn_at <= now() - $1::interval',
+    [retention],
+  );
+  return rowCount ?? 0;
+}
+
+/** Records a renewed consent of a user who had withdrawn it. */
+export async function renewConsent(client: PoolClient, id: string): Promise<void> {
+  await client.query(
+    `UPDATE users SET consent_given_at = now(), consent_withdrawn_at = NULL, updated_at = now()
+     WHERE id = $1`,
+    [id],
+  );
+}
+
+/** Whether the user may use the account: it exists and the consent is not withdrawn. */
+export async function hasActiveConsent(id: string): Promise<boolean | undefined> {
+  const { rows } = await pool.query<{ active: boolean }>(
+    'SELECT consent_withdrawn_at IS NULL AS active FROM users WHERE id = $1',
+    [id],
+  );
+  return rows[0]?.active;
 }
 
 export async function updateUser(

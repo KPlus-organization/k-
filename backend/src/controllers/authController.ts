@@ -36,9 +36,13 @@ export async function login(req: Request, res: Response): Promise<void> {
   const issues: FieldIssue[] = [];
   const identifier = readString(body, 'identifier', IDENTIFIER_RULE, issues);
   const password = readString(body, 'password', { min: 1, max: PASSWORD_RULE.max, trim: false }, issues);
+  // Optional: needed only to sign in after the consent was withdrawn.
+  if (body['consent'] !== undefined && body['consent'] !== true) {
+    issues.push({ field: 'consent', message: 'Consent must be true when given' });
+  }
   throwIfIssues(issues);
 
-  res.status(200).json(await auth.login(identifier!, password!));
+  res.status(200).json(await auth.login(identifier!, password!, body['consent'] === true));
 }
 
 function readRefreshToken(body: Fields): string {

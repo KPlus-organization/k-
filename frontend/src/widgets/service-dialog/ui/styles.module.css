@@ -66,3 +66,9 @@
 .consent-document li + li {
   margin-top: 6px;
 }
+
+.consent-document h3 {
+  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}

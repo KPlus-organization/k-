@@ -76,11 +76,12 @@
 | GET | `/` | — | Сервер работает | 200 | — |
 | GET | `/api/health` | — | Сервер и БД работают | 200 | 503 |
 | POST | `/api/auth/register` | — | Регистрация | 201 | 400, 409 |
-| POST | `/api/auth/login` | — | Вход по логину или email | 200 | 400, 401 |
+| POST | `/api/auth/login` | — | Вход по логину или email | 200 | 400, 401, 403 |
 | POST | `/api/auth/refresh` | — | Обновление пары токенов | 200 | 400, 401 |
 | POST | `/api/auth/logout` | — | Отзыв refresh-токена | 204 | 400 |
 | GET | `/api/profile` | Bearer | Текущий пользователь | 200 | 401 |
 | PATCH | `/api/profile` | Bearer | Изменение имени, логина, email | 200 | 400, 401, 409 |
+| POST | `/api/profile/consent/withdraw` | Bearer | Отзыв согласия на обработку персональных данных | 204 | 401 |
 | GET | `/api/favorites` | Bearer | Избранные материалы | 200 | 401 |
 | PUT | `/api/favorites/:materialId` | Bearer | Добавить в избранное | 204 | 401, 404 |
 | DELETE | `/api/favorites/:materialId` | Bearer | Удалить из избранного | 204 | 401 |
@@ -259,6 +260,11 @@ HTTP/1.1 503 Service Unavailable
 { "error": { "code": "INVALID_CREDENTIALS", "message": "Invalid login or password" } }
 ```
 
+Если пользователь отозвал согласие на обработку персональных данных, после проверки пароля
+сервер отвечает `403 CONSENT_REQUIRED`. Чтобы войти, клиент повторяет запрос с `"consent": true`:
+сервер записывает новое время согласия, снимает отметку об отзыве и выдаёт `AuthSession`.
+Поле `consent` необязательно; если оно передано, оно должно быть строго `true`.
+
 ### `POST /api/auth/refresh`
 
 ```json
@@ -316,6 +322,17 @@ Authorization: Bearer eyJ...
 Любые другие поля (`id`, `registeredAt`, `password`…) → `400 VALIDATION_ERROR`.
 
 `200 OK` → `{ "user": User }` с обновлёнными данными. Ошибки: `400`, `401`, `409 LOGIN_TAKEN`, `409 EMAIL_TAKEN`.
+
+### `POST /api/profile/consent/withdraw`
+
+Тело не нужно. Сохраняет время отзыва в `users.consent_withdrawn_at` и отзывает все refresh-токены
+пользователя. Профиль, избранное, история и документы сохраняются **30 дней**: если за это время
+войти с повторным согласием, отзыв снимается. Иначе сервер удаляет профиль вместе со всеми его
+данными — фоновая проверка идёт при запуске и затем каждый час, удаление происходит не позже
+30 дней после отзыва (`src/jobs/deleteWithdrawnAccounts.ts`).
+
+`204 No Content`. После этого любой защищённый запрос, в том числе с выданным ранее access-токеном,
+получает `401 CONSENT_WITHDRAWN`, а вход возможен только с повторным согласием (см. `POST /api/auth/login`).
 
 ## 8. Эндпоинты: избранное
 
@@ -619,6 +636,8 @@ API не знает адресов страниц сайта: id материа�
 | `INVALID_TOKEN` | 401 | Access-токен поддельный, повреждён или его пользователь удалён |
 | `TOKEN_EXPIRED` | 401 | Access-токен истёк — нужен `refresh` |
 | `INVALID_CREDENTIALS` | 401 | Неверный логин/email или пароль |
+| `CONSENT_WITHDRAWN` | 401 | Пользователь отозвал согласие на обработку персональных данных |
+| `CONSENT_REQUIRED` | 403 | Вход в профиль с отозванным согласием без `"consent": true` |
 | `INVALID_REFRESH_TOKEN` | 401 | Refresh-токен неизвестен, истёк, отозван или уже использован |
 | `NOT_FOUND` | 404 | Маршрут не найден |
 | `MATERIAL_NOT_FOUND` | 404 | Материала с таким id нет |

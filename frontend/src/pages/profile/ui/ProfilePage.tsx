@@ -166,6 +166,9 @@ export function ProfilePage({
         </section>
         <NavigationHistory profile={profile} open={open} />
       </div>
+      <footer className={styles['dashboard-footer']}>
+        <button onClick={() => open('privacy')}>Политика конфиденциальности</button>
+      </footer>
     </div>
   );
 }

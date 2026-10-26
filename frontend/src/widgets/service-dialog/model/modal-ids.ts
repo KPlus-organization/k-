@@ -3,7 +3,7 @@ import { tools } from '@/shared/config';
 export const modalTitles: Record<string, string> = {
   settings: 'Настройки профиля',
   favorites: 'Все избранные',
-  privacy: 'Конфиденциальность',
+  privacy: 'Политика конфиденциальности',
   'personal-data-consent': 'Согласие на обработку персональных данных',
   reset: 'Восстановление пароля',
   help: 'Помощь',

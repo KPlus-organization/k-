@@ -1,6 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { errorMessage } from '@/shared/api';
+import { ApiError, errorMessage } from '@/shared/api';
 import { cx, validateForm, type Open } from '@/shared/lib';
 import { Icon, type IconName, PasswordField, ui } from '@/shared/ui';
 import { profileFieldHints } from '@/entities/profile';
@@ -21,6 +21,29 @@ function nextPath(next: string | null) {
   }
 }
 
+function ConsentCheckbox({ open }: { open: Open }) {
+  return (
+    <label className={styles['consent']}>
+      <input
+        type="checkbox"
+        required
+        name="consent"
+        data-required-message="Подтвердите согласие на обработку персональных данных."
+      />
+      <span>
+        Я даю{' '}
+        <button type="button" onClick={() => open('personal-data-consent')}>
+          согласие на обработку персональных данных
+        </button>{' '}
+        и ознакомлен(а) с{' '}
+        <button type="button" onClick={() => open('privacy')}>
+          политикой конфиденциальности.
+        </button>
+      </span>
+    </label>
+  );
+}
+
 export function Auth({
   register,
   status,
@@ -30,12 +53,14 @@ export function Auth({
 }: {
   register: boolean;
   status: 'loading' | 'guest' | 'user';
-  login: (identifier: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string, consent?: boolean) => Promise<void>;
   signUp: (data: RegisterData) => Promise<void>;
   open: Open;
 }) {
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
+  // The account's consent was withdrawn: signing in requires giving it again.
+  const [consentRequired, setConsentRequired] = useState(false);
   const submitting = useRef(false);
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -76,9 +101,11 @@ export function Auth({
           password,
           consent: true,
         });
-      else await login(String(data.get('email')).trim(), password);
+      else await login(String(data.get('email')).trim(), password, consentRequired);
       navigate(destination, { replace: true });
     } catch (caught) {
+      if (caught instanceof ApiError && caught.code === 'CONSENT_REQUIRED')
+        setConsentRequired(true);
       setError(errorMessage(caught, profileFieldHints));
       setPending(false);
       submitting.current = false;
@@ -227,26 +254,8 @@ export function Auth({
               {register && (
                 <p className={styles['password-hint']}>Пароль — от 8 до 128 символов.</p>
               )}
-              {register ? (
-                <label className={styles['consent']}>
-                  <input
-                    type="checkbox"
-                    required
-                    name="consent"
-                    data-required-message="Подтвердите согласие на обработку персональных данных."
-                  />
-                  <span>
-                    Я даю{' '}
-                    <button type="button" onClick={() => open('personal-data-consent')}>
-                      согласие на обработку персональных данных
-                    </button>{' '}
-                    и ознакомлен(а) с{' '}
-                    <button type="button" onClick={() => open('privacy')}>
-                      политикой конфиденциальности.
-                    </button>
-                  </span>
-                </label>
-              ) : (
+              {(register || consentRequired) && <ConsentCheckbox open={open} />}
+              {!register && (
                 <button className={styles['forgot']} type="button" onClick={() => open('reset')}>
                   Забыли пароль?
                 </button>

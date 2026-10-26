@@ -3,7 +3,7 @@ import type { Request, Response } from 'express';
 import { HttpError, type FieldIssue } from '../errors/HttpError';
 import { authUserId } from '../middlewares/requireAuth';
 import { bodyObject, EMAIL_RULE, LOGIN_RULE, NAME_RULE, readString, throwIfIssues } from '../lib/validation';
-import { getUserById, updateUser } from '../services/users';
+import { getUserById, updateUser, withdrawConsent } from '../services/users';
 
 const EDITABLE_FIELDS = { name: NAME_RULE, login: LOGIN_RULE, email: EMAIL_RULE } as const;
 type EditableField = keyof typeof EDITABLE_FIELDS;
@@ -33,4 +33,9 @@ export async function updateProfile(req: Request, res: Response): Promise<void> 
   }
 
   res.status(200).json({ user: await updateUser(authUserId(req), changes) });
+}
+
+export async function withdrawProfileConsent(req: Request, res: Response): Promise<void> {
+  await withdrawConsent(authUserId(req));
+  res.status(204).end();
 }

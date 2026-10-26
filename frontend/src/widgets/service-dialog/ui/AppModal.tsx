@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { cx, type Open } from '@/shared/lib';
 import { tools } from '@/shared/config';
 import { Icon, Modal, ui } from '@/shared/ui';
@@ -11,12 +11,35 @@ import {
   useObjects,
   type MaterialSummary,
 } from '@/entities/material';
-import { ProfileSettings } from '@/features/profile-settings';
+import { ProfileSettings, WithdrawConsent } from '@/features/profile-settings';
 import { LawyerRequest } from '@/features/lawyer-request';
 import { SavedDocuments } from '@/features/saved-documents';
 import { modalTitles } from '../model/modal-ids';
+import { type LegalDocument } from '../model/legal-document';
 import { personalDataConsent } from '../model/personal-data-consent';
+import { privacyPolicy } from '../model/privacy-policy';
 import styles from './styles.module.css';
+
+function LegalText({ document, children }: { document: LegalDocument; children: ReactNode }) {
+  return (
+    <div className={styles['consent-document']}>
+      {document.blocks.map((block, index) =>
+        'heading' in block ? (
+          <h3 key={index}>{block.heading}</h3>
+        ) : 'list' in block ? (
+          <ul key={index}>
+            {block.list.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        ) : (
+          <p key={index}>{block.paragraph}</p>
+        ),
+      )}
+      {children}
+    </div>
+  );
+}
 
 export function AppModal({
   id,
@@ -24,6 +47,7 @@ export function AppModal({
   open,
   onClose,
   onSaveProfile,
+  onWithdrawConsent,
   onRequestSubmitted,
   favorites,
   toggleFavorite,
@@ -33,10 +57,12 @@ export function AppModal({
   open: Open;
   onClose: () => void;
   onSaveProfile: (changes: Partial<Pick<Profile, 'name' | 'login' | 'email'>>) => Promise<void>;
+  onWithdrawConsent: () => Promise<void>;
   onRequestSubmitted: () => void;
   favorites: MaterialSummary[];
   toggleFavorite: (id: string) => void;
 }) {
+  const { pathname } = useLocation();
   const objects = useObjects().data ?? [];
   const materials = useMaterials().data ?? [];
   const object = id.startsWith('object:')
@@ -62,7 +88,13 @@ export function AppModal({
     );
   else if (id === 'settings')
     body = profile ? (
-      <ProfileSettings profile={profile} onSave={onSaveProfile} />
+      <>
+        <ProfileSettings profile={profile} onSave={onSaveProfile} />
+        <WithdrawConsent
+          onOpenConsent={() => open('personal-data-consent')}
+          onWithdraw={onWithdrawConsent}
+        />
+      </>
     ) : (
       <p>Войдите в профиль, чтобы изменить настройки.</p>
     );
@@ -135,38 +167,30 @@ export function AppModal({
     );
   else if (id === 'personal-data-consent')
     body = (
-      <div className={styles['consent-document']}>
-        <p>(далее — Согласие)</p>
-        <p>{personalDataConsent.intro}</p>
-        <ul>
-          {personalDataConsent.purposes.map((purpose) => (
-            <li key={purpose}>{purpose}</li>
-          ))}
-        </ul>
-        {personalDataConsent.paragraphs.map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
-        ))}
-        <p>{personalDataConsent.date}</p>
-        <button className={cx(ui['button'], ui['primary'])} onClick={onClose}>
-          Вернуться к регистрации
-        </button>
-      </div>
+      <LegalText document={personalDataConsent}>
+        {/* Opened from the sign-up or sign-in form, or from the profile settings. */}
+        {profile ? (
+          <button className={cx(ui['button'], ui['primary'])} onClick={() => open('settings')}>
+            Вернуться к настройкам
+          </button>
+        ) : (
+          <button className={cx(ui['button'], ui['primary'])} onClick={onClose}>
+            {pathname === '/register'
+              ? 'Вернуться к регистрации'
+              : pathname === '/login'
+                ? 'Вернуться ко входу'
+                : 'Закрыть'}
+          </button>
+        )}
+      </LegalText>
     );
   else if (id === 'privacy')
     body = (
-      <>
-        <p>
-          Данные профиля (логин, email, имя), избранное и история навигации хранятся на сервере
-          «МоёПраво» и используются только для работы личного кабинета.
-        </p>
-        <p>
-          Пароль хранится в виде криптографического хеша: восстановить его по сохранённым данным
-          нельзя. Полный текст политики конфиденциальности готовится.
-        </p>
+      <LegalText document={privacyPolicy}>
         <button className={cx(ui['button'], ui['primary'])} onClick={onClose}>
           Понятно
         </button>
-      </>
+      </LegalText>
     );
   else if (id === 'reset')
     body = (

@@ -5,7 +5,7 @@ import { pool, withTransaction } from '../config/db';
 import { HttpError } from '../errors/HttpError';
 import { hashPassword, simulatePasswordCheck, verifyPassword } from '../lib/password';
 import { generateRefreshToken, hashRefreshToken, signAccessToken } from '../lib/tokens';
-import { createUser, findUserByIdentifier, toUser, USER_COLUMNS, type User, type UserRow } from './users';
+import { createUser, findUserByIdentifier, renewConsent, toUser, USER_COLUMNS, type User, type UserRow } from './users';
 
 export interface AuthSession {
   tokenType: 'Bearer';
@@ -48,7 +48,11 @@ export async function register(data: { login: string; email: string; password: s
   });
 }
 
-export async function login(identifier: string, password: string): Promise<AuthSession> {
+/**
+ * Signs in by login or email. A user who withdrew the consent gets 403 CONSENT_REQUIRED
+ * (only after the password is checked) until the request carries `consent: true`.
+ */
+export async function login(identifier: string, password: string, consent = false): Promise<AuthSession> {
   const found = await findUserByIdentifier(identifier);
   if (!found) {
     await simulatePasswordCheck(password);
@@ -58,8 +62,15 @@ export async function login(identifier: string, password: string): Promise<AuthS
     throw new HttpError(401, 'INVALID_CREDENTIALS', 'Invalid login or password');
   }
 
-  const { passwordHash: _omit, ...user } = found;
-  return withTransaction((client) => issueSession(client, user));
+  if (found.consentWithdrawn && !consent) {
+    throw new HttpError(403, 'CONSENT_REQUIRED', 'Consent to personal data processing must be given again');
+  }
+
+  const { passwordHash: _omit, consentWithdrawn, ...user } = found;
+  return withTransaction(async (client) => {
+    if (consentWithdrawn) await renewConsent(client, user.id);
+    return issueSession(client, user);
+  });
 }
 
 const INVALID_REFRESH = () => new HttpError(401, 'INVALID_REFRESH_TOKEN', 'Refresh token is invalid or expired');
@@ -87,7 +98,10 @@ export async function refresh(refreshToken: string): Promise<AuthSession> {
     }
 
     await client.query('UPDATE refresh_tokens SET revoked_at = now() WHERE id = $1', [stored.id]);
-    const userRows = await client.query<UserRow>(`SELECT ${USER_COLUMNS} FROM users WHERE id = $1`, [stored.user_id]);
+    const userRows = await client.query<UserRow>(
+      `SELECT ${USER_COLUMNS} FROM users WHERE id = $1 AND consent_withdrawn_at IS NULL`,
+      [stored.user_id],
+    );
     const userRow = userRows.rows[0];
     if (!userRow) return { session: undefined };
     return { session: await issueSession(client, toUser(userRow)) };
