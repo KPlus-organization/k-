@@ -228,13 +228,15 @@ export function AppModal({
           <Icon name={id === 'lawyer' ? 'user' : 'files'} />
           <p>
             {id === 'lawyer'
-              ? 'Каталог юристов пока недоступен. Можно подготовить материалы к консультации с помощью чек-листа.'
+              ? 'Каталог юристов пока недоступен.'
               : 'Этот раздел готовится. Пока доступны материалы и чек-лист по защите программного кода.'}
           </p>
         </div>
-        <Link className={cx(ui['button'], ui['primary'])} to="/protect/code">
-          Открыть чек-лист <Icon name="arrowRight" size={18} />
-        </Link>
+        {id !== 'lawyer' && (
+          <Link className={cx(ui['button'], ui['primary'])} to="/protect/code">
+            Открыть чек-лист <Icon name="arrowRight" size={18} />
+          </Link>
+        )}
       </>
     );
   return (

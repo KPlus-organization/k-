@@ -94,8 +94,13 @@ test('published materials render on mobile with current notices and download the
     );
     const notice = page.getByRole('complementary', { name: 'Обратите внимание' });
     await expect(notice.getByRole('button')).toHaveCount(2);
-    await expect(notice).toContainText(/актуален на 21\.10\.(?:2026|26)/);
-    await expect(notice).not.toContainText(/(?:13|18|19)\.10\.(?:2026|26)/);
+    // The relevance date in the source notes is replaced with today's date.
+    const today = await page.evaluate(() => new Date().toLocaleDateString('ru-RU'));
+    await expect(notice).toContainText(
+      new RegExp(
+        `актуален на ${today.slice(0, 6).replaceAll('.', '\\.')}(?:${today.slice(6)}|${today.slice(8)})\\b`,
+      ),
+    );
     expect(await page.evaluate(() => document.documentElement.scrollWidth), id).toBeLessThanOrEqual(
       390,
     );

@@ -93,6 +93,12 @@
   margin: 12px 0 18px;
 }
 
+.notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .document-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

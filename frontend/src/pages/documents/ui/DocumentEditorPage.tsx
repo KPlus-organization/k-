@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ApiError, errorMessage, isNotFound } from '@/shared/api';
 import { cx, randomUuid, useDocumentTitle, type Open } from '@/shared/lib';
-import { LoadState, ui } from '@/shared/ui';
+import { Icon, LoadState, ui } from '@/shared/ui';
 import type { Profile } from '@/entities/profile';
 import {
   activeValues,
@@ -403,12 +403,17 @@ function DocumentEditor({
           перед направлением адресату. Заполнение формы не заменяет консультацию юриста по вашему
           делу.
         </p>
-        <button
-          className={cx(ui['button'], ui['secondary'])}
-          onClick={() => open('lawyer-request')}
-        >
-          Обсудить задачу с нами
-        </button>
+        <div className={styles['notice-actions']}>
+          <button className={cx(ui['button'], ui['secondary'])} onClick={() => open('lawyer')}>
+            Найти юриста <Icon name="arrowUp" size={18} />
+          </button>
+          <button
+            className={cx(ui['button'], ui['primary'])}
+            onClick={() => open('lawyer-request')}
+          >
+            Обсудить задачу с нами <Icon name="messages" size={18} />
+          </button>
+        </div>
       </section>
     </div>
   );

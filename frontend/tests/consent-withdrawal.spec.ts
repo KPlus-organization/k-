@@ -7,7 +7,20 @@ test('withdrawing consent signs out, keeps the profile and asks for consent at t
 }) => {
   const user = await signIn(page, request);
   await page.goto('/profile');
-  await page.getByRole('button', { name: 'Политика конфиденциальности' }).click();
+  const policy = page.getByRole('button', { name: 'Политика конфиденциальности' });
+  // Bottom left, under the dashboard panels.
+  const policyBox = (await policy.boundingBox())!;
+  const historyBox = (await page
+    .getByRole('heading', { name: 'История навигации' })
+    .locator('..')
+    .boundingBox())!;
+  const personalBox = (await page
+    .getByRole('heading', { name: 'Персональная информация' })
+    .locator('../..')
+    .boundingBox())!;
+  expect(policyBox.y).toBeGreaterThan(historyBox.y + historyBox.height);
+  expect(Math.abs(policyBox.x - personalBox.x)).toBeLessThan(2);
+  await policy.click();
   await expect(page.getByRole('dialog', { name: 'Политика конфиденциальности' })).toBeVisible();
   await page.getByRole('button', { name: 'Понятно' }).click();
 
