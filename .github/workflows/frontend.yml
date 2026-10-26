@@ -71,6 +71,22 @@ jobs:
           npm run build
           node dist/db/migrate.js
           node dist/db/seed.js
-      - run: npx playwright install --with-deps chromium
-      # Playwright starts the built backend and the Vite dev server itself.
+      # The browser is cached per Playwright version; the system libraries it needs are not
+      # part of the cache and are installed by apt on every run.
+      - name: Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: browsers
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-chromium
+      # Usually ~20 s; a stalled download or apt mirror fails fast instead of hanging.
+      - if: steps.browsers.outputs.cache-hit != 'true'
+        timeout-minutes: 4
+        run: npx playwright install --with-deps chromium
+      - if: steps.browsers.outputs.cache-hit == 'true'
+        timeout-minutes: 4
+        run: npx playwright install-deps chromium
+      # Playwright starts the built backend and serves the build above with vite preview.
       - run: npm test

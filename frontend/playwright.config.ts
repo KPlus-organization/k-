@@ -22,7 +22,9 @@ export default defineConfig({
       timeout: 60_000,
     },
     {
-      command: 'node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 3000 --strictPort',
+      // CI serves the build from `npm run build`: the tests check what is deployed and run
+      // about twice as fast as on the dev server, which compiles modules on demand.
+      command: `node node_modules/vite/bin/vite.js ${process.env.CI ? 'preview ' : ''}--host 127.0.0.1 --port 3000 --strictPort`,
       url: 'http://127.0.0.1:3000',
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,

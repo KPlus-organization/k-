@@ -21,7 +21,8 @@ test('request validates, closes the dialog and shows a frontend submission notif
   await submit.click();
   await expect(dialog.getByRole('alert')).toHaveText('Заполните поле «Имя».');
   await dialog.getByLabel('Имя', { exact: true }).fill('Мария');
-  await dialog.getByLabel('Логин', { exact: true }).fill('maria');
+  await expect(dialog.getByLabel('Логин', { exact: true })).toHaveCount(0);
+  await dialog.getByLabel('Электронная почта', { exact: true }).fill('maria@example.com');
   await dialog.getByLabel('Коротко о задаче').fill('          ');
   await submit.click();
   await expect(dialog.getByRole('alert')).toContainText('Опишите задачу подробнее');
@@ -43,6 +44,7 @@ test('material notice has both actions and a request uses profile details', asyn
   page,
   request,
 }) => {
+  await page.clock.install({ time: new Date(2026, 10, 3, 23, 59) });
   const user = await signIn(page, request);
   await page.goto('/articles/code-0');
   const notice = page
@@ -52,14 +54,20 @@ test('material notice has both actions and a request uses profile details', asyn
     'Материал носит общий характер и не заменяет консультацию юриста по вашему делу.',
   );
   await expect(notice).toContainText(
-    'Правовые нормы сверены с актуальной редакцией, и данный материал актуален на 21.10.26.',
+    'Правовые нормы сверены с актуальной редакцией, и данный материал актуален на 03.11.26.',
   );
+  // The relevance date is always today's, also on a page left open past midnight.
+  await page.clock.fastForward('02:00');
+  await expect(notice).toContainText('данный материал актуален на 04.11.26.');
   await notice.getByRole('button', { name: 'Найти юриста' }).click();
-  await expect(page.getByRole('dialog', { name: 'Найти юриста' })).toBeVisible();
+  const lawyer = page.getByRole('dialog', { name: 'Найти юриста' });
+  await expect(lawyer).toContainText('Каталог юристов пока недоступен.');
+  await expect(lawyer).not.toContainText('чек-лист');
+  await expect(lawyer.getByRole('link')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await notice.getByRole('button', { name: 'Обсудить задачу с нами' }).click();
   await expect(page.getByRole('dialog').getByLabel('Имя', { exact: true })).toHaveValue(user.login);
-  await expect(page.getByRole('dialog').getByLabel('Логин', { exact: true })).toHaveValue(
-    user.login,
-  );
+  await expect(
+    page.getByRole('dialog').getByLabel('Электронная почта', { exact: true }),
+  ).toHaveValue(user.email);
 });

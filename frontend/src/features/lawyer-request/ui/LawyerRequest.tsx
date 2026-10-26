@@ -55,19 +55,18 @@ export function LawyerRequest({
           />
         </label>
         <label className={ui['field']}>
-          Логин
+          Электронная почта
           <input
-            name="login"
-            defaultValue={profile?.login ?? ''}
-            autoComplete="username"
+            name="email"
+            type="email"
+            defaultValue={profile?.email ?? ''}
+            autoComplete="email"
             autoCapitalize="none"
             spellCheck={false}
-            placeholder="Логин на сайте"
+            placeholder="Куда ответить"
             required
-            minLength={3}
-            maxLength={32}
-            pattern="[\p{L}\p{N}._\-]+"
-            title={profileFieldHints['login']}
+            maxLength={254}
+            title={profileFieldHints['email']}
           />
         </label>
       </div>

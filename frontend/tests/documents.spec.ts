@@ -60,6 +60,9 @@ test('every template field can be filled inside the document, with plain-languag
   const paper = page.getByRole('article', { name: 'Заполнение документа' });
   await expect(paper.locator('#document-recipient')).toBeVisible();
   await expect(paper.locator('[contenteditable="true"]')).toHaveCount(0);
+  const notice = page.locator('section', { hasText: 'Обратите внимание!' });
+  await expect(notice.getByRole('button', { name: 'Найти юриста' })).toBeVisible();
+  await expect(notice.getByRole('button', { name: 'Обсудить задачу с нами' })).toBeVisible();
   await expect(paper).toContainText(
     'Способы защиты исключительного права предусмотрены статьями 1250 и 1252 ГК РФ.',
   );
