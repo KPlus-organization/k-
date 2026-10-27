@@ -30,7 +30,6 @@ test('request validates, closes the dialog and shows a frontend submission notif
   await dialog
     .getByLabel('Коротко о задаче')
     .fill('Наш программный код используют без разрешения.');
-  await page.screenshot({ path: '../tmp/preview/lawyer-request-mobile.png' });
   await submit.click();
   await expect(dialog).not.toBeVisible();
   await expect(page.getByRole('status')).toHaveText('Заявка отправлена');

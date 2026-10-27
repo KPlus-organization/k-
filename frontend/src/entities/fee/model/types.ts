@@ -14,6 +14,8 @@ export type Fee = {
   code: string;
   /** How to cite the item, e.g. «подпункт 2.4 приложения № 1 к Положению». */
   reference: string;
+  /** The item online (ConsultantPlus), or null. */
+  referenceUrl: string | null;
   group: string;
   name: string;
   wording: string;
@@ -27,6 +29,8 @@ export type FeeScheduleSummary = {
   id: string;
   title: string;
   basis: string;
+  /** The legal act online (ConsultantPlus), or null. */
+  basisUrl: string | null;
   /** YYYY-MM-DD */
   effectiveFrom: string;
   reviewedBy: string | null;
@@ -44,8 +48,11 @@ export type FeeValues = Record<string, number | boolean | number[]>;
 export type FeeLine = { label: string; units?: number; unitAmount?: number; amount: number };
 
 export type FeeResult = {
-  schedule: Pick<FeeScheduleSummary, 'id' | 'title' | 'basis' | 'effectiveFrom' | 'reviewedBy'>;
-  fee: Pick<Fee, 'code' | 'reference' | 'name' | 'wording'>;
+  schedule: Pick<
+    FeeScheduleSummary,
+    'id' | 'title' | 'basis' | 'basisUrl' | 'effectiveFrom' | 'reviewedBy'
+  >;
+  fee: Pick<Fee, 'code' | 'reference' | 'referenceUrl' | 'name' | 'wording'>;
   total: number;
   lines: FeeLine[];
 };

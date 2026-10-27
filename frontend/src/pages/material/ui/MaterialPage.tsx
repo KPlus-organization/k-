@@ -60,7 +60,7 @@ export function MaterialPage(props: Props) {
   return <ReadingSession key={material.id} {...props} material={material} />;
 }
 
-const HIGHLIGHT_MS = 2500;
+const HIGHLIGHT_MS = 2000;
 
 function ReadingSession({
   material,

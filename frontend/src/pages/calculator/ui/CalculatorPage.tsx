@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode, type RefOb
 import { useSearchParams } from 'react-router-dom';
 import { errorMessage } from '@/shared/api';
 import { cx, useDocumentTitle, validateForm } from '@/shared/lib';
-import { LoadState, ui } from '@/shared/ui';
+import { LawLink, LoadState, ui } from '@/shared/ui';
 import {
   calculateFee,
   CLASS_COUNT_PARAMETER,
@@ -33,6 +33,21 @@ const SCHEDULE_HINTS: Partial<Record<string, string>> = {
   trademarks: 'Название, логотип, знак обслуживания',
   programs: 'Код приложения или сайта, база данных',
 };
+
+/**
+ * The wording of the item in the legal act. The item's name links to the item itself; a click
+ * there opens the link, a click elsewhere on the line expands the wording.
+ */
+function FeeWording({ fee }: { fee: Pick<Fee, 'reference' | 'referenceUrl' | 'wording'> }) {
+  return (
+    <details className={styles['wording']}>
+      <summary>
+        Текст нормы: <LawLink href={fee.referenceUrl}>{fee.reference}</LawLink>
+      </summary>
+      <p>{fee.wording}</p>
+    </details>
+  );
+}
 
 /** 1 вид, 4 вида, 42 вида, 11 видов. */
 function feeKinds(count: number) {
@@ -392,10 +407,7 @@ function FeeCalculator({ schedule, fee }: { schedule: FeeSchedule; fee: Fee }) {
         <p className={styles['formula']}>
           <strong>Как считается:</strong> {formula(fee)}.
         </p>
-        <details className={styles['wording']}>
-          <summary>Текст нормы: {fee.reference}</summary>
-          <p>{fee.wording}</p>
-        </details>
+        <FeeWording fee={fee} />
 
         <form className={styles['form']} noValidate onSubmit={submit}>
           {parameters.map((parameter) => {
@@ -511,15 +523,11 @@ function FeeResultView({
         </table>
       )}
       <p className={styles['basis']}>
-        Основание: {result.fee.reference}. {schedule.basis}. Действует с{' '}
+        Основание: <LawLink href={result.fee.referenceUrl}>{result.fee.reference}</LawLink>.{' '}
+        <LawLink href={schedule.basisUrl}>{schedule.basis}</LawLink>. Действует с{' '}
         {formatDate(schedule.effectiveFrom)}.
       </p>
-      {wording && (
-        <details className={styles['wording']}>
-          <summary>Текст нормы: {result.fee.reference}</summary>
-          <p>{result.fee.wording}</p>
-        </details>
-      )}
+      {wording && <FeeWording fee={result.fee} />}
       {schedule.note && <p className={styles['basis']}>{schedule.note}</p>}
       <p className={styles['disclaimer']}>
         Расчёт справочный. Перед оплатой сверьте сумму с{' '}

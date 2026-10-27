@@ -25,6 +25,14 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # The official Playwright image already has Chromium and the system libraries it needs:
+    # nothing is installed by apt, which on the runner sometimes took minutes or failed.
+    # Its version must match @playwright/test in package-lock.json (checked below).
+    # --ipc=host: Docker gives a container 64 MB of shared memory, too little for Chromium with
+    # several pages (pages crash, tests time out). --init reaps the browsers' child processes.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      options: --init --ipc=host
     defaults:
       run:
         working-directory: frontend
@@ -36,8 +44,6 @@ jobs:
           POSTGRES_USER: k_ci
           POSTGRES_PASSWORD: k_ci_password
           POSTGRES_DB: k_ci
-        ports:
-          - 5432:5432
         options: >-
           --health-cmd "pg_isready -U k_ci -d k_ci"
           --health-interval 5s
@@ -45,9 +51,10 @@ jobs:
           --health-retries 10
 
     # Throwaway values for the CI database only; they are not secrets.
+    # Inside the job container the database service is reached by its name, «postgres».
     env:
       NODE_ENV: test
-      DATABASE_URL: postgresql://k_ci:k_ci_password@localhost:5432/k_ci
+      DATABASE_URL: postgresql://k_ci:k_ci_password@postgres:5432/k_ci
       JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else-0123456789
       FRONTEND_ORIGIN: http://localhost:3000,http://127.0.0.1:3000
       VITE_API_URL: http://localhost:3001
@@ -62,6 +69,15 @@ jobs:
             frontend/package-lock.json
             backend/package-lock.json
       - run: npm ci
+      # The image's browsers belong to one Playwright version: it must be the one in package-lock.json.
+      - name: The image has the browser this Playwright needs
+        run: |
+          node -e "
+            const { chromium } = require('@playwright/test');
+            if (!require('node:fs').existsSync(chromium.executablePath())) {
+              console.log('::error::No browser for @playwright/test ' + require('@playwright/test/package.json').version + ' in the job image: set its version in container.image');
+              process.exit(1);
+            }"
       - run: npm run check
       - run: npm run build
       - name: Prepare backend and database
@@ -71,36 +87,5 @@ jobs:
           npm run build
           node dist/db/migrate.js
           node dist/db/seed.js
-      # The browser is cached per Playwright version; the system libraries it needs are not
-      # part of the cache and are installed by apt on every run.
-      - name: Playwright version
-        id: playwright
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
-        id: browsers
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-chromium
-      # Usually ~20 s. One attempt still stops if apt stalls; a second attempt gets a fresh download.
-      - if: steps.browsers.outputs.cache-hit != 'true'
-        timeout-minutes: 10
-        run: |
-          for attempt in 1 2; do
-            if timeout 240 npx playwright install --with-deps chromium; then
-              exit 0
-            fi
-            echo "Playwright install failed on attempt $attempt"
-          done
-          exit 1
-      - if: steps.browsers.outputs.cache-hit == 'true'
-        timeout-minutes: 10
-        run: |
-          for attempt in 1 2; do
-            if timeout 240 npx playwright install-deps chromium; then
-              exit 0
-            fi
-            echo "Playwright system dependencies failed on attempt $attempt"
-          done
-          exit 1
       # Playwright starts the built backend and serves the build above with vite preview.
       - run: npm test

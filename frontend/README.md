@@ -211,7 +211,26 @@ Playwright сам запускает бэкенд (`npm --prefix ../backend run 
 использует уже запущенные. Тесты регистрируют своих пользователей с логинами `e2e_…`; в локальной
 базе они накапливаются. Локально используется установленный Google Chrome (`channel: 'chrome'`);
 без него запускайте `CI=1 npm test` — тогда используется Chromium из `npx playwright install chromium`
-и собранный бэкенд (`npm run build` в `backend/`). Снимки экранов сохраняются в `../tmp/preview/`.
+и собранный бэкенд (`npm run build` в `backend/`).
+
+Снимки экранов для сравнения с макетами Figma в `npm test` не входят: их делает
+`npm run screenshots` (`tests/screenshots.screens.ts`) и сохраняет в `../tmp/preview/`.
+
+Тесты проверяют работу сайта, а не текст материалов: переходы к материалам ищутся по адресу
+(`/articles/<id>`), а не по формулировке ссылки, и не сверяют число шагов, таблиц или пунктов.
+Общий тест `tests/all-materials.spec.ts` проходит по всем опубликованным материалам из API, поэтому
+после загрузки нового контента отдельные тесты под него не нужны.
 Workflow `../.github/workflows/frontend.yml` поднимает PostgreSQL, готовит бэкенд и выполняет `check`,
-сборку и браузерные тесты при изменениях фронтенда, бэкенда или наполнения.
+сборку и браузерные тесты при изменениях фронтенда, бэкенда или наполнения. Джоба идёт в
+официальном образе Playwright (`mcr.microsoft.com/playwright:v<версия>-noble`), где Chromium и
+системные библиотеки уже установлены. Версия образа должна совпадать с `@playwright/test` в
+`package-lock.json`: при обновлении Playwright поменяйте и `container.image`, иначе первый шаг после
+`npm ci` сообщит, что браузера нет. Так же можно прогнать тесты локально (Docker, бэкенд и база
+на этой машине, `npm run build` в `frontend/` и `backend/`):
+
+```bash
+docker run --rm --init --ipc=host --network host -e CI=1 -u "$(id -u):$(id -g)" -e HOME=/tmp \
+  -v "$PWD/..:$PWD/.." -w "$PWD" mcr.microsoft.com/playwright:v1.64.0-noble npm test
+```
+
 Браузерные проверки используют доступные роли и `data-testid`, а не сгенерированные имена CSS-классов.

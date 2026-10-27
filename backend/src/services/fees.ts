@@ -16,6 +16,8 @@ export interface FeeScheduleSummary {
   id: string;
   title: string;
   basis: string;
+  /** The legal act online (ConsultantPlus), or null. */
+  basisUrl: string | null;
   effectiveFrom: string;
   reviewedBy: string | null;
   feesCount: number;
@@ -26,6 +28,8 @@ export interface PublicFee {
   code: string;
   /** How to cite the item, e.g. «подпункт 2.4 приложения № 1 к Положению». */
   reference: string;
+  /** The item online (ConsultantPlus), or null. */
+  referenceUrl: string | null;
   group: string;
   name: string;
   wording: string;
@@ -42,8 +46,15 @@ export interface PublicFeeSchedule extends FeeScheduleSummary {
 }
 
 export interface FeeResult {
-  schedule: { id: string; title: string; basis: string; effectiveFrom: string; reviewedBy: string | null };
-  fee: { code: string; reference: string; name: string; wording: string };
+  schedule: {
+    id: string;
+    title: string;
+    basis: string;
+    basisUrl: string | null;
+    effectiveFrom: string;
+    reviewedBy: string | null;
+  };
+  fee: { code: string; reference: string; referenceUrl: string | null; name: string; wording: string };
   total: number;
   lines: FeeLine[];
 }
@@ -52,6 +63,7 @@ interface ScheduleRow {
   id: string;
   title: string;
   basis: string;
+  basis_url: string | null;
   effective_from: string;
   reference: string;
   reviewed_by: string | null;
@@ -62,8 +74,8 @@ interface ScheduleRow {
 }
 
 // effective_from is a date: format it in SQL so that no time zone shifts it.
-const COLUMNS = `id, title, basis, to_char(effective_from, 'YYYY-MM-DD') AS effective_from, reference, reviewed_by,
-  note, parameters, fees, sort_order`;
+const COLUMNS = `id, title, basis, basis_url, to_char(effective_from, 'YYYY-MM-DD') AS effective_from, reference,
+  reviewed_by, note, parameters, fees, sort_order`;
 
 function toSchedule(row: ScheduleRow): FeeSchedule {
   return {
@@ -71,12 +83,14 @@ function toSchedule(row: ScheduleRow): FeeSchedule {
     title: row.title,
     order: row.sort_order,
     basis: row.basis,
+    basisUrl: row.basis_url,
     effectiveFrom: row.effective_from,
     reference: row.reference,
     reviewedBy: row.reviewed_by,
     note: row.note,
     parameters: row.parameters,
-    fees: row.fees,
+    // Fees synced before links were added have no referenceUrl.
+    fees: row.fees.map((fee) => ({ ...fee, referenceUrl: fee.referenceUrl ?? null })),
   };
 }
 
@@ -85,6 +99,7 @@ function summary(schedule: FeeSchedule): FeeScheduleSummary {
     id: schedule.id,
     title: schedule.title,
     basis: schedule.basis,
+    basisUrl: schedule.basisUrl,
     effectiveFrom: schedule.effectiveFrom,
     reviewedBy: schedule.reviewedBy,
     feesCount: schedule.fees.length,
@@ -117,6 +132,7 @@ export async function getFeeSchedule(id: string): Promise<PublicFeeSchedule> {
     fees: schedule.fees.map((fee) => ({
       code: fee.code,
       reference: feeReference(schedule, fee),
+      referenceUrl: fee.referenceUrl,
       group: fee.group,
       name: fee.name,
       wording: fee.wording,
@@ -154,10 +170,17 @@ export async function calculate(scheduleId: string, code: unknown, rawValues: un
       id: schedule.id,
       title: schedule.title,
       basis: schedule.basis,
+      basisUrl: schedule.basisUrl,
       effectiveFrom: schedule.effectiveFrom,
       reviewedBy: schedule.reviewedBy,
     },
-    fee: { code: fee.code, reference: feeReference(schedule, fee), name: fee.name, wording: fee.wording },
+    fee: {
+      code: fee.code,
+      reference: feeReference(schedule, fee),
+      referenceUrl: fee.referenceUrl,
+      name: fee.name,
+      wording: fee.wording,
+    },
     total,
     lines,
   };

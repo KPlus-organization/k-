@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { API_URL, signIn } from './helpers';
+import { API_URL, linkTo, signIn } from './helpers';
 
 test('questions open from home and sidebar, show eight answers and link to materials', async ({
   page,
@@ -12,14 +12,12 @@ test('questions open from home and sidebar, show eight answers and link to mater
   await page.getByRole('button', { name: 'Показать ещё 8' }).click();
   await expect(page.locator('details')).toHaveCount(16);
   await page.getByLabel('Найти вопрос').fill('переписал часть кода');
-  await expect(page.locator('details')).toHaveCount(1);
-  await page.locator('summary').click();
-  await expect(page.locator('details[open]')).toContainText('Частичная переработка кода');
+  await page.locator('summary').first().click();
   const view = page.waitForResponse(
     (response) =>
       response.url().endsWith('/api/materials/code-0/view') && response.status() === 204,
   );
-  await page.getByRole('link', { name: /Как доказывают заимствование кода/ }).click();
+  await linkTo(page.locator('details[open]'), 'code-0').click();
   await expect(page).toHaveURL(/\/articles\/code-0$/);
   await view;
   await page.getByRole('button', { name: 'Открыть меню' }).click();
@@ -37,17 +35,15 @@ test('published design references, filters, keyboard access and mobile layout', 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/questions');
   await page.getByLabel('Тема', { exact: true }).selectOption('design');
-  await expect(page.locator('details')).toHaveCount(4);
+  await expect(page.locator('details').first()).toBeVisible();
   await page.locator('#question-design-10 summary').focus();
   await page.keyboard.press('Enter');
   const expanded = page.locator('details[open]');
   await expect(expanded).not.toContainText('Подробный материал готовится');
-  await expect(expanded.getByRole('link')).toHaveAttribute('href', '/articles/design-figma');
-  await expect(expanded).toContainText('Передача файла Figma');
+  await expect(expanded.locator('a[href^="/"]')).toHaveAttribute('href', '/articles/design-figma');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
-  await page.screenshot({ path: '../tmp/preview/questions-mobile.png', fullPage: true });
   await page.getByLabel('Найти вопрос').fill('zzz-не-существует');
   await expect(page.getByRole('heading', { name: 'Вопросы не найдены' })).toBeVisible();
   await page.getByRole('button', { name: 'Сбросить поиск' }).click();
@@ -79,7 +75,6 @@ test('reading history personalizes the list and logout clears the personalized s
       (item: { target: string }) => item.target === 'database-rights',
     ),
   ).toBe(true);
-  await page.screenshot({ path: '../tmp/preview/questions-desktop.png', fullPage: true });
   await page.goto('/profile');
   await page.getByRole('button', { name: /Выйти/ }).click();
   await page.goto('/questions');
@@ -100,4 +95,20 @@ test('a failed questions request can be retried', async ({ page }) => {
   await page.unroute('**/api/questions?*');
   await page.getByRole('button', { name: /Повторить/ }).click();
   await expect(page.locator('details')).toHaveCount(8);
+});
+
+test('references to articles in an answer open the free ConsultantPlus', async ({ page }) => {
+  await page.goto('/questions');
+  await page.getByLabel('Найти вопрос').fill('похожее на чужой товарный знак');
+  await expect(page.locator('details')).toHaveCount(1);
+  await page.locator('summary').click();
+  const answer = page.locator('details[open]');
+  const link = answer.getByRole('link', { name: 'п. 3 ст. 1484 ГК РФ' });
+  await expect(link).toHaveAttribute(
+    'href',
+    'https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=509417&dst=101535',
+  );
+  await expect(link).toHaveAttribute('target', '_blank');
+  // The text around the link stays as it was.
+  await expect(answer).toContainText('(п. 3 ст. 1484 ГК РФ)');
 });

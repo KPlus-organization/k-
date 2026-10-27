@@ -4,8 +4,12 @@ import { defineConfig } from '@playwright/test';
 // (see ../backend/README.md). Already running servers are reused locally.
 export default defineConfig({
   testDir: './tests',
-  testMatch: '**/*.spec.ts',
   fullyParallel: true,
+  // `npm test` runs the checks; `npm run screenshots` saves screens to ../tmp/preview/.
+  projects: [
+    { name: 'tests', testMatch: '**/*.spec.ts' },
+    { name: 'screenshots', testMatch: '**/*.screens.ts' },
+  ],
   reporter: 'list',
   use: {
     baseURL: 'http://127.0.0.1:3000',

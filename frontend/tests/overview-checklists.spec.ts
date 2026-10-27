@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-import { signIn } from './helpers';
+import { linkTo, signIn, steps } from './helpers';
 
 for (const area of ['protect', 'defend'] as const) {
   test(`${area}: home opens the full overview before object materials`, async ({
@@ -14,30 +14,19 @@ for (const area of ['protect', 'defend'] as const) {
       })
       .click();
     await expect(page).toHaveURL(new RegExp(`/${area}$`));
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      area === 'protect'
-        ? 'Как защитить нарушенные права на сайт или приложение'
-        : 'Как оспорить претензию о нарушении чужих прав',
-    );
-    await expect(page.getByTestId('guide-step')).toHaveCount(6);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(steps(page)).toBeVisible();
     await expect(page.getByRole('checkbox')).toHaveCount(0);
-    await expect(page.getByRole('article')).not.toContainText('[ссылка]');
-    await expect(
-      page.getByTestId('guide-step').last().getByRole('heading', { level: 2 }),
-    ).toContainText('Шаг 6.');
     const download = await request.get(
       (await page.getByRole('link', { name: 'Скачать файл' }).getAttribute('href'))!,
     );
     expect(download.ok()).toBe(true);
     expect(await download.body()).toEqual(await readFile(`../content/files/${area}-overview.docx`));
     if (area === 'defend') {
-      const table = page.getByRole('table');
-      await expect(table).toContainText('К чему предъявлена претензия');
-      await table
-        .getByRole('link', { name: 'Получена претензия к базе данных: как действовать?' })
-        .click();
+      // The table of claims leads to the checklist for each object.
+      await linkTo(page.getByRole('table'), 'database-claim').click();
       await expect(page).toHaveURL(/\/defend\/databases$/);
-      await expect(page.getByRole('heading', { level: 1 })).toContainText('Содержание базы данных');
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       await page.goBack();
     }
     await page.getByRole('link', { name: 'Перейти к выбору объекта' }).click();
@@ -72,10 +61,9 @@ test('overview favorites reopen the checklist and new guides fit mobile', async 
   await page.setViewportSize({ width: 390, height: 844 });
   for (const area of ['protect', 'defend']) {
     await page.goto(`/${area}`);
-    await expect(page.getByTestId('guide-step')).toHaveCount(6);
+    await expect(steps(page)).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
-    await page.screenshot({ path: `../tmp/preview/${area}-overview-mobile.png`, fullPage: true });
   }
 });
