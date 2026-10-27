@@ -221,5 +221,16 @@ Playwright сам запускает бэкенд (`npm --prefix ../backend run 
 Общий тест `tests/all-materials.spec.ts` проходит по всем опубликованным материалам из API, поэтому
 после загрузки нового контента отдельные тесты под него не нужны.
 Workflow `../.github/workflows/frontend.yml` поднимает PostgreSQL, готовит бэкенд и выполняет `check`,
-сборку и браузерные тесты при изменениях фронтенда, бэкенда или наполнения.
+сборку и браузерные тесты при изменениях фронтенда, бэкенда или наполнения. Джоба идёт в
+официальном образе Playwright (`mcr.microsoft.com/playwright:v<версия>-noble`), где Chromium и
+системные библиотеки уже установлены. Версия образа должна совпадать с `@playwright/test` в
+`package-lock.json`: при обновлении Playwright поменяйте и `container.image`, иначе первый шаг после
+`npm ci` сообщит, что браузера нет. Так же можно прогнать тесты локально (Docker, бэкенд и база
+на этой машине, `npm run build` в `frontend/` и `backend/`):
+
+```bash
+docker run --rm --init --ipc=host --network host -e CI=1 -u "$(id -u):$(id -g)" -e HOME=/tmp \
+  -v "$PWD/..:$PWD/.." -w "$PWD" mcr.microsoft.com/playwright:v1.64.0-noble npm test
+```
+
 Браузерные проверки используют доступные роли и `data-testid`, а не сгенерированные имена CSS-классов.
