@@ -83,7 +83,7 @@ test('code checklist links to both articles and expert questions, with full-text
   await page.goto('/protect/code');
   await page
     .getByRole('article')
-    .getByRole('link', { name: /Запрет использования, убытки или компенсация/ })
+    .getByRole('link', { name: /Убытки или компенсация: что требовать при копировании программы/ })
     .click();
   await expect(page.getByRole('article')).toContainText('одновременно убытки и компенсацию');
   await page.goto('/search?q=' + encodeURIComponent('служебные комментарии'));

@@ -44,7 +44,7 @@ test('Figma navigation, complete guide, and persistent favorites', async ({ page
     'aria-pressed',
     'true',
   );
-  await page.getByRole('link', { name: '8 Оценить ответ' }).click();
+  await page.getByRole('link', { name: '8 Оцените ответ и подготовьте дальнейшие действия' }).click();
   await expect(page.locator('#step-8')).toBeInViewport();
   expect(errors).toEqual([]);
 });
