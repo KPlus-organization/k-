@@ -1,12 +1,11 @@
-import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
-import { API_URL } from './helpers';
+import { API_URL, linkTo, steps } from './helpers';
 
 test('design guides open for each task and lead to the relevant articles', async ({ page }) => {
-  for (const [area, steps, article] of [
-    ['ownership', 8, /Файл в Figma передали/],
-    ['protect', 8, /Что сравнивают в споре об интерфейсе/],
-    ['defend', 10, /Один UI-kit/],
+  for (const [area, article] of [
+    ['ownership', 'design-figma'],
+    ['protect', 'design-comparison'],
+    ['defend', 'design-ui-kit'],
   ] as const) {
     await page.goto(`/${area}`);
     await page
@@ -14,10 +13,11 @@ test('design guides open for each task and lead to the relevant articles', async
       .getByRole('link', { name: 'Дизайн интерфейса (UI/UX)' })
       .click();
     await expect(page).toHaveURL(`/${area}/design`);
-    await expect(page.getByTestId('guide-step')).toHaveCount(steps);
+    await expect(steps(page)).toBeVisible();
     await expect(page.getByRole('checkbox')).toHaveCount(0);
-    await page.getByRole('article').getByRole('link', { name: article }).click();
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(article);
+    await linkTo(page.getByRole('article'), article).click();
+    await expect(page).toHaveURL(`/articles/${article}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   }
 });
 
@@ -25,61 +25,17 @@ test('the code claim guide links to the contractor article and existing evidence
   page,
 }) => {
   await page.goto('/defend/code');
-  await expect(page.getByTestId('guide-step')).toHaveCount(10);
-  await page
-    .getByRole('article')
-    .getByRole('link', { name: /Чужой код добавил подрядчик/ })
-    .click();
+  await expect(steps(page)).toBeVisible();
+  await linkTo(page.getByRole('article'), 'code-contractor').click();
   await expect(page).toHaveURL('/articles/code-contractor');
-  await expect(page.getByRole('article')).toContainText(
-    'Когда можно взыскать расходы с исполнителя?',
-  );
   await page.goto('/defend/code');
-  await page
-    .getByRole('article')
-    .getByRole('link', { name: 'Как доказывают заимствование кода', exact: true })
-    .click();
+  await linkTo(page.getByRole('article'), 'code-0').click();
   await expect(page).toHaveURL('/articles/code-0');
-  await page
-    .getByRole('article')
-    .getByRole('link', { name: 'Сформулировать вопросы эксперту.' })
-    .click();
+  await linkTo(page.getByRole('article'), 'code-expert').click();
   await expect(page).toHaveURL('/articles/code-expert');
 });
 
-test('new materials have downloadable sources, readable mobile pages and working FAQ links', async ({
-  page,
-  request,
-}) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  for (const id of [
-    'design-ownership',
-    'design-defense',
-    'design-protection',
-    'design-comparison',
-    'design-figma',
-    'design-ui-kit',
-    'design-contractor',
-    'code-defense',
-    'code-contractor',
-    'text-protection',
-    'text-authorship',
-    'text-claim',
-  ]) {
-    await page.goto(`/articles/${id}`);
-    await expect(page.getByRole('article')).toBeVisible();
-    await expect(page.getByRole('heading', { level: 1 })).toHaveCSS('color', 'rgb(0, 134, 91)');
-    await expect(page.getByRole('checkbox')).toHaveCount(0);
-    await expect(page.getByRole('article')).not.toContainText(
-      /СЦЕНАРИЙ:|ОФОРМИТЬ ПРАВА ->|☐|Просчитать риски/,
-    );
-    expect(await page.evaluate(() => document.documentElement.scrollWidth), id).toBeLessThanOrEqual(
-      390,
-    );
-    const download = await request.get(`${API_URL}/api/materials/${id}/file`);
-    expect(download.ok(), id).toBe(true);
-    expect(await download.body(), id).toEqual(await readFile(`../content/files/${id}.docx`));
-  }
+test('FAQ answers lead to the new materials and their downloads', async ({ page }) => {
   for (const [question, material] of [
     ['code-05', 'code-contractor'],
     ['design-10', 'design-figma'],

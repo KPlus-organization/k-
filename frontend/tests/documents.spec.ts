@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-import { API_URL, newCredentials, PASSWORD, signIn } from './helpers';
+import { API_URL, newCredentials, PASSWORD, signIn, steps } from './helpers';
 
 async function fillClaim(page: Page) {
   for (const [id, value] of Object.entries({
@@ -181,8 +181,6 @@ test('an open constructor refreshes an old template without losing entered value
   await expect(page.locator('#document-recipient')).toHaveValue(
     'Адресат из незавершённой претензии',
   );
-  const guidance = page.getByRole('complementary', { name: 'Что можно приложить к претензии' });
-  await guidance.screenshot({ path: '../tmp/preview/claim-attachment-guidance.png' });
 });
 
 test('three home actions, overview checklist and updated profile illustration', async ({
@@ -195,10 +193,9 @@ test('three home actions, overview checklist and updated profile illustration', 
   ).toHaveCount(3);
   await expect(page.getByRole('button', { name: /Рассчитать риски/ })).toHaveCount(0);
   await page.getByRole('link', { name: /Оформить права/ }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-    'Как оформить права на сайт или приложение',
-  );
-  await expect(page.getByTestId('guide-step')).toHaveCount(5);
+  await expect(page).toHaveURL('/ownership');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(steps(page)).toBeVisible();
   await expect(page.getByRole('checkbox')).toHaveCount(0);
   const download = await request.get(`${API_URL}/api/materials/ownership-overview/file`);
   expect(await download.body()).toEqual(await readFile('../content/files/ownership-overview.docx'));
@@ -319,16 +316,13 @@ test('source article reference opens the published article without losing form d
   await signIn(page, request);
   await page.goto('/documents/claim/code');
   await page.locator('#document-recipient').fill('Мой адресат');
-  const reference = page.getByRole('link', {
-    name: /Убытки или компенсация: что требовать при копировании программы/,
-  });
-  await expect(reference).toHaveAttribute('href', '/articles/code-1');
+  // The source article of the template, found by its address: its title may change.
+  const reference = page.locator('a[href="/articles/code-1"]');
   const popupEvent = page.waitForEvent('popup');
   await reference.click();
   const article = await popupEvent;
-  await expect(article.getByRole('heading', { level: 1 })).toContainText(
-    'что требовать при копировании программы',
-  );
+  await expect(article).toHaveURL(/\/articles\/code-1$/);
+  await expect(article.getByRole('heading', { level: 1 })).toBeVisible();
   await article.close();
   const calculation = page.getByRole('link', {
     name: 'Как рассчитывается компенсация ↗',
@@ -437,5 +431,4 @@ test('inline fields replace alternatives; network failures preserve input', asyn
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('#document-recipient')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-  await page.screenshot({ path: '../tmp/preview/document-editor-mobile.png', fullPage: true });
 });

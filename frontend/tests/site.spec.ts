@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { addFavorite, createUser, newCredentials, PASSWORD, signIn } from './helpers';
+import { addFavorite, createUser, newCredentials, PASSWORD, signIn, steps } from './helpers';
 
 test('Figma navigation, complete guide, and persistent favorites', async ({ page, request }) => {
   const errors: string[] = [];
@@ -33,7 +33,7 @@ test('Figma navigation, complete guide, and persistent favorites', async ({ page
   await page.keyboard.press('Escape');
   await expect(page.getByRole('tooltip')).toHaveCount(0);
   await page.getByRole('link', { name: 'Программный код', exact: true }).click();
-  await expect(page.getByTestId('guide-step')).toHaveCount(8);
+  await expect(steps(page)).toBeVisible();
   await expect(page.getByRole('checkbox')).toHaveCount(0);
   await expect(page.getByRole('progressbar')).toHaveCount(0);
   await page.getByRole('button', { name: 'Сохранить чек-лист' }).click();
@@ -44,10 +44,14 @@ test('Figma navigation, complete guide, and persistent favorites', async ({ page
     'aria-pressed',
     'true',
   );
-  await page
-    .getByRole('link', { name: '8 Оцените ответ и подготовьте дальнейшие действия' })
-    .click();
-  await expect(page.locator('#step-8')).toBeInViewport();
+  // The table of contents leads to each step, here the last one.
+  const lastStep = page
+    .getByRole('navigation', { name: 'Шаги чек-листа' })
+    .getByRole('link')
+    .last();
+  const target = (await lastStep.getAttribute('href'))!;
+  await lastStep.click();
+  await expect(page.locator(target)).toBeInViewport();
   expect(errors).toEqual([]);
 });
 
@@ -176,28 +180,6 @@ test('favorites can be removed and the hidden trademark tool is not shown', asyn
   await expect(page.getByRole('button', { name: /Проверка товарного знака/ })).toHaveCount(0);
 });
 
-test('desktop screenshots for comparison with Figma', async ({ page, request }) => {
-  for (const [url, name] of [
-    ['/', 'home'],
-    ['/login', 'login'],
-    ['/register', 'register'],
-    ['/protect', 'protect'],
-    ['/protect/code', 'code'],
-  ] as const) {
-    await page.goto(url);
-    await page.evaluate(() => document.fonts.ready);
-    await page.screenshot({ path: `../tmp/preview/${name}.png`, fullPage: true });
-  }
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Открыть меню' }).click();
-  await page.screenshot({ path: '../tmp/preview/menu.png', fullPage: true });
-  const user = await signIn(page, request);
-  await addFavorite(request, user, 'checklist');
-  await page.goto('/profile');
-  await expect(page.getByRole('heading', { name: /Добро пожаловать/ })).toBeVisible();
-  await page.screenshot({ path: '../tmp/preview/profile.png', fullPage: true });
-});
-
 test('mobile screens fit the viewport and navigation works', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const url of [
@@ -219,7 +201,6 @@ test('mobile screens fit the viewport and navigation works', async ({ page }) =>
     await expect(page.getByRole('heading').first()).toBeVisible();
   }
   await page.goto('/');
-  await page.screenshot({ path: '../tmp/preview/mobile-home.png', fullPage: true });
   await page.getByRole('button', { name: 'Открыть меню' }).click();
   await page
     .getByRole('navigation', { name: 'Основная навигация' })

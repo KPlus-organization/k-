@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
-import type { APIRequestContext, Page } from '@playwright/test';
+import type { APIRequestContext, Locator, Page } from '@playwright/test';
+import { materialHref } from '../src/entities/material/model/routes';
 
 export const API_URL = process.env.VITE_API_URL ?? 'http://localhost:3001';
 export const PASSWORD = 'e2e-password-123';
@@ -44,4 +45,19 @@ export async function addFavorite(request: APIRequestContext, user: TestUser, ma
     headers: { Authorization: `Bearer ${user.accessToken}` },
   });
   if (response.status() !== 204) throw new Error(`favorite: ${response.status()}`);
+}
+
+/**
+ * A link to a material found by its address: titles and wording change with the content,
+ * material ids do not.
+ */
+export function linkTo(scope: Page | Locator, materialId: string) {
+  const href = materialHref(materialId);
+  // Search results add ?q=… to highlight the words found; links to a place in it add #….
+  return scope.locator(`a[href="${href}"], a[href^="${href}?"], a[href^="${href}#"]`).first();
+}
+
+/** A checklist is shown: at least one step, whatever their number in the content. */
+export function steps(page: Page) {
+  return page.getByTestId('guide-step').first();
 }

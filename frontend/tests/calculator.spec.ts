@@ -139,36 +139,26 @@ test('fixed trademark fees appear right after choosing the action', async ({ pag
   await expect(page.getByRole('region', { name: '4 000 ₽' })).toBeVisible();
 });
 
-test('calculator screenshots', async ({ page }) => {
-  await page.goto('/tools/calculator');
-  await page.screenshot({ path: '../tmp/preview/calculator-start.png', fullPage: true });
-  await page.goto('/tools/calculator?schedule=trademarks&fee=2.22');
-  await page.getByLabel('Количество классов МКТУ').selectOption('7');
-  await page.getByLabel('Класс 1').fill('14');
-  await page.getByRole('checkbox', { name: 'Нужно свидетельство на бумаге' }).check();
-  await page.getByRole('button', { name: 'Рассчитать' }).click();
-  await expect(page.getByRole('region', { name: '31 000 ₽' })).toBeVisible();
-  await page.screenshot({ path: '../tmp/preview/calculator.png', fullPage: true });
-});
-
 test('choosing on each step keeps the page where it is', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 700 });
+  await page.setViewportSize({ width: 390, height: 500 });
   await page.goto('/tools/calculator');
-  const scrollY = () => page.evaluate(() => window.scrollY);
   for (const option of [
     /Товарные знаки/,
     /Регистрация и свидетельство/,
     /Регистрация товарного знака и выдача/,
   ]) {
     const button = page.getByRole('button', { name: option }).first();
-    await button.scrollIntoViewIfNeeded();
-    await page.mouse.wheel(0, 120);
-    const before = await scrollY();
+    // Scroll instantly so that the option is in the lower part of the screen.
+    const before = await button.evaluate((element) => {
+      const top = element.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo(0, top - 300);
+      return window.scrollY;
+    });
     expect(before).toBeGreaterThan(0);
     await button.click();
     await expect(page).toHaveURL(/schedule=trademarks/);
-    // Focus moves to the next step; the page may follow it down, but never jumps to the top.
+    // Focus moves to the next step; the page may follow it down, but never jumps up.
     await page.waitForTimeout(300);
-    expect(await scrollY()).toBeGreaterThanOrEqual(before - 1);
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(before - 1);
   }
 });

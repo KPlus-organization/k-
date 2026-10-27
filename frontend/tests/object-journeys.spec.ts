@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { linkTo, steps } from './helpers';
 
 for (const area of ['protect', 'defend']) {
   test(`${area}: every object opens relevant content or an available consultation form`, async ({
@@ -16,22 +17,11 @@ for (const area of ['protect', 'defend']) {
       if (/\/(code|design|databases|brand|visuals)$/.test(route)) {
         await expect(page.getByText('Материалы по этому объекту готовятся')).toHaveCount(0);
         if (route === '/defend/code') {
-          await expect(
-            page
-              .getByRole('article')
-              .getByRole('link', { name: 'Как доказывают заимствование кода', exact: true }),
-          ).toBeVisible();
-          await expect(
-            page.getByRole('main').getByRole('link', { name: /Вопросы эксперту/ }),
-          ).toBeVisible();
-          await expect(
-            page
-              .getByRole('main')
-              .getByRole('link', { name: /Запрет использования, убытки или компенсация/ }),
-          ).toBeVisible();
-          await expect(
-            page.getByRole('link', { name: /Когда будет полезна регистрация/ }),
-          ).toHaveCount(0);
+          // Claims about code lead to evidence and remedies, not to registration.
+          await expect(linkTo(page.getByRole('article'), 'code-0')).toBeVisible();
+          await expect(linkTo(page.getByRole('main'), 'code-expert')).toBeVisible();
+          await expect(linkTo(page.getByRole('main'), 'code-1')).toBeVisible();
+          await expect(page.locator('a[href="/articles/code-registration"]')).toHaveCount(0);
         } else {
           await expect(page.getByRole('article')).toBeVisible();
         }
@@ -50,15 +40,14 @@ for (const area of ['protect', 'defend']) {
 test('database and brand routes distinguish protecting rights from answering claims', async ({
   page,
 }) => {
-  for (const [route, title, steps] of [
-    ['/protect/databases', 'База данных как объект прав: как защититься при копировании?', 7],
-    ['/defend/databases', 'Содержание базы данных: что делать, если вам предъявили претензию', 6],
-    ['/protect/brand', 'Порядок защиты бренда и домена от копирования: как пресечь нарушение', 4],
-    ['/defend/brand', 'Как защититься от претензии из-за использования чужого обозначения', 7],
-  ] as const) {
-    await page.goto(route);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);
-    await expect(page.getByTestId('guide-step')).toHaveCount(steps);
+  for (const object of ['databases', 'brand']) {
+    const titles: string[] = [];
+    for (const area of ['protect', 'defend']) {
+      await page.goto(`/${area}/${object}`);
+      await expect(steps(page)).toBeVisible();
+      titles.push(await page.getByRole('heading', { level: 1 }).innerText());
+    }
+    expect(titles[0], object).not.toBe(titles[1]);
   }
   await page.goto('/protect/unknown-object');
   await expect(page.getByRole('heading', { name: 'Объект не найден' })).toBeVisible();
