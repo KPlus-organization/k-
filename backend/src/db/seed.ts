@@ -112,10 +112,11 @@ export async function syncContent(
     for (const schedule of feeSchedules) {
       await client.query(
         `INSERT INTO fee_schedules (id, title, basis, effective_from, reviewed_by, note, parameters, fees, sort_order,
-           reference, is_published, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, now())
+           reference, basis_url, is_published, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, now())
          ON CONFLICT (id) DO UPDATE SET title = $2, basis = $3, effective_from = $4, reviewed_by = $5, note = $6,
-           parameters = $7, fees = $8, sort_order = $9, reference = $10, is_published = true, updated_at = now()`,
+           parameters = $7, fees = $8, sort_order = $9, reference = $10, basis_url = $11, is_published = true,
+           updated_at = now()`,
         [
           schedule.id,
           schedule.title,
@@ -127,6 +128,7 @@ export async function syncContent(
           JSON.stringify(schedule.fees),
           schedule.order,
           schedule.reference,
+          schedule.basisUrl,
         ],
       );
     }

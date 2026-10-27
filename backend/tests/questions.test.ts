@@ -40,6 +40,33 @@ test('the supplied questions have answers and only published, complete material 
   assert.equal((await api('GET', '/api/questions', { token: 'invalid' })).status, 401);
 });
 
+test('references to articles in answers link to the free ConsultantPlus', async () => {
+  const all = (await api('GET', '/api/questions?limit=100')).body.items as {
+    id: string;
+    answer: string;
+    answerLinks: { text: string; href: string }[];
+  }[];
+  const from: Record<string, number> = {};
+  for (const item of all) {
+    for (const link of item.answerLinks) {
+      const at = item.answer.indexOf(link.text, from[item.id] ?? 0);
+      assert.ok(at >= 0, `${item.id}: «${link.text}» in the answer, in order`);
+      from[item.id] = at + link.text.length;
+      assert.match(link.href, /^https:\/\/www\.consultant\.ru\/cons\/cgi\/online\.cgi\?req=doc&base=LAW&n=\d+&dst=\d+$/);
+    }
+  }
+  const byId = new Map(all.map((item) => [item.id, item]));
+  assert.deepEqual(byId.get('brand-05')!.answerLinks, [
+    { text: 'п. 3 ст. 1484 ГК РФ', href: 'https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=509417&dst=101535' },
+  ]);
+  // A list of articles links each article separately.
+  assert.deepEqual(
+    byId.get('code-01')!.answerLinks.map((link) => link.text),
+    ['ст. 1229', '1235', '1280 ГК РФ'],
+  );
+  assert.deepEqual(byId.get('brand-01')!.answerLinks, []);
+});
+
 test('opening a material counts guests once per 30 minutes, including concurrent requests', async () => {
   const visitorId = visitor();
   const results = await Promise.all(

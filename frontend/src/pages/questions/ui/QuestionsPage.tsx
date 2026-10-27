@@ -1,14 +1,33 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { materialHref, materialLabels } from '@/entities/material';
 import { cx, type Open } from '@/shared/lib';
-import { Icon, LoadState, ui } from '@/shared/ui';
+import { Icon, LawLink, LoadState, ui } from '@/shared/ui';
 import { Breadcrumbs } from '@/widgets/page-heading';
 import { LegalNotice } from '@/widgets/legal-notice';
-import { useQuestions } from '../model/use-questions';
+import { useQuestions, type Question } from '../model/use-questions';
 import styles from './styles.module.css';
 
 const PAGE_SIZE = 8;
+
+/** The answer with its references to legal acts as links; each link text follows the previous one. */
+function AnswerText({ answer, answerLinks }: Pick<Question, 'answer' | 'answerLinks'>) {
+  const parts: ReactNode[] = [];
+  let from = 0;
+  for (const link of answerLinks) {
+    const at = answer.indexOf(link.text, from);
+    if (at < 0) continue;
+    parts.push(answer.slice(from, at));
+    parts.push(
+      <LawLink key={at} href={link.href}>
+        {link.text}
+      </LawLink>,
+    );
+    from = at + link.text.length;
+  }
+  parts.push(answer.slice(from));
+  return parts;
+}
 
 export function QuestionsPage({
   userId,
@@ -123,7 +142,9 @@ export function QuestionsPage({
                 <Icon name="chevron" size={22} />
               </summary>
               <div className={styles['answer']}>
-                <p>{item.answer}</p>
+                <p>
+                  <AnswerText answer={item.answer} answerLinks={item.answerLinks} />
+                </p>
                 {item.material ? (
                   <Link className={styles['material']} to={materialHref(item.material.id)}>
                     <Icon name="book" size={20} />

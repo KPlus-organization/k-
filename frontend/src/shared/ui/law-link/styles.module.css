@@ -1,0 +1,5 @@
+.law-link {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

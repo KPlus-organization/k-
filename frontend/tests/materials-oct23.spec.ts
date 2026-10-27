@@ -93,7 +93,8 @@ test('new materials have downloadable sources, readable mobile pages and working
     await page.goto(`/questions#${question}`);
     const answer = page.locator(`#question-${question}`);
     await expect(answer).toHaveAttribute('open', '');
-    await answer.getByRole('link').click();
+    // The material link; links to legal acts in the answer lead to ConsultantPlus.
+    await answer.locator('a[href^="/"]').click();
     await expect(page.getByRole('article')).toBeVisible();
     const file = page.getByRole('link', { name: 'Скачать файл' });
     await expect(file).toHaveAttribute('href', `${API_URL}/api/materials/${material}/file`);

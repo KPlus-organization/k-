@@ -144,4 +144,31 @@ test('mistakes in the YAML files are reported in Russian with their place', asyn
     /programs\.yaml, пункт «1»: неизвестное поле «суммa»/,
     /programs\.yaml, пункт «1»: не заполнено поле «сумма»/,
   ]);
+  // A link is a whole web address; any site is accepted.
+  await check(
+    'trademarks.yaml',
+    (t) =>
+      t
+        .replace('https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=515381&dst=1474', 'consultant.ru/cons/cgi/online.cgi?n=515381')
+        .replace('https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=515381&dst=1428', 'https://rospatent.gov.ru/ru/documents'),
+    [/trademarks\.yaml, пункт «2\.11»: «ссылка» — адрес страницы, начинается с https:\/\/; сейчас: «consultant\.ru/],
+  );
+  const accepted = await loadFeeSchedules(
+    await feesCopy('trademarks.yaml', (t) =>
+      t.replace('https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=515381&dst=1428', 'https://rospatent.gov.ru/ru/documents'),
+    ),
+  );
+  assert.equal(accepted.find((schedule) => schedule.id === 'trademarks')!.basisUrl, 'https://rospatent.gov.ru/ru/documents');
+});
+
+test('every fee and schedule links to its place in the free ConsultantPlus', async () => {
+  const consultant = /^https:\/\/www\.consultant\.ru\/cons\/cgi\/online\.cgi\?req=doc&base=LAW&n=\d+&dst=\d+$/;
+  for (const id of ['trademarks', 'programs']) {
+    const schedule = (await api('GET', `/api/fees/${id}`)).body;
+    assert.match(schedule.basisUrl, consultant);
+    for (const fee of schedule.fees) assert.match(fee.referenceUrl, consultant, `${id} ${fee.code}`);
+  }
+  const result = await calc('trademarks', '2.11', { классы: 6 });
+  assert.equal(result.body.fee.referenceUrl, 'https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=515381&dst=1474');
+  assert.equal(result.body.schedule.basisUrl, 'https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=515381&dst=1428');
 });

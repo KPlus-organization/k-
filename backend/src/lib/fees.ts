@@ -32,6 +32,8 @@ export interface Fee {
   group: string;
   name: string;
   wording: string;
+  /** The item online (ConsultantPlus), or null when no link is given. */
+  referenceUrl: string | null;
   base: number;
   surcharges: FeeSurcharge[];
   examples: FeeExample[];
@@ -42,6 +44,8 @@ export interface FeeSchedule {
   title: string;
   order: number;
   basis: string;
+  /** The legal act online (ConsultantPlus), or null when no link is given. */
+  basisUrl: string | null;
   /** YYYY-MM-DD */
   effectiveFrom: string;
   /** How to cite an item, with {пункт} for its code, e.g. «подпункт {пункт} приложения № 1». */

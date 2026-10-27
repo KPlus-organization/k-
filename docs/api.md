@@ -502,6 +502,7 @@ type FeeScheduleSummary = {
   id: string;                 // 'trademarks' | 'programs'
   title: string;
   basis: string;              // нормативный акт и редакция
+  basisUrl: string | null;    // адрес этого акта (некоммерческая версия КонсультантПлюс)
   effectiveFrom: string;      // 'YYYY-MM-DD'
   reviewedBy: string | null;  // кто из юристов сверил суммы; null — ещё не сверено
   feesCount: number;
@@ -518,6 +519,7 @@ type FeeParameter = {
 type Fee = {
   code: string;               // '2.4'
   reference: string;          // 'подпункт 2.4 приложения № 1 к Положению'
+  referenceUrl: string | null; // адрес этого подпункта (некоммерческая версия КонсультантПлюс)
   group: string;              // раздел списка действий
   name: string;
   wording: string;            // дословный текст пункта
@@ -544,8 +546,8 @@ Content-Type: application/json
 
 ```json
 {
-  "schedule": { "id": "trademarks", "title": "Товарные знаки", "basis": "…", "effectiveFrom": "2025-10-04", "reviewedBy": null },
-  "fee": { "code": "2.4", "reference": "подпункт 2.4 приложения № 1 к Положению", "name": "…", "wording": "…" },
+  "schedule": { "id": "trademarks", "title": "Товарные знаки", "basis": "…", "basisUrl": "https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=515381&dst=1428", "effectiveFrom": "2025-10-04", "reviewedBy": null },
+  "fee": { "code": "2.4", "reference": "подпункт 2.4 приложения № 1 к Положению", "referenceUrl": "https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=515381&dst=1866", "name": "…", "wording": "…" },
   "total": 20500,
   "lines": [
     { "label": "Основная пошлина", "amount": 13000 },
@@ -557,6 +559,10 @@ Content-Type: application/json
 
 Ошибки: `400 VALIDATION_ERROR` — неизвестный `fee` (поле `fee`), лишний, отсутствующий или неверный
 параметр (поле `values.<id>`), число значений `perClass` не равно числу классов; `404 FEE_SCHEDULE_NOT_FOUND`.
+
+`basisUrl` и `referenceUrl` берутся из полей `ссылка_на_основание` и `ссылка` в YAML; сайт
+показывает основание расчёта ссылками. Колонку `fee_schedules.basis_url` добавляет миграция
+`008_fee_basis_links.sql`; после обновления выполните `npm run db:migrate` и `npm run db:seed`.
 
 ## 11. Маршруты сайта и наполнение
 
@@ -736,7 +742,10 @@ API не знает адресов страниц сайта: id материа�
 другие значения `order` дают `400`. Переданный некорректный токен вызывает `401`, а не переключение на гостя.
 Оба ответа имеют `Cache-Control: no-store`.
 
-Вопрос содержит `id`, `topic`, `topicTitle`, `question`, `answer`, `reference` и `material`.
+Вопрос содержит `id`, `topic`, `topicTitle`, `question`, `answer`, `answerLinks`, `reference` и `material`.
+`answerLinks` — ссылки на статьи законов в тексте ответа: `{ text, href }[]` в порядке, в котором
+`text` встречается в `answer` (каждый следующий — после предыдущего). `href` — полный адрес
+`http(s)://…`, сейчас это некоммерческая версия КонсультантПлюс; у вопросов без ссылок массив пустой.
 `material` — сводка опубликованного материала с содержимым либо `null`, если подробный материал
 ещё не доступен. В исходном JSON также записаны название DOCX (`source`) и связь `materialId`.
 Импортированы 39 вопросов из трёх предоставленных документов; у 23 есть полные материалы на сайте.

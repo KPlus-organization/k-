@@ -101,6 +101,8 @@ export function App() {
     };
   }, [profile?.id, addFavorite]);
 
+  // The calculator keeps each choice in the address; choosing must not move the page.
+  const scrollSearch = location.pathname === '/tools/calculator' ? '' : pageSearch;
   useEffect(() => {
     // Not on opening or closing a window (?modal): the page stays where it is. A link to a
     // place on a page (#…) is scrolled to by the page itself.
@@ -108,7 +110,7 @@ export function App() {
     // Pages with loaded content (materials, objects) set their own titles.
     const title = staticTitles[location.pathname];
     if (title) document.title = `${title} — МоёПраво`;
-  }, [location.pathname, location.hash, pageSearch]);
+  }, [location.pathname, location.hash, scrollSearch]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(''), 3500);

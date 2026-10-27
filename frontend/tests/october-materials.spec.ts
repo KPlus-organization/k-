@@ -144,7 +144,8 @@ test('database, brand and visual questions link to published articles and are se
     await page.getByLabel('Тема', { exact: true }).selectOption(topic);
     await expect(page.locator('details')).toHaveCount(count);
     for (const summary of await page.locator('summary').all()) await summary.click();
-    await expect(page.locator('details[open] a')).toHaveCount(count);
+    // One material link per answer, besides links to legal acts.
+    await expect(page.locator('details[open] a[href^="/"]')).toHaveCount(count);
     await expect(page.getByText('Подробный материал готовится')).toHaveCount(0);
   }
   await page.getByRole('link', { name: /Картинку сгенерировала нейросеть/ }).click();

@@ -13,6 +13,7 @@ import {
   type FeeSchedule,
   type FeeSurcharge,
 } from '../lib/fees';
+import { isWebLink } from '../lib/webLinks';
 
 // Reads content/fees/*.yaml. The files are edited by lawyers, so every message here
 // is in Russian and points to the file and the item.
@@ -26,6 +27,7 @@ const SCHEDULE_KEYS = [
   'название',
   'порядок',
   'основание',
+  'ссылка_на_основание',
   'действует_с',
   'ссылка_на_пункт',
   'проверил',
@@ -34,7 +36,7 @@ const SCHEDULE_KEYS = [
   'пошлины',
 ];
 const PARAMETER_KEYS = ['вопрос', 'тип', 'от', 'до'];
-const FEE_KEYS = ['пункт', 'раздел', 'название', 'формулировка', 'сумма', 'доплаты', 'примеры'];
+const FEE_KEYS = ['пункт', 'раздел', 'название', 'формулировка', 'ссылка', 'сумма', 'доплаты', 'примеры'];
 const SURCHARGE_KEYS = ['за', 'параметр', 'сверх', 'сумма'];
 
 type Raw = Record<string, unknown>;
@@ -157,6 +159,14 @@ function exampleValues(raw: Raw, params: FeeParameter[]): Record<string, unknown
   return values;
 }
 
+/** An optional link to a legal act: an http(s) address. */
+function legalLink(value: unknown, where: string, field: string, problems: Problems): string | null {
+  if (value === undefined || value === null || value === '') return null;
+  if (isWebLink(value)) return value;
+  problems.add(where, `«${field}» — адрес страницы, начинается с https://; сейчас: «${String(value)}»`);
+  return null;
+}
+
 function formatRubles(amount: number) {
   return `${amount.toLocaleString('ru-RU').replace(/ /g, ' ')} ₽`;
 }
@@ -170,6 +180,7 @@ function scheduleFrom(id: string, file: string, raw: unknown): { schedule?: FeeS
   if (!title) problems.add(file, 'не заполнено «название»');
   const basis = text(raw['основание']);
   if (!basis) problems.add(file, 'не заполнено «основание» — нормативный акт, из которого взяты суммы');
+  const basisUrl = legalLink(raw['ссылка_на_основание'], file, 'ссылка_на_основание', problems);
   const effectiveFrom = text(raw['действует_с']);
   if (!effectiveFrom || !/^\d{4}-\d{2}-\d{2}$/.test(effectiveFrom) || Number.isNaN(Date.parse(effectiveFrom))) {
     problems.add(file, `«действует_с» — дата в виде ГГГГ-ММ-ДД, например 2025-10-04; сейчас: «${effectiveFrom ?? ''}»`);
@@ -204,6 +215,7 @@ function scheduleFrom(id: string, file: string, raw: unknown): { schedule?: FeeS
         group: text(item['раздел']) ?? '',
         name: text(item['название']) ?? '',
         wording: text(item['формулировка']) ?? '',
+        referenceUrl: legalLink(item['ссылка'], where, 'ссылка', problems),
         base: money(item['сумма'], where, 'сумма', problems) ?? 0,
         surcharges: surcharges(item['доплаты'], where, params, problems),
         examples: [],
@@ -234,6 +246,7 @@ function scheduleFrom(id: string, file: string, raw: unknown): { schedule?: FeeS
     title: title!,
     order: order ?? 100,
     basis: basis!,
+    basisUrl,
     effectiveFrom: effectiveFrom!,
     reference,
     reviewedBy: text(raw['проверил']) ?? null,

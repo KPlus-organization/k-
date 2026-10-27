@@ -42,7 +42,7 @@ test('published design references, filters, keyboard access and mobile layout', 
   await page.keyboard.press('Enter');
   const expanded = page.locator('details[open]');
   await expect(expanded).not.toContainText('Подробный материал готовится');
-  await expect(expanded.getByRole('link')).toHaveAttribute('href', '/articles/design-figma');
+  await expect(expanded.locator('a[href^="/"]')).toHaveAttribute('href', '/articles/design-figma');
   await expect(expanded).toContainText('Передача файла Figma');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
@@ -100,4 +100,20 @@ test('a failed questions request can be retried', async ({ page }) => {
   await page.unroute('**/api/questions?*');
   await page.getByRole('button', { name: /Повторить/ }).click();
   await expect(page.locator('details')).toHaveCount(8);
+});
+
+test('references to articles in an answer open the free ConsultantPlus', async ({ page }) => {
+  await page.goto('/questions');
+  await page.getByLabel('Найти вопрос').fill('похожее на чужой товарный знак');
+  await expect(page.locator('details')).toHaveCount(1);
+  await page.locator('summary').click();
+  const answer = page.locator('details[open]');
+  const link = answer.getByRole('link', { name: 'п. 3 ст. 1484 ГК РФ' });
+  await expect(link).toHaveAttribute(
+    'href',
+    'https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=509417&dst=101535',
+  );
+  await expect(link).toHaveAttribute('target', '_blank');
+  // The text around the link stays as it was.
+  await expect(answer).toContainText('(п. 3 ст. 1484 ГК РФ)');
 });

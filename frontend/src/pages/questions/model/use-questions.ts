@@ -9,6 +9,8 @@ export type Question = {
   topicTitle: string;
   question: string;
   answer: string;
+  /** Parts of the answer that link to legal acts, in the order they occur in it. */
+  answerLinks: { text: string; href: string }[];
   reference: string;
   material: MaterialSummary | null;
 };
